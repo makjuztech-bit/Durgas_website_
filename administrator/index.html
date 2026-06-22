@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DURGAS — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --black: #0D0D0D;
+    --white: #FAFAF7;
+    --beige: #F5F0E8;
+    --gray: #888;
+    --sidebar: #1a1a1a;
+    --font-serif: 'Cormorant Garamond', serif;
+    --font-sans: 'Jost', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); background: var(--beige); color: var(--black); display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 240px; background: var(--sidebar); color: var(--white);
+    padding: 24px 0; flex-shrink: 0; position: fixed; height: 100vh; overflow-y: auto;
+  }
+  .sidebar-logo {
+    font-family: var(--font-serif); font-size: 1.4rem; letter-spacing: 0.15em;
+    padding: 0 24px 32px; border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .sidebar-logo span { color: var(--gold); }
+  .nav-item {
+    display: block; padding: 14px 24px; color: rgba(255,255,255,0.7);
+    text-decoration: none; font-size: 0.75rem; letter-spacing: 0.12em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.3s;
+    border-left: 3px solid transparent;
+  }
+  .nav-item:hover, .nav-item.active { color: var(--gold); background: rgba(201,168,76,0.08); border-left-color: var(--gold); }
+
+  .main { margin-left: 240px; flex: 1; padding: 32px; }
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+  .page-title { font-family: var(--font-serif); font-size: 2rem; font-weight: 400; }
+  .admin-user { font-size: 0.75rem; color: var(--gray); }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px; }
+  .stat-card {
+    background: var(--white); padding: 24px; border-radius: 4px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .stat-label { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gray); margin-bottom: 8px; }
+  .stat-value { font-family: var(--font-serif); font-size: 2rem; color: var(--gold); }
+
+  .panel { background: var(--white); border-radius: 4px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+  .panel-title { font-family: var(--font-serif); font-size: 1.3rem; margin-bottom: 20px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { text-align: left; padding: 12px; border-bottom: 2px solid var(--beige); font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray); }
+  td { padding: 12px; border-bottom: 1px solid var(--beige); vertical-align: middle; }
+  tr:hover td { background: rgba(201,168,76,0.04); }
+
+  .btn {
+    padding: 10px 20px; font-size: 0.7rem; letter-spacing: 0.1em;
+    text-transform: uppercase; border: none; cursor: pointer; transition: all 0.3s;
+    font-family: var(--font-sans);
+  }
+  .btn-primary { background: var(--black); color: var(--white); }
+  .btn-primary:hover { background: var(--gold); }
+  .btn-danger { background: #c0392b; color: white; padding: 6px 12px; font-size: 0.65rem; }
+  .btn-edit { background: var(--gold); color: white; padding: 6px 12px; font-size: 0.65rem; margin-right: 6px; }
+  .btn-sm { padding: 6px 14px; font-size: 0.65rem; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { display: block; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray); margin-bottom: 6px; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 10px 14px; border: 1px solid var(--beige);
+    background: var(--white); font-family: var(--font-sans); font-size: 0.85rem;
+  }
+  .form-textarea { min-height: 100px; resize: vertical; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .login-screen {
+    position: fixed; inset: 0; background: var(--black);
+    display: flex; align-items: center; justify-content: center; z-index: 100;
+  }
+  .login-box {
+    background: var(--white); padding: 48px; width: 400px; max-width: 90vw;
+    text-align: center;
+  }
+  .login-box h1 { font-family: var(--font-serif); font-size: 2rem; margin-bottom: 8px; }
+  .login-box p { color: var(--gray); font-size: 0.85rem; margin-bottom: 32px; }
+  .login-box .form-group { text-align: left; }
+  .login-box .btn { width: 100%; margin-top: 8px; padding: 14px; }
+  .error-msg { color: #c0392b; font-size: 0.8rem; margin-top: 12px; }
+
+  .badge { display: inline-block; padding: 3px 10px; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; border-radius: 2px; }
+  .badge-pending { background: #fff3cd; color: #856404; }
+  .badge-processing { background: #cce5ff; color: #004085; }
+  .badge-shipped { background: #d4edda; color: #155724; }
+  .badge-delivered { background: #d4edda; color: #155724; }
+  .badge-cancelled { background: #f8d7da; color: #721c24; }
+
+  .product-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 2px; }
+  .hidden { display: none !important; }
+
+  @media (max-width: 900px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-grid { grid-template-columns: 1fr; }
+    .sidebar { width: 200px; }
+    .main { margin-left: 200px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <h1>DURGAS<span style="color:var(--gold)">✦</span></h1>
+    <p>Super Admin Login</p>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" id="loginEmail" value="admin@durgas.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-input" id="loginPassword" placeholder="Enter password">
+    </div>
+    <button class="btn btn-primary" onclick="adminLogin()">Sign In</button>
+    <p class="error-msg" id="loginError"></p>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<aside class="sidebar hidden" id="sidebar">
+  <div class="sidebar-logo">DURGAS <span>✦</span> Admin</div>
+  <a class="nav-item active" data-section="dashboard" onclick="showSection('dashboard')">Dashboard</a>
+  <a class="nav-item" data-section="products" onclick="showSection('products')">Products</a>
+  <a class="nav-item" data-section="add-product" onclick="showSection('add-product')">Add Product</a>
+  <a class="nav-item" data-section="categories" onclick="showSection('categories')">Categories</a>
+  <a class="nav-item" data-section="orders" onclick="showSection('orders')">Orders</a>
+  <a class="nav-item" data-section="customers" onclick="showSection('customers')">Customers</a>
+  <a class="nav-item" data-section="reviews" onclick="showSection('reviews')">Reviews</a>
+  <a class="nav-item" style="margin-top:40px;color:#c0392b" onclick="adminLogout()">Logout</a>
+</aside>
+
+<main class="main hidden" id="mainContent">
+
+  <!-- Dashboard -->
+  <div class="section active" id="section-dashboard">
+    <div class="page-header">
+      <h1 class="page-title">Dashboard</h1>
+      <span class="admin-user" id="adminName"></span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><p class="stat-label">Total Products</p><p class="stat-value" id="statProducts">—</p></div>
+      <div class="stat-card"><p class="stat-label">Total Orders</p><p class="stat-value" id="statOrders">—</p></div>
+      <div class="stat-card"><p class="stat-label">Total Customers</p><p class="stat-value" id="statCustomers">—</p></div>
+      <div class="stat-card"><p class="stat-label">Total Revenue</p><p class="stat-value" id="statRevenue">—</p></div>
+    </div>
+    <div class="panel">
+      <h3 class="panel-title">Recent Orders</h3>
+      <table><thead><tr><th>Order #</th><th>Customer</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody id="recentOrdersTable"></tbody></table>
+    </div>
+  </div>
+
+  <!-- Products List -->
+  <div class="section" id="section-products">
+    <div class="page-header">
+      <h1 class="page-title">Products</h1>
+      <button class="btn btn-primary" onclick="showSection('add-product')">+ Add Product</button>
+    </div>
+    <div class="panel">
+      <table><thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Badge</th><th>Actions</th></tr></thead>
+      <tbody id="productsTable"></tbody></table>
+    </div>
+  </div>
+
+  <!-- Add Product Form -->
+  <div class="section" id="section-add-product">
+    <div class="page-header"><h1 class="page-title" id="productFormTitle">Add Product</h1></div>
+    <div class="panel">
+      <form id="productForm" onsubmit="saveProduct(event)">
+        <input type="hidden" id="editProductId">
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Product Name *</label><input type="text" class="form-input" id="pName" required></div>
+          <div class="form-group"><label class="form-label">Category *</label><select class="form-select" id="pCategory" required></select></div>
+          <div class="form-group full"><label class="form-label">Description</label><textarea class="form-textarea" id="pDescription"></textarea></div>
+          <div class="form-group"><label class="form-label">Material</label><input type="text" class="form-input" id="pMaterial" placeholder="18K Gold"></div>
+          <div class="form-group"><label class="form-label">Purity</label><input type="text" class="form-input" id="pPurity" placeholder="Diamond"></div>
+          <div class="form-group"><label class="form-label">Weight (g)</label><input type="number" step="0.01" class="form-input" id="pWeight"></div>
+          <div class="form-group"><label class="form-label">SKU</label><input type="text" class="form-input" id="pSku"></div>
+          <div class="form-group"><label class="form-label">Price (₹) *</label><input type="number" class="form-input" id="pPrice" required></div>
+          <div class="form-group"><label class="form-label">Old Price (₹)</label><input type="number" class="form-input" id="pOldPrice"></div>
+          <div class="form-group"><label class="form-label">Stock *</label><input type="number" class="form-input" id="pStock" required value="10"></div>
+          <div class="form-group"><label class="form-label">Badge</label>
+            <select class="form-select" id="pBadge">
+              <option value="">None</option>
+              <option value="New">New</option>
+              <option value="Sale">Sale</option>
+              <option value="Best Seller">Best Seller</option>
+            </select>
+          </div>
+          <div class="form-group full"><label class="form-label">Product Images</label><input type="file" class="form-input" id="pImages" multiple accept="image/*"></div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top:16px">Save Product</button>
+        <button type="button" class="btn" style="margin-top:16px;margin-left:8px;background:var(--beige)" onclick="showSection('products')">Cancel</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Categories -->
+  <div class="section" id="section-categories">
+    <div class="page-header">
+      <h1 class="page-title">Categories</h1>
+      <button class="btn btn-primary" onclick="showAddCategory()">+ Add Category</button>
+    </div>
+    <div class="panel" id="addCategoryForm" style="display:none;margin-bottom:20px">
+      <h3 class="panel-title" id="catFormTitle">Add Category</h3>
+      <input type="hidden" id="editCategoryId">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Name *</label><input type="text" class="form-input" id="catName"></div>
+        <div class="form-group"><label class="form-label">Image URL</label><input type="text" class="form-input" id="catImage"></div>
+        <div class="form-group full"><label class="form-label">Description</label><textarea class="form-textarea" id="catDescription"></textarea></div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="saveCategory()">Save</button>
+      <button class="btn btn-sm" style="background:var(--beige);margin-left:8px" onclick="hideAddCategory()">Cancel</button>
+    </div>
+    <div class="panel">
+      <table><thead><tr><th>Name</th><th>Products</th><th>Actions</th></tr></thead>
+      <tbody id="categoriesTable"></tbody></table>
+    </div>
+  </div>
+
+  <!-- Orders -->
+  <div class="section" id="section-orders">
+    <div class="page-header"><h1 class="page-title">Orders</h1></div>
+    <div class="panel">
+      <table><thead><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody id="ordersTable"></tbody></table>
+    </div>
+  </div>
+
+  <!-- Customers -->
+  <div class="section" id="section-customers">
+    <div class="page-header"><h1 class="page-title">Customers</h1></div>
+    <div class="panel">
+      <table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th></tr></thead>
+      <tbody id="customersTable"></tbody></table>
+    </div>
+  </div>
+
+  <!-- Reviews -->
+  <div class="section" id="section-reviews">
+    <div class="page-header"><h1 class="page-title">Reviews</h1></div>
+    <div class="panel">
+      <table><thead><tr><th>Product</th><th>Reviewer</th><th>Rating</th><th>Review</th><th>Date</th></tr></thead>
+      <tbody id="reviewsTable"></tbody></table>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const API = '/api';
+let token = localStorage.getItem('adminToken');
+let categories = [];
+
+function apiFetch(url, options = {}) {
+  const headers = { ...options.headers };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+  return fetch(API + url, { ...options, headers });
+}
+
+function formatPrice(n) {
+  return '₹' + Number(n).toLocaleString('en-IN');
+}
+
+function formatDate(d) {
+  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function statusBadge(status) {
+  return `<span class="badge badge-${status}">${status}</span>`;
+}
+
+async function adminLogin() {
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+
+  try {
+    const res = await fetch(API + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.message; return; }
+    if (data.user.role !== 'superadmin') { errEl.textContent = 'Admin access only.'; return; }
+
+    token = data.token;
+    localStorage.setItem('adminToken', token);
+    document.getElementById('adminName').textContent = data.user.full_name;
+    showDashboard();
+  } catch (e) {
+    errEl.textContent = 'Connection error. Is the server running?';
+  }
+}
+
+function adminLogout() {
+  token = null;
+  localStorage.removeItem('adminToken');
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('sidebar').classList.add('hidden');
+  document.getElementById('mainContent').classList.add('hidden');
+}
+
+function showDashboard() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('sidebar').classList.remove('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+  loadDashboard();
+}
+
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  document.querySelector(`[data-section="${name}"]`)?.classList.add('active');
+
+  if (name === 'dashboard') loadDashboard();
+  else if (name === 'products') loadProducts();
+  else if (name === 'add-product') { loadCategorySelect(); resetProductForm(); }
+  else if (name === 'categories') loadCategories();
+  else if (name === 'orders') loadOrders();
+  else if (name === 'customers') loadCustomers();
+  else if (name === 'reviews') loadReviews();
+}
+
+async function loadDashboard() {
+  const res = await apiFetch('/analytics/dashboard');
+  const data = await res.json();
+  document.getElementById('statProducts').textContent = data.totalProducts;
+  document.getElementById('statOrders').textContent = data.totalOrders;
+  document.getElementById('statCustomers').textContent = data.totalCustomers;
+  document.getElementById('statRevenue').textContent = formatPrice(data.totalRevenue);
+
+  const ordersRes = await apiFetch('/orders');
+  const orders = await ordersRes.json();
+  document.getElementById('recentOrdersTable').innerHTML = orders.slice(0, 5).map(o => `
+    <tr>
+      <td>${o.order_number}</td>
+      <td>${o.full_name || '—'}</td>
+      <td>${formatPrice(o.total_amount)}</td>
+      <td>${statusBadge(o.status)}</td>
+      <td>${formatDate(o.created_at)}</td>
+    </tr>`).join('') || '<tr><td colspan="5">No orders yet</td></tr>';
+}
+
+async function loadProducts() {
+  const res = await apiFetch('/products/admin/all');
+  const products = await res.json();
+  document.getElementById('productsTable').innerHTML = products.map(p => `
+    <tr>
+      <td>${p.image ? `<img src="${p.image}" class="product-thumb">` : '—'}</td>
+      <td>${p.name}</td>
+      <td>${p.category_name || '—'}</td>
+      <td>${formatPrice(p.price)}</td>
+      <td>${p.stock}</td>
+      <td>${p.badge || '—'}</td>
+      <td>
+        <button class="btn btn-edit" onclick="editProduct(${p.id})">Edit</button>
+        <button class="btn btn-danger" onclick="deleteProduct(${p.id})">Delete</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="7">No products yet. Add your first product!</td></tr>';
+}
+
+async function loadCategorySelect() {
+  const res = await apiFetch('/categories');
+  categories = await res.json();
+  document.getElementById('pCategory').innerHTML = categories.map(c =>
+    `<option value="${c.id}">${c.name}</option>`
+  ).join('');
+}
+
+function resetProductForm() {
+  document.getElementById('productForm').reset();
+  document.getElementById('editProductId').value = '';
+  document.getElementById('productFormTitle').textContent = 'Add Product';
+  document.getElementById('pStock').value = 10;
+}
+
+async function saveProduct(e) {
+  e.preventDefault();
+  const editId = document.getElementById('editProductId').value;
+  const formData = new FormData();
+  formData.append('name', document.getElementById('pName').value);
+  formData.append('description', document.getElementById('pDescription').value);
+  formData.append('category_id', document.getElementById('pCategory').value);
+  formData.append('material', document.getElementById('pMaterial').value);
+  formData.append('purity', document.getElementById('pPurity').value);
+  formData.append('weight', document.getElementById('pWeight').value);
+  formData.append('sku', document.getElementById('pSku').value);
+  formData.append('price', document.getElementById('pPrice').value);
+  formData.append('old_price', document.getElementById('pOldPrice').value || '');
+  formData.append('stock', document.getElementById('pStock').value);
+  formData.append('badge', document.getElementById('pBadge').value);
+
+  const files = document.getElementById('pImages').files;
+  for (const f of files) formData.append('images', f);
+
+  const url = editId ? `/products/${editId}` : '/products';
+  const method = editId ? 'PUT' : 'POST';
+
+  const res = await apiFetch(url, { method, body: formData });
+  const data = await res.json();
+  if (!res.ok) { alert(data.message); return; }
+
+  alert(editId ? 'Product updated!' : 'Product created!');
+  showSection('products');
+}
+
+async function editProduct(id) {
+  const res = await apiFetch(`/products/${id}`);
+  const p = await res.json();
+  await loadCategorySelect();
+
+  document.getElementById('editProductId').value = p.id;
+  document.getElementById('productFormTitle').textContent = 'Edit Product';
+  document.getElementById('pName').value = p.name;
+  document.getElementById('pDescription').value = p.description || '';
+  document.getElementById('pCategory').value = p.category_id;
+  document.getElementById('pMaterial').value = p.material || '';
+  document.getElementById('pPurity').value = p.purity || '';
+  document.getElementById('pWeight').value = p.weight || '';
+  document.getElementById('pSku').value = p.sku || '';
+  document.getElementById('pPrice').value = p.price;
+  document.getElementById('pOldPrice').value = p.old_price || '';
+  document.getElementById('pStock').value = p.stock;
+  document.getElementById('pBadge').value = p.badge || '';
+
+  showSection('add-product');
+}
+
+async function deleteProduct(id) {
+  if (!confirm('Delete this product?')) return;
+  await apiFetch(`/products/${id}`, { method: 'DELETE' });
+  loadProducts();
+}
+
+async function loadCategories() {
+  const res = await apiFetch('/categories');
+  categories = await res.json();
+  document.getElementById('categoriesTable').innerHTML = categories.map(c => `
+    <tr>
+      <td>${c.name}</td>
+      <td>${c.product_count || 0}</td>
+      <td>
+        <button class="btn btn-edit" onclick="editCategory(${c.id})">Edit</button>
+        <button class="btn btn-danger" onclick="deleteCategory(${c.id})">Delete</button>
+      </td>
+    </tr>`).join('');
+}
+
+function showAddCategory() {
+  document.getElementById('addCategoryForm').style.display = 'block';
+  document.getElementById('editCategoryId').value = '';
+  document.getElementById('catFormTitle').textContent = 'Add Category';
+  document.getElementById('catName').value = '';
+  document.getElementById('catImage').value = '';
+  document.getElementById('catDescription').value = '';
+}
+
+function hideAddCategory() { document.getElementById('addCategoryForm').style.display = 'none'; }
+
+function editCategory(id) {
+  const c = categories.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('addCategoryForm').style.display = 'block';
+  document.getElementById('editCategoryId').value = c.id;
+  document.getElementById('catFormTitle').textContent = 'Edit Category';
+  document.getElementById('catName').value = c.name;
+  document.getElementById('catImage').value = c.image || '';
+  document.getElementById('catDescription').value = c.description || '';
+}
+
+async function saveCategory() {
+  const editId = document.getElementById('editCategoryId').value;
+  const body = {
+    name: document.getElementById('catName').value,
+    image: document.getElementById('catImage').value,
+    description: document.getElementById('catDescription').value,
+  };
+  const url = editId ? `/categories/${editId}` : '/categories';
+  const method = editId ? 'PUT' : 'POST';
+  await apiFetch(url, { method, body: JSON.stringify(body) });
+  hideAddCategory();
+  loadCategories();
+}
+
+async function deleteCategory(id) {
+  if (!confirm('Delete this category?')) return;
+  await apiFetch(`/categories/${id}`, { method: 'DELETE' });
+  loadCategories();
+}
+
+async function loadOrders() {
+  const res = await apiFetch('/orders');
+  const orders = await res.json();
+  document.getElementById('ordersTable').innerHTML = orders.map(o => `
+    <tr>
+      <td>${o.order_number}</td>
+      <td>${o.full_name || '—'}</td>
+      <td>${o.items?.length || 0} items</td>
+      <td>${formatPrice(o.total_amount)}</td>
+      <td>${statusBadge(o.status)}</td>
+      <td>${formatDate(o.created_at)}</td>
+      <td>
+        <select onchange="updateOrderStatus(${o.id}, this.value)" style="font-size:0.75rem;padding:4px">
+          <option value="pending" ${o.status==='pending'?'selected':''}>Pending</option>
+          <option value="processing" ${o.status==='processing'?'selected':''}>Processing</option>
+          <option value="shipped" ${o.status==='shipped'?'selected':''}>Shipped</option>
+          <option value="delivered" ${o.status==='delivered'?'selected':''}>Delivered</option>
+          <option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelled</option>
+        </select>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="7">No orders yet</td></tr>';
+}
+
+async function updateOrderStatus(id, status) {
+  await apiFetch(`/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
+}
+
+async function loadCustomers() {
+  const res = await apiFetch('/auth/customers');
+  const customers = await res.json();
+  document.getElementById('customersTable').innerHTML = customers.map(c => `
+    <tr>
+      <td>${c.full_name}</td>
+      <td>${c.email}</td>
+      <td>${c.phone || '—'}</td>
+      <td>${formatDate(c.created_at)}</td>
+    </tr>`).join('') || '<tr><td colspan="4">No customers yet</td></tr>';
+}
+
+async function loadReviews() {
+  const res = await apiFetch('/analytics/reviews');
+  const reviews = await res.json();
+  document.getElementById('reviewsTable').innerHTML = reviews.map(r => `
+    <tr>
+      <td>${r.product_name}</td>
+      <td>${r.reviewer_name || '—'}</td>
+      <td>${'★'.repeat(r.rating)}</td>
+      <td>${r.review_text?.substring(0, 80) || '—'}...</td>
+      <td>${formatDate(r.created_at)}</td>
+    </tr>`).join('') || '<tr><td colspan="5">No reviews yet</td></tr>';
+}
+
+// Auto-login if token exists
+if (token) {
+  apiFetch('/auth/profile').then(res => {
+    if (res.ok) return res.json();
+    throw new Error();
+  }).then(user => {
+    if (user.role === 'superadmin') {
+      document.getElementById('adminName').textContent = user.full_name;
+      showDashboard();
+    } else adminLogout();
+  }).catch(() => adminLogout());
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "durgas-website-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "echo \"No frontend npm scripts configured (static site).\"",
+    "build": "echo \"No frontend build configured.\""
+  }
+}
+

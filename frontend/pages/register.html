@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account — DURGAS</title>
+  <meta name="description" content="Create a DURGAS account to unlock member rewards, order tracking, and custom jewellery consultations.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/products.css">
+  <link rel="stylesheet" href="/css/cart.css">
+</head>
+<body>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav" id="mobileNav">
+  <button class="mobile-close" onclick="closeMobileNav()">✕</button>
+  <a href="/" onclick="closeMobileNav()">Home</a>
+  <a href="/products" onclick="closeMobileNav()">Shop</a>
+  <a href="/about" onclick="closeMobileNav()">About</a>
+  <a href="/contact" onclick="closeMobileNav()">Contact</a>
+</div>
+
+<!-- Offer Banner -->
+<div class="offer-banner">
+  ✦ Use code <span>DURGAS10</span> for 10% off your first purchase &nbsp;·&nbsp; Free shipping on orders above ₹5,000 ✦
+</div>
+
+<!-- Navigation -->
+<nav id="mainNav">
+  <a href="/" class="nav-logo">
+    <img src="/main logo.jpeg" alt="Durgas Logo" class="logo">
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/products">Shop</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/contact">Contact</a></li>
+  </ul>
+  <div class="nav-icons">
+    <button class="nav-icon-btn" title="Search">⌕</button>
+    <button class="nav-icon-btn" title="Wishlist" onclick="openWishlist()">♡</button>
+    <button class="nav-icon-btn" title="Account" onclick="openAuthModal()" id="accountBtn">◎</button>
+    <button class="nav-icon-btn" title="Cart" onclick="openCart()">
+      ⟨bag⟩<span class="cart-count" id="cartCountBadge">0</span>
+    </button>
+    <button class="hamburger" onclick="openMobileNav()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- ==================== REGISTER PAGE ==================== -->
+<div class="page active" id="page-register" style="padding: 80px 5vw; display: flex; align-items: center; justify-content: center; min-height: 70vh; background: var(--white);">
+  <div style="background: var(--white); border: 1px solid var(--beige-dark); padding: 50px 40px; width: 440px; max-width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.03);">
+    <h2 class="modal-title" style="text-align: center; margin-bottom: 8px;">Create Account</h2>
+    <p class="modal-sub" style="text-align: center; margin-bottom: 36px;">Join the DURGAS family</p>
+    
+    <div class="form-group" style="margin-bottom: 20px;">
+      <label class="form-label">Full Name</label>
+      <input type="text" class="form-input" id="regName" placeholder="Priya Sharma">
+    </div>
+    <div class="form-group" style="margin-bottom: 20px;">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" id="regEmail" placeholder="hello@email.com">
+    </div>
+    <div class="form-group" style="margin-bottom: 20px;">
+      <label class="form-label">Phone</label>
+      <input type="tel" class="form-input" id="regPhone" placeholder="+91 98765 43210">
+    </div>
+    <div class="form-group" style="margin-bottom: 28px;">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-input" id="regPassword" placeholder="••••••••">
+    </div>
+    
+    <button class="btn-primary" style="width: 100%; padding: 16px; font-size: 0.75rem; letter-spacing: 0.22em;" onclick="registerUser()">
+      <span>Register</span>
+    </button>
+    
+    <p style="text-align: center; margin-top: 24px; font-size: 0.82rem; color: var(--gray);">
+      Already have an account? <a href="/login" style="color: var(--gold); text-decoration: none;">Sign In</a>
+    </p>
+    <p class="auth-error" id="regError" style="margin-top: 16px; text-align: center;"></p>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="/" class="nav-logo" style="font-size:1.6rem">DURGAS<span style="color:var(--gold)">✦</span></a>
+      <p class="footer-desc">Fine jewellery handcrafted in Mumbai since 2008. Every piece is a labour of love, designed to be passed down through generations.</p>
+      <div class="footer-social">
+        <a href="#" class="social-link">IG</a>
+        <a href="#" class="social-link">FB</a>
+        <a href="#" class="social-link">PT</a>
+        <a href="#" class="social-link">YT</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Collections</h4>
+      <ul>
+        <li><a href="/products">New Arrivals</a></li>
+        <li><a href="/products">Best Sellers</a></li>
+        <li><a href="/products">Necklaces</a></li>
+        <li><a href="/products">Earrings</a></li>
+        <li><a href="/products">Rings</a></li>
+        <li><a href="/products">Bracelets</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="/about">Our Story</a></li>
+        <li><a href="/about">Craftsmanship</a></li>
+        <li><a href="/contact">Contact Us</a></li>
+        <li><a href="#">Press</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Sustainability</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Support</h4>
+      <ul>
+        <li><a href="#">Shipping Policy</a></li>
+        <li><a href="#">Returns & Exchange</a></li>
+        <li><a href="#">Size Guide</a></li>
+        <li><a href="#">Jewellery Care</a></li>
+        <li><a href="#">Certificate Verification</a></li>
+        <li><a href="#">Custom Orders</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p class="footer-copy">© 2025 DURGAS Fine Jewellery. All rights reserved. · Privacy Policy · Terms of Use</p>
+    <div class="footer-pay">
+      <span class="pay-badge">Visa</span>
+      <span class="pay-badge">Mastercard</span>
+      <span class="pay-badge">UPI</span>
+      <span class="pay-badge">Razorpay</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/cart.js"></script>
+<script src="/js/wishlist.js"></script>
+<script src="/js/products.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

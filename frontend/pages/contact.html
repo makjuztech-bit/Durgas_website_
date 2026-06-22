@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us — DURGAS</title>
+  <meta name="description" content="Reach out to DURGAS customer service, enquire about custom designs, or locate our studio in Zaveri Bazaar, Mumbai.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/products.css">
+  <link rel="stylesheet" href="/css/cart.css">
+</head>
+<body>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Cart Sidebar -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="cart-sidebar" id="cartSidebar">
+  <div class="cart-header">
+    <h3 class="cart-title">Your Bag</h3>
+    <button class="cart-close" onclick="closeCart()">✕</button>
+  </div>
+  <div class="cart-items" id="cartItems">
+    <div class="cart-empty">
+      <div class="cart-empty-icon">♡</div>
+      <p>Your bag is empty</p>
+      <button class="btn-primary" onclick="closeCart(); window.location.href='/products'"><span>Shop Now</span></button>
+    </div>
+  </div>
+  <div class="cart-footer" id="cartFooter" style="display:none">
+    <div class="cart-total">
+      <span>Total</span>
+      <span id="cartTotal">₹0</span>
+    </div>
+    <button class="cart-checkout" onclick="proceedToCheckout()">Proceed to Checkout</button>
+  </div>
+</div>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav" id="mobileNav">
+  <button class="mobile-close" onclick="closeMobileNav()">✕</button>
+  <a href="/" onclick="closeMobileNav()">Home</a>
+  <a href="/products" onclick="closeMobileNav()">Shop</a>
+  <a href="/about" onclick="closeMobileNav()">About</a>
+  <a href="/contact" onclick="closeMobileNav()">Contact</a>
+</div>
+
+<!-- Offer Banner -->
+<div class="offer-banner">
+  ✦ Use code <span>DURGAS10</span> for 10% off your first purchase &nbsp;·&nbsp; Free shipping on orders above ₹5,000 ✦
+</div>
+
+<!-- Navigation -->
+<nav id="mainNav">
+  <a href="/" class="nav-logo">
+    <img src="/main logo.jpeg" alt="Durgas Logo" class="logo">
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/products">Shop</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/contact">Contact</a></li>
+  </ul>
+  <div class="nav-icons">
+    <button class="nav-icon-btn" title="Search">⌕</button>
+    <button class="nav-icon-btn" title="Wishlist" onclick="openWishlist()">♡</button>
+    <button class="nav-icon-btn" title="Account" onclick="openAuthModal()" id="accountBtn">◎</button>
+    <button class="nav-icon-btn" title="Cart" onclick="openCart()">
+      ⟨bag⟩<span class="cart-count" id="cartCountBadge">0</span>
+    </button>
+    <button class="hamburger" onclick="openMobileNav()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- ==================== CONTACT PAGE ==================== -->
+<div class="page active" id="page-contact">
+  <div class="page-hero">
+    <p class="section-tag">Get in Touch</p>
+    <h1 class="section-title">We'd Love to <em>Hear</em> from You</h1>
+    <div class="breadcrumb"><a href="/">Home</a> <span>/</span> <span>Contact</span></div>
+  </div>
+  <div class="contact-layout">
+    <div class="contact-info">
+      <p class="section-tag">Our Details</p>
+      <h2 class="section-title" style="color:var(--white)">Visit Us or<br><em>Reach Out</em></h2>
+      <div class="contact-details">
+        <div class="contact-item">
+          <div class="contact-item-icon">⌂</div>
+          <div><h5>Studio Address</h5><p>42, Zaveri Bazaar, Kalbadevi<br>Mumbai, Maharashtra 400002</p></div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-item-icon">✆</div>
+          <div><h5>Phone & WhatsApp</h5><p>+91 98765 43210<br>Mon–Sat, 10am–7pm</p></div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-item-icon">✉</div>
+          <div><h5>Email</h5><p>hello@lumierejewels.in<br>care@lumierejewels.in</p></div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-item-icon">◷</div>
+          <div><h5>Store Hours</h5><p>Monday – Saturday: 10am – 7pm<br>Sunday: 11am – 5pm</p></div>
+        </div>
+      </div>
+      <div class="social-links-row">
+        <a href="#" class="social-link" title="Instagram">IG</a>
+        <a href="#" class="social-link" title="Facebook">FB</a>
+        <a href="#" class="social-link" title="Pinterest">PT</a>
+        <a href="#" class="social-link" title="YouTube">YT</a>
+      </div>
+    </div>
+    <div class="contact-form-section">
+      <p class="section-tag">Send a Message</p>
+      <h2 class="section-title">Write to <em>Us</em></h2>
+      <div class="form-grid" id="contactForm">
+        <div class="form-group"><label class="form-label">First Name</label><input type="text" class="form-input" id="contactFirstName" placeholder="Priya"></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input type="text" class="form-input" id="contactLastName" placeholder="Sharma"></div>
+        <div class="form-group"><label class="form-label">Email Address</label><input type="email" class="form-input" id="contactEmail" placeholder="hello@email.com"></div>
+        <div class="form-group"><label class="form-label">Phone Number</label><input type="tel" class="form-input" id="contactPhone" placeholder="+91 98765 43210"></div>
+        <div class="form-group full"><label class="form-label">Subject</label><input type="text" class="form-input" id="contactSubject" placeholder="Enquiry about custom jewellery..."></div>
+        <div class="form-group full"><label class="form-label">Message</label><textarea class="form-input form-textarea" id="contactMessage" placeholder="Tell us about your enquiry, custom order, or how we can help you..."></textarea></div>
+        <button class="form-submit" onclick="submitContact(event)">Send Message</button>
+      </div>
+    </div>
+  </div>
+  <div class="map-placeholder">
+    <div class="map-icon">⊕</div>
+    <p style="font-size:.9rem;font-family:var(--font-serif);font-style:italic">42 Zaveri Bazaar, Mumbai · Find us on Google Maps</p>
+    <p>📍 Kalbadevi, Mumbai — 400002</p>
+  </div>
+</div>
+
+<!-- Auth Modal -->
+<div class="modal-overlay" id="authOverlay" onclick="closeAuthModal()"></div>
+<div class="modal-box" id="authModal">
+  <button class="modal-close" onclick="closeAuthModal()">✕</button>
+  <div id="authLoginForm">
+    <h2 class="modal-title">Welcome Back</h2>
+    <p class="modal-sub">Sign in to your DURGAS account</p>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="authEmail"></div>
+    <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="authPassword"></div>
+    <button class="btn-primary" style="width:100%;margin-top:12px" onclick="loginUser()"><span>Sign In</span></button>
+    <p style="text-align:center;margin-top:16px;font-size:0.8rem;color:var(--gray)">Don't have an account? <a href="#" onclick="showRegisterForm();return false" style="color:var(--gold)">Register</a></p>
+    <p class="auth-error" id="authError"></p>
+  </div>
+  <div id="authRegisterForm" style="display:none">
+    <h2 class="modal-title">Create Account</h2>
+    <p class="modal-sub">Join the DURGAS family</p>
+    <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" id="regName"></div>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="regEmail"></div>
+    <div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-input" id="regPhone"></div>
+    <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="regPassword"></div>
+    <button class="btn-primary" style="width:100%;margin-top:12px" onclick="registerUser()"><span>Register</span></button>
+    <p style="text-align:center;margin-top:16px;font-size:0.8rem;color:var(--gray)">Already have an account? <a href="#" onclick="showLoginForm();return false" style="color:var(--gold)">Sign In</a></p>
+    <p class="auth-error" id="regError"></p>
+  </div>
+</div>
+
+<!-- Checkout Modal -->
+<div class="modal-overlay" id="checkoutOverlay" onclick="closeCheckout()"></div>
+<div class="modal-box checkout-modal" id="checkoutModal">
+  <button class="modal-close" onclick="closeCheckout()">✕</button>
+  <h2 class="modal-title">Checkout</h2>
+  <p class="modal-sub">Enter your shipping details</p>
+  <div class="form-group"><label class="form-label">Address</label><textarea class="form-input form-textarea" id="shipAddress" placeholder="Street address, apartment, etc."></textarea></div>
+  <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="form-group"><label class="form-label">City</label><input type="text" class="form-input" id="shipCity"></div>
+    <div class="form-group"><label class="form-label">State</label><input type="text" class="form-input" id="shipState"></div>
+    <div class="form-group"><label class="form-label">Pincode</label><input type="text" class="form-input" id="shipPincode"></div>
+    <div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-input" id="shipPhone"></div>
+  </div>
+  <button class="btn-primary" style="width:100%;margin-top:16px" onclick="placeOrder()"><span>Place Order</span></button>
+  <p class="auth-error" id="checkoutError"></p>
+</div>
+
+<!-- Order Confirmation -->
+<div class="modal-overlay" id="confirmOverlay" onclick="closeConfirm()"></div>
+<div class="modal-box" id="confirmModal">
+  <h2 class="modal-title" style="color:var(--gold)">Order Placed!</h2>
+  <p class="modal-sub" id="confirmMessage">Thank you for your purchase.</p>
+  <button class="btn-primary" style="width:100%;margin-top:16px" onclick="closeConfirm()"><span>Continue Shopping</span></button>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="/" class="nav-logo" style="font-size:1.6rem">DURGAS<span style="color:var(--gold)">✦</span></a>
+      <p class="footer-desc">Fine jewellery handcrafted in Mumbai since 2008. Every piece is a labour of love, designed to be passed down through generations.</p>
+      <div class="footer-social">
+        <a href="#" class="social-link">IG</a>
+        <a href="#" class="social-link">FB</a>
+        <a href="#" class="social-link">PT</a>
+        <a href="#" class="social-link">YT</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Collections</h4>
+      <ul>
+        <li><a href="/products">New Arrivals</a></li>
+        <li><a href="/products">Best Sellers</a></li>
+        <li><a href="/products">Necklaces</a></li>
+        <li><a href="/products">Earrings</a></li>
+        <li><a href="/products">Rings</a></li>
+        <li><a href="/products">Bracelets</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="/about">Our Story</a></li>
+        <li><a href="/about">Craftsmanship</a></li>
+        <li><a href="/contact">Contact Us</a></li>
+        <li><a href="#">Press</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Sustainability</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Support</h4>
+      <ul>
+        <li><a href="#">Shipping Policy</a></li>
+        <li><a href="#">Returns & Exchange</a></li>
+        <li><a href="#">Size Guide</a></li>
+        <li><a href="#">Jewellery Care</a></li>
+        <li><a href="#">Certificate Verification</a></li>
+        <li><a href="#">Custom Orders</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p class="footer-copy">© 2025 DURGAS Fine Jewellery. All rights reserved. · Privacy Policy · Terms of Use</p>
+    <div class="footer-pay">
+      <span class="pay-badge">Visa</span>
+      <span class="pay-badge">Mastercard</span>
+      <span class="pay-badge">UPI</span>
+      <span class="pay-badge">Razorpay</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/cart.js"></script>
+<script src="/js/wishlist.js"></script>
+<script src="/js/products.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>
