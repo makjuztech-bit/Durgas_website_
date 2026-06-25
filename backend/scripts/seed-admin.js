@@ -7,7 +7,9 @@ async function seedAdmin() {
   const password = 'Admin@123';
   const hashed = await bcrypt.hash(password, 10);
 
-  db.query('SELECT id FROM users WHERE email = ?', [email], (err, rows) => {
+  db.query('SELECT user_id FROM users WHERE email = ?', [email], (err, rows) => {
+
+
     if (err) {
       console.error('Err0r:', err.message);
       process.exit(1);
@@ -19,8 +21,9 @@ async function seedAdmin() {
     }
 
     db.query(
-      'INSERT INTO users ( user_id, full_name, email, password, role) VALUES (?, ?, ?, ?, ?)',
-      [null, 'Super Admin', email, hashed, 'superadmin'],
+      'INSERT INTO users (full_name, email, password, role) VALUES (?, ?, ?, ?)',
+      ['Super Admin', email, hashed, 'superadmin'],
+
       (insErr) => {
         if (insErr) {
           console.error('Err0r:', insErr.message);
