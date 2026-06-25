@@ -4,7 +4,7 @@ const db = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || 'Mugesh@26',
-  database: process.env.DB_NAME || 'Durags_shop_db',
+  database: process.env.DB_NAME || 'Durgas_shop_db',
   waitForConnections: true,
   connectionLimit: 10,
 });
@@ -18,3 +18,4 @@ db.query('SELECT 1', (err, result) => {
 });
 
 module.exports = db;
+
