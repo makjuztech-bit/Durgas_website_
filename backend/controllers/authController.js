@@ -4,7 +4,7 @@ const db = require('../config/db');
 
 const generateToken = (user) => {
   return jwt.sign(
-    { id: user.id, email: user.email, role: user.role, full_name: user.full_name },
+    { id: user.user_id ?? user.id, email: user.email, role: user.role, full_name: user.full_name },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
@@ -31,7 +31,7 @@ exports.register = async (req, res) => {
           return res.status(500).json({ message: err.message });
         }
 
-        const user = { id: result.insertId, full_name, email, role: 'customer' };
+        const user = { id: result.insertId, user_id: result.insertId, full_name, email, role: 'customer' };
         res.status(201).json({
           message: 'Registration successful',
           token: generateToken(user),
@@ -75,7 +75,7 @@ exports.login = (req, res) => {
 
 exports.getProfile = (req, res) => {
   db.query(
-    'SELECT id, full_name, email, phone, role, created_at FROM users WHERE id = ?',
+    'SELECT user_id as id, full_name, email, phone, role, created_at FROM users WHERE user_id = ?',
     [req.user.id],
     (err, rows) => {
       if (err) return res.status(500).json({ message: err.message });
@@ -87,7 +87,7 @@ exports.getProfile = (req, res) => {
 
 exports.getCustomers = (req, res) => {
   db.query(
-    "SELECT id, full_name, email, phone, role, created_at FROM users WHERE role = 'customer' ORDER BY created_at DESC",
+    "SELECT user_id as id, full_name, email, phone, role, created_at FROM users WHERE role = 'customer' ORDER BY created_at DESC",
     (err, rows) => {
       if (err) return res.status(500).json({ message: err.message });
       res.json(rows);
