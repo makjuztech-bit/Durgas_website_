@@ -75,7 +75,7 @@ exports.login = (req, res) => {
 
 exports.getProfile = (req, res) => {
   db.query(
-    'SELECT user_id as id, full_name, email, phone, role, created_at FROM users WHERE user_id = ?',
+    'SELECT id, full_name, email, phone, role, created_at FROM users WHERE id = ?',
     [req.user.id],
     (err, rows) => {
       if (err) return res.status(500).json({ message: err.message });
@@ -87,7 +87,7 @@ exports.getProfile = (req, res) => {
 
 exports.getCustomers = (req, res) => {
   db.query(
-    "SELECT user_id as id, full_name, email, phone, role, created_at FROM users WHERE role = 'customer' ORDER BY created_at DESC",
+    "SELECT id, full_name, email, phone, role, created_at FROM users WHERE role = 'customer' ORDER BY created_at DESC",
     (err, rows) => {
       if (err) return res.status(500).json({ message: err.message });
       res.json(rows);
