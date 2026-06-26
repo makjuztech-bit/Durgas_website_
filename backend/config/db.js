@@ -18,3 +18,4 @@ db.query('SELECT 1', (err, result) => {
 });
 
 module.exports = db;
+

@@ -1,4 +1,7 @@
-const API = '/api';
+const API = (
+  window.location.protocol === 'file:' ||
+  ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '5000')
+) ? 'http://localhost:5000/api' : '/api';
 let userToken = localStorage.getItem('userToken');
 let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
 
