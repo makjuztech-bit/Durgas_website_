@@ -7,9 +7,7 @@ async function seedAdmin() {
   const password = 'Admin@123';
   const hashed = await bcrypt.hash(password, 10);
 
-  db.query('SELECT user_id FROM users WHERE email = ?', [email], (err, rows) => {
-
-
+  db.query('SELECT id FROM users WHERE email = ?', [email], (err, rows) => {
     if (err) {
       console.error('Err0r:', err.message);
       process.exit(1);
