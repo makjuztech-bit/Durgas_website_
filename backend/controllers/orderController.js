@@ -11,7 +11,7 @@ const generateOrderNumber = () => {
   return 'DUR-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 };
 
-const placeOrderInDb = (userId, shippingData, payment_method, callback) => {
+const placeOrderInDb = (userId, shippingData, payment_method, paymentMeta = {}, callback) => {
   const cartSql = `
     SELECT c.quantity, p.id AS product_id, p.name, p.price, p.stock
     FROM cart c
@@ -21,16 +21,31 @@ const placeOrderInDb = (userId, shippingData, payment_method, callback) => {
 
   db.query(cartSql, [userId], (err, cartItems) => {
     if (err) return callback(err);
-    if (!cartItems.length) return callback(new Error('Cart is empty'), null, null, 400);
+    if (!cartItems.length) return callback(Object.assign(new Error('Cart is empty'), { status: 400 }), null, null);
 
     const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const orderNumber = generateOrderNumber();
+    const paymentStatus = payment_method === 'razorpay' ? 'paid' : 'pending';
 
     db.query(
       `INSERT INTO orders
-       (user_id, order_number, total_amount, shipping_address, shipping_city, shipping_state, shipping_pincode, shipping_phone, payment_method)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [userId, orderNumber, total, shippingData.shipping_address, shippingData.shipping_city, shippingData.shipping_state, shippingData.shipping_pincode, shippingData.shipping_phone, payment_method],
+       (user_id, order_number, total_amount, shipping_address, shipping_city, shipping_state, shipping_pincode, shipping_phone, payment_method, payment_status, razorpay_order_id, razorpay_payment_id, tracking_number)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        userId,
+        orderNumber,
+        total,
+        shippingData.shipping_address,
+        shippingData.shipping_city,
+        shippingData.shipping_state,
+        shippingData.shipping_pincode,
+        shippingData.shipping_phone,
+        payment_method,
+        paymentStatus,
+        paymentMeta.razorpay_order_id || null,
+        paymentMeta.razorpay_payment_id || null,
+        paymentMeta.tracking_number || null,
+      ],
       (orderErr, orderResult) => {
         if (orderErr) return callback(orderErr);
 
@@ -58,6 +73,10 @@ const placeOrderInDb = (userId, shippingData, payment_method, callback) => {
                 order_id: orderId,
                 order_number: orderNumber,
                 total_amount: total,
+                payment_method,
+                payment_status: paymentStatus,
+                razorpay_order_id: paymentMeta.razorpay_order_id || null,
+                razorpay_payment_id: paymentMeta.razorpay_payment_id || null,
               }, total);
             });
           }
@@ -77,6 +96,10 @@ exports.createOrder = (req, res) => {
     return res.status(400).json({ message: 'Use Razorpay checkout for online payment.' });
   }
 
+  if (!shipping_address || !shipping_city || !shipping_state || !shipping_pincode || !shipping_phone) {
+    return res.status(400).json({ message: 'Complete shipping details are required.' });
+  }
+
   const shippingData = {
     shipping_address,
     shipping_city,
@@ -85,7 +108,7 @@ exports.createOrder = (req, res) => {
     shipping_phone,
   };
 
-  placeOrderInDb(req.user.id, shippingData, payment_method || 'cod', (err, orderSummary, total) => {
+  placeOrderInDb(req.user.id, shippingData, payment_method || 'cod', (err, orderSummary) => {
     if (err) return res.status(err.status || 500).json({ message: err.message });
     res.status(201).json({
       message: 'Order placed successfully',
@@ -95,25 +118,37 @@ exports.createOrder = (req, res) => {
 };
 
 exports.createRazorpayOrder = (req, res) => {
-  const { amount } = req.body;
-  if (!amount || typeof amount !== 'number' || amount <= 0) {
-    return res.status(400).json({ message: 'Invalid order amount' });
-  }
+  const userId = req.user.id;
+  const cartSql = `
+    SELECT c.quantity, p.price
+    FROM cart c
+    JOIN products p ON c.product_id = p.id
+    WHERE c.user_id = ?
+  `;
 
-  const options = {
-    amount: Math.round(amount * 100),
-    currency: 'INR',
-    receipt: `receipt_${Date.now()}`,
-    payment_capture: 1,
-  };
-
-  razorpay.orders.create(options, (err, order) => {
+  db.query(cartSql, [userId], (err, cartItems) => {
     if (err) return res.status(500).json({ message: err.message });
-    res.json({
-      key: process.env.RAZORPAY_KEY_ID,
-      id: order.id,
-      amount: order.amount,
-      currency: order.currency,
+    if (!cartItems.length) return res.status(400).json({ message: 'Cart is empty.' });
+
+    const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    if (total <= 0) return res.status(400).json({ message: 'Cart total must be greater than zero.' });
+
+    const options = {
+      amount: Math.round(total * 100),
+      currency: 'INR',
+      receipt: `receipt_${Date.now()}`,
+      payment_capture: 1,
+    };
+
+    razorpay.orders.create(options, (createErr, order) => {
+      if (createErr) return res.status(500).json({ message: createErr.message });
+      res.json({
+        key: process.env.RAZORPAY_KEY_ID,
+        id: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        total_amount: total,
+      });
     });
   });
 };
@@ -134,6 +169,10 @@ exports.verifyRazorpayOrder = (req, res) => {
     return res.status(400).json({ message: 'Missing Razorpay payment details.' });
   }
 
+  if (!shipping_address || !shipping_city || !shipping_state || !shipping_pincode || !shipping_phone) {
+    return res.status(400).json({ message: 'Complete shipping details are required.' });
+  }
+
   const generated_signature = crypto
     .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
     .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -151,13 +190,14 @@ exports.verifyRazorpayOrder = (req, res) => {
     shipping_phone,
   };
 
-  placeOrderInDb(req.user.id, shippingData, 'razorpay', (err, orderSummary) => {
+  placeOrderInDb(req.user.id, shippingData, 'razorpay', {
+    razorpay_order_id,
+    razorpay_payment_id,
+  }, (err, orderSummary) => {
     if (err) return res.status(err.status || 500).json({ message: err.message });
     res.status(201).json({
       message: 'Payment verified and order placed successfully',
       ...orderSummary,
-      razorpay_payment_id,
-      razorpay_order_id,
     });
   });
 };

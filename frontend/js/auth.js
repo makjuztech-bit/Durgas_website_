@@ -62,7 +62,6 @@ async function loginUser() {
     if (typeof syncCartFromServer === 'function') {
       await syncCartFromServer();
     }
-    // Redirect if on dedicated login page
     if (window.location.pathname.includes('login') || window.location.pathname.includes('register')) {
       window.location.href = '/';
     } else {
@@ -95,6 +94,9 @@ async function registerUser() {
     localStorage.setItem('currentUser', JSON.stringify(currentUser));
     updateAccountBtn();
     closeAuthModal();
+    if (typeof syncCartFromServer === 'function') {
+      await syncCartFromServer();
+    }
     if (window.location.pathname.includes('login') || window.location.pathname.includes('register')) {
       window.location.href = '/';
     } else {
@@ -116,14 +118,28 @@ function logoutUser() {
   window.location.href = '/';
 }
 
-function updateAccountBtn() {
-  const btn = document.getElementById('accountBtn');
-  if (!btn) return;
-  btn.title = currentUser ? currentUser.full_name : 'Account';
-  btn.textContent = currentUser ? '●' : '◎';
+async function refreshUserProfile() {
+  if (!userToken) return;
+  try {
+    const res = await fetch(API + '/auth/profile', {
+      headers: { 'Authorization': 'Bearer ' + userToken },
+    });
+    if (!res.ok) throw new Error('Profile refresh failed');
+    currentUser = await res.json();
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    updateAccountBtn();
+  } catch (err) {
+    console.warn('Unable to refresh profile:', err.message);
+    userToken = null;
+    currentUser = null;
+    localStorage.removeItem('userToken');
+    localStorage.removeItem('currentUser');
+    updateAccountBtn();
+  }
 }
 
-// Initialize button on load
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize button and profile state on load
+document.addEventListener('DOMContentLoaded', async () => {
+  await refreshUserProfile();
   updateAccountBtn();
 });

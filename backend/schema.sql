@@ -79,6 +79,10 @@ CREATE TABLE IF NOT EXISTS orders (
   shipping_pincode VARCHAR(10),
   shipping_phone VARCHAR(20),
   payment_method VARCHAR(50) DEFAULT 'cod',
+  payment_status ENUM('pending', 'paid', 'failed') DEFAULT 'pending',
+  razorpay_order_id VARCHAR(100),
+  razorpay_payment_id VARCHAR(100),
+  tracking_number VARCHAR(100),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
