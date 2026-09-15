@@ -47,7 +47,6 @@
       target.innerHTML = orders.length ? orders.map(order => `<article style="border-top:1px solid var(--beige-dark);padding:20px 0"><div style="display:flex;justify-content:space-between;gap:16px"><strong>${order.order_number}</strong><span>${order.status}</span></div><p>${new Date(order.created_at).toLocaleDateString('en-IN')} - ${formatPrice(order.total_amount)}</p><p>${order.shipping_address}, ${order.shipping_city}, ${order.shipping_state} ${order.shipping_pincode}</p><p>${(order.items || []).map(item => `${item.product_name} x ${item.quantity}`).join(', ')}</p></article>`).join('') : '<p class="loading-msg">No orders yet.</p>';
     }
     async function loadProfile() {
-      if (!userToken) { window.location.href = '/login'; return; }
       const profileRes = await apiFetch('/auth/profile');
       if (!profileRes.ok) { logoutUser(); return; }
       const profile = await profileRes.json();

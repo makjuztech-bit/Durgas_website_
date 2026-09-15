@@ -1,6 +1,6 @@
 async function addToWishlist(e, productId) {
   if (e) e.stopPropagation();
-  if (!userToken) { openAuthModal(); return; }
+  if (!currentUser) { openAuthModal(); return; }
   try {
     const res = await apiFetch('/wishlist', {
       method: 'POST',
@@ -28,7 +28,7 @@ async function addToWishlistDetail() {
 }
 
 async function openWishlist() {
-  if (!userToken) { openAuthModal(); return; }
+  if (!currentUser) { openAuthModal(); return; }
   try {
     const res = await apiFetch('/wishlist');
     const items = await res.json();

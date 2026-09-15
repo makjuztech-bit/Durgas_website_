@@ -58,13 +58,12 @@ async function loginUser() {
   try {
     const res = await fetch(API + '/auth/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
     if (!res.ok) { errEl.textContent = data.message; return; }
-    userToken = data.token;
     currentUser = data.user;
-    localStorage.setItem('userToken', userToken);
     localStorage.setItem('currentUser', JSON.stringify(currentUser));
     updateAccountBtn();
     closeAuthModal();
@@ -93,13 +92,12 @@ async function registerUser() {
   try {
     const res = await fetch(API + '/auth/register', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(body),
     });
     const data = await res.json();
     if (!res.ok) { errEl.textContent = data.message; return; }
-    userToken = data.token;
     currentUser = data.user;
-    localStorage.setItem('userToken', userToken);
     localStorage.setItem('currentUser', JSON.stringify(currentUser));
     updateAccountBtn();
     closeAuthModal();
@@ -117,10 +115,10 @@ async function registerUser() {
   }
 }
 
-function logoutUser() {
+async function logoutUser() {
+  await apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
   userToken = null;
   currentUser = null;
-  localStorage.removeItem('userToken');
   localStorage.removeItem('currentUser');
   updateAccountBtn();
   updateCartBadge(0);
@@ -128,11 +126,9 @@ function logoutUser() {
 }
 
 async function refreshUserProfile() {
-  if (!userToken) return;
   try {
-    const res = await fetch(API + '/auth/profile', {
-      headers: { 'Authorization': 'Bearer ' + userToken },
-    });
+    await fetch(API + '/auth/csrf', { credentials: 'include' });
+    const res = await apiFetch('/auth/profile');
     if (!res.ok) throw new Error('Profile refresh failed');
     currentUser = await res.json();
     localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -141,7 +137,6 @@ async function refreshUserProfile() {
     console.warn('Unable to refresh profile:', err.message);
     userToken = null;
     currentUser = null;
-    localStorage.removeItem('userToken');
     localStorage.removeItem('currentUser');
     updateAccountBtn();
   }
@@ -151,5 +146,5 @@ async function refreshUserProfile() {
 document.addEventListener('DOMContentLoaded', async () => {
   await refreshUserProfile();
   updateAccountBtn();
-  if (typeof syncCartFromServer === 'function' && userToken) await syncCartFromServer();
+  if (typeof syncCartFromServer === 'function' && currentUser) await syncCartFromServer();
 });

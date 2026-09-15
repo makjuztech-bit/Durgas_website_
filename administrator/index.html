@@ -266,14 +266,16 @@
 
 <script>
 const API = '/api';
-let token = localStorage.getItem('adminToken');
+let token = null;
 let categories = [];
 
 function apiFetch(url, options = {}) {
   const headers = { ...options.headers };
   if (token) headers['Authorization'] = 'Bearer ' + token;
+  const csrfToken = document.cookie.split('; ').find((part) => part.startsWith('csrf_token='))?.split('=').slice(1).join('=');
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(options.method || 'GET') && csrfToken) headers['X-CSRF-Token'] = decodeURIComponent(csrfToken);
   if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
-  return fetch(API + url, { ...options, headers });
+  return fetch(API + url, { ...options, headers, credentials: 'include' });
 }
 
 function formatPrice(n) {
@@ -295,17 +297,18 @@ async function adminLogin() {
   errEl.textContent = '';
 
   try {
+    await fetch(API + '/auth/csrf', { credentials: 'include' });
     const res = await fetch(API + '/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
     if (!res.ok) { errEl.textContent = data.message; return; }
     if (data.user.role !== 'superadmin') { errEl.textContent = 'Admin access only.'; return; }
 
-    token = data.token;
-    localStorage.setItem('adminToken', token);
+    token = null;
     document.getElementById('adminName').textContent = data.user.full_name;
     showDashboard();
   } catch (e) {
@@ -314,8 +317,8 @@ async function adminLogin() {
 }
 
 function adminLogout() {
+  apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
   token = null;
-  localStorage.removeItem('adminToken');
   document.getElementById('loginScreen').classList.remove('hidden');
   document.getElementById('sidebar').classList.add('hidden');
   document.getElementById('mainContent').classList.add('hidden');

@@ -2,17 +2,38 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({
-  origin: (origin, callback) => callback(null, true),
+  origin: (origin, callback) => {
+    const allowedOrigins = (process.env.FRONTEND_ORIGINS || 'http://localhost:5000').split(',').map((value) => value.trim());
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Origin is not allowed'));
+  },
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use((req, res, next) => {
+  req.cookies = Object.fromEntries((req.headers.cookie || '').split(';').filter(Boolean).map((part) => {
+    const separator = part.indexOf('=');
+    return [part.slice(0, separator).trim(), decodeURIComponent(part.slice(separator + 1).trim())];
+  }));
+  next();
+});
+
+app.use((req, res, next) => {
+  if (!req.cookies.csrf_token) {
+    const csrfToken = crypto.randomBytes(32).toString('hex');
+    res.setHeader('Set-Cookie', `csrf_token=${csrfToken}; Path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
+  }
+  next();
+});
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

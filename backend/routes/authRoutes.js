@@ -5,6 +5,8 @@ const { auth, adminOnly } = require('../middleware/auth');
 
 router.post('/register', authController.register);
 router.post('/login', authController.login);
+router.get('/csrf', authController.csrf);
+router.post('/logout', auth, authController.logout);
 router.get('/profile', auth, authController.getProfile);
 router.put('/profile', auth, authController.updateProfile);
 router.get('/customers', auth, adminOnly, authController.getCustomers);

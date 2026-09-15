@@ -4,7 +4,7 @@ const db = require('../config/db');
 // Verify JWT and attach user object to req
 function verifyToken(req, res, next) {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const token = (authHeader && authHeader.split(' ')[1]) || req.cookies?.auth_token;
   if (!token) return res.status(401).json({ message: 'Access token missing' });
 
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
@@ -16,6 +16,10 @@ function verifyToken(req, res, next) {
       role: decoded.role,
       full_name: decoded.full_name,
     };
+    if (req.cookies?.auth_token && !['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+      const csrfHeader = req.headers['x-csrf-token'];
+      if (!csrfHeader || csrfHeader !== req.cookies.csrf_token) return res.status(403).json({ message: 'CSRF validation failed' });
+    }
     next();
   });
 }

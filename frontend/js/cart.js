@@ -24,7 +24,7 @@ function closeCart() {
 
 async function addToCart(e, productId) {
   if (e) e.stopPropagation();
-  if (!userToken) { openAuthModal(); return; }
+  if (!currentUser) { openAuthModal(); return; }
   try {
     const res = await apiFetch('/cart/add', {
       method: 'POST',
@@ -40,7 +40,7 @@ async function addToCart(e, productId) {
 }
 
 async function syncCartFromServer() {
-  if (!userToken) return;
+  if (!currentUser) return;
   try {
     const res = await apiFetch('/cart');
     cartItems = await res.json();
@@ -138,7 +138,7 @@ function renderCart() {
 }
 
 function proceedToCheckout() {
-  if (!userToken) { closeCart(); openAuthModal(); return; }
+  if (!currentUser) { closeCart(); openAuthModal(); return; }
   if (!cartItems.length) return;
   closeCart();
   const overlay = document.getElementById('checkoutOverlay');
@@ -243,6 +243,13 @@ async function placeRazorpayOrder() {
     };
 
     const razorpay = new Razorpay(options);
+    razorpay.on('payment.failed', async function (response) {
+      await apiFetch('/orders/payment/failure', {
+        method: 'POST',
+        body: JSON.stringify({ razorpay_order_id: orderData.id, razorpay_payment_id: response.error?.metadata?.payment_id }),
+      });
+      if (errEl) errEl.textContent = response.error?.description || 'Payment failed. No order was placed.';
+    });
     razorpay.open();
   } catch (err) {
     if (errEl) errEl.textContent = 'Failed to initialize Razorpay payment.';
@@ -350,7 +357,7 @@ function closeConfirm() {
 
 // Initial pull on load
 document.addEventListener('DOMContentLoaded', async () => {
-  if (userToken) syncCartFromServer();
+  if (currentUser) syncCartFromServer();
   try {
     await loadRazorpayScript();
   } catch (err) {

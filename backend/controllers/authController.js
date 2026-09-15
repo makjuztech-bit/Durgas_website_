@@ -4,6 +4,10 @@ const db = require('../config/db');
 
 const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
 
+const cookieOptions = `Path=/; HttpOnly; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
+const setAuthCookie = (res, token) => res.append('Set-Cookie', `auth_token=${encodeURIComponent(token)}; ${cookieOptions}`);
+const clearAuthCookie = (res) => res.append('Set-Cookie', `auth_token=; ${cookieOptions}; Max-Age=0`);
+
 const generateToken = (user) => {
   return jwt.sign(
     { id: user.user_id ?? user.id, email: user.email, role: user.role, full_name: user.full_name },
@@ -34,9 +38,9 @@ exports.register = async (req, res) => {
         }
 
         const user = { id: result.insertId, user_id: result.insertId, full_name, email, role: 'customer' };
+        setAuthCookie(res, generateToken(user));
         res.status(201).json({
           message: 'Registration successful',
-          token: generateToken(user),
           user,
         });
       }
@@ -64,15 +68,22 @@ exports.login = (req, res) => {
       if (!valid) return res.status(401).json({ message: 'Invalid email or password.' });
 
       const { password: _, ...safeUser } = user;
+      setAuthCookie(res, generateToken(user));
       res.json({
         message: 'Login successful',
-        token: generateToken(user),
         user: safeUser,
       });
     } catch (e) {
       res.status(500).json({ message: e.message });
     }
   });
+};
+
+exports.csrf = (req, res) => res.json({ csrfToken: req.cookies?.csrf_token || null });
+
+exports.logout = (req, res) => {
+  clearAuthCookie(res);
+  res.json({ message: 'Logged out' });
 };
 
 exports.getProfile = (req, res) => {

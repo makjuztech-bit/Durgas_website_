@@ -2,14 +2,19 @@ const API = (
   window.location.protocol === 'file:' ||
   ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '5000')
 ) ? 'http://localhost:5000/api' : '/api';
-let userToken = localStorage.getItem('userToken');
+let userToken = null;
 let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+function getCookie(name) {
+  return document.cookie.split('; ').find((part) => part.startsWith(name + '='))?.split('=').slice(1).join('=') || '';
+}
 
 function apiFetch(url, options = {}) {
   const headers = { ...options.headers };
   if (userToken) headers['Authorization'] = 'Bearer ' + userToken;
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(options.method || 'GET')) headers['X-CSRF-Token'] = decodeURIComponent(getCookie('csrf_token'));
   if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
-  return fetch(API + url, { ...options, headers });
+  return fetch(API + url, { ...options, headers, credentials: 'include' });
 }
 
 function formatPrice(n) {
