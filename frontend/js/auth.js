@@ -1,6 +1,7 @@
 function openAuthModal() {
   if (currentUser) {
-    if (confirm('Sign out of ' + currentUser.full_name + '?')) logoutUser();
+    if (window.location.pathname !== '/profile') window.location.href = '/profile';
+    else if (confirm('Sign out of ' + currentUser.full_name + '?')) logoutUser();
     return;
   }
   const overlay = document.getElementById('authOverlay');
@@ -13,6 +14,14 @@ function openAuthModal() {
     // If modal elements don't exist on page, redirect to login page
     window.location.href = '/login';
   }
+}
+
+function updateAccountBtn() {
+  const button = document.getElementById('accountBtn');
+  if (!button) return;
+  button.title = currentUser ? 'Profile' : 'Sign in';
+  button.setAttribute('aria-label', button.title);
+  button.textContent = currentUser ? '◉' : '◎';
 }
 
 function closeAuthModal() {
@@ -142,4 +151,5 @@ async function refreshUserProfile() {
 document.addEventListener('DOMContentLoaded', async () => {
   await refreshUserProfile();
   updateAccountBtn();
+  if (typeof syncCartFromServer === 'function' && userToken) await syncCartFromServer();
 });

@@ -2,6 +2,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
+const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
+
 const generateToken = (user) => {
   return jwt.sign(
     { id: user.user_id ?? user.id, email: user.email, role: user.role, full_name: user.full_name },
@@ -11,10 +13,10 @@ const generateToken = (user) => {
 };
 
 exports.register = async (req, res) => {
-  const { full_name, email, password, phone } = req.body;
+  const { full_name, email, password, phone } = req.body || {};
 
-  if (!full_name || !email || !password) {
-    return res.status(400).json({ message: 'Name, email and password are required.' });
+  if (!full_name?.trim() || !isEmail(email) || typeof password !== 'string' || password.length < 8 || password.length > 72) {
+    return res.status(400).json({ message: 'Name, valid email and a password of 8 to 72 characters are required.' });
   }
 
   try {
@@ -22,7 +24,7 @@ exports.register = async (req, res) => {
 
     db.query(
       'INSERT INTO users (full_name, email, password, phone, role) VALUES (?, ?, ?, ?, ?)',
-      [full_name, email, hashed, phone || null, 'customer'],
+      [full_name.trim(), email.trim().toLowerCase(), hashed, phone?.trim() || null, 'customer'],
       (err, result) => {
         if (err) {
           if (err.code === 'ER_DUP_ENTRY') {
@@ -45,9 +47,9 @@ exports.register = async (req, res) => {
 };
 
 exports.login = (req, res) => {
-  const { email, password } = req.body;
+  const { email, password } = req.body || {};
 
-  if (!email || !password) {
+  if (!isEmail(email) || typeof password !== 'string' || !password) {
     return res.status(400).json({ message: 'Email and password are required.' });
   }
 
@@ -75,12 +77,28 @@ exports.login = (req, res) => {
 
 exports.getProfile = (req, res) => {
   db.query(
-    'SELECT id, full_name, email, phone, role, created_at FROM users WHERE id = ?',
+    'SELECT id, full_name, email, phone, address, city, state, pincode, role, created_at FROM users WHERE id = ?',
     [req.user.id],
     (err, rows) => {
       if (err) return res.status(500).json({ message: err.message });
       if (!rows.length) return res.status(404).json({ message: 'User not found' });
       res.json(rows[0]);
+    }
+  );
+};
+
+exports.updateProfile = (req, res) => {
+  const { full_name, phone, address, city, state, pincode } = req.body || {};
+  if (!full_name?.trim()) return res.status(400).json({ message: 'Full name is required.' });
+  if (pincode && !/^\d{6}$/.test(String(pincode).trim())) return res.status(400).json({ message: 'Pincode must be 6 digits.' });
+
+  db.query(
+    'UPDATE users SET full_name = ?, phone = ?, address = ?, city = ?, state = ?, pincode = ? WHERE id = ?',
+    [full_name.trim(), phone?.trim() || null, address?.trim() || null, city?.trim() || null, state?.trim() || null, pincode?.trim() || null, req.user.id],
+    (err, result) => {
+      if (err) return res.status(500).json({ message: err.message });
+      if (!result.affectedRows) return res.status(404).json({ message: 'User not found.' });
+      exports.getProfile(req, res);
     }
   );
 };

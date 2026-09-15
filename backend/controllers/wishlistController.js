@@ -1,10 +1,14 @@
 const db = require('../config/db');
 
 exports.addToWishlist = (req, res) => {
-  const { product_id } = req.body;
+  const { product_id } = req.body || {};
+
+  if (!Number.isInteger(Number(product_id))) {
+    return res.status(400).json({ message: 'A valid product is required.' });
+  }
 
   db.query(
-    'INSERT INTO wishlist (user_id, product_id) VALUES (?, ?)',
+    'INSERT INTO wishlist (user_id, product_id) SELECT ?, id FROM products WHERE id = ? AND is_active = 1',
     [req.user.id, product_id],
     (err, result) => {
       if (err) {
@@ -13,6 +17,7 @@ exports.addToWishlist = (req, res) => {
         }
         return res.status(500).json({ message: err.message });
       }
+      if (!result.affectedRows) return res.status(404).json({ message: 'Product is unavailable.' });
       res.status(201).json({ message: 'Added to wishlist', id: result.insertId });
     }
   );

@@ -46,6 +46,9 @@ app.get('/login', (req, res) => {
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'register.html'));
 });
+app.get('/profile', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'profile.html'));
+});
 app.get('/contact', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'contact.html'));
 });

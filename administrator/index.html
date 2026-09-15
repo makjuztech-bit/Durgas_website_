@@ -239,7 +239,7 @@
   <div class="section" id="section-orders">
     <div class="page-header"><h1 class="page-title">Orders</h1></div>
     <div class="panel">
-      <table><thead><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+      <table><thead><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
       <tbody id="ordersTable"></tbody></table>
     </div>
   </div>
@@ -358,6 +358,7 @@ async function loadDashboard() {
       <td>${o.order_number}</td>
       <td>${o.full_name || '—'}</td>
       <td>${formatPrice(o.total_amount)}</td>
+      <td>${o.payment_method || '—'} / ${o.payment_status || '—'}${o.razorpay_payment_id ? `<br><small>${o.razorpay_payment_id}</small>` : ''}</td>
       <td>${statusBadge(o.status)}</td>
       <td>${formatDate(o.created_at)}</td>
     </tr>`).join('') || '<tr><td colspan="5">No orders yet</td></tr>';

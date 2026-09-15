@@ -60,6 +60,22 @@ async function removeFromCart(id) {
   }
 }
 
+async function updateCartQuantity(id, quantity) {
+  const nextQuantity = Number(quantity);
+  if (!Number.isInteger(nextQuantity) || nextQuantity < 1) return removeFromCart(id);
+  try {
+    const res = await apiFetch('/cart/' + id, {
+      method: 'PATCH',
+      body: JSON.stringify({ quantity: nextQuantity }),
+    });
+    const data = await res.json();
+    if (!res.ok) return alert(data.message || 'Could not update quantity.');
+    await syncCartFromServer();
+  } catch (err) {
+    console.error('Cart quantity update failed:', err);
+  }
+}
+
 function updateCartBadge(total) {
   const badge = document.getElementById('cartCountBadge');
   if (badge) badge.textContent = total;
@@ -81,7 +97,7 @@ function renderCart() {
           </div>
           <div class="cart-item-info">
             <p class="cart-item-name">${i.name}</p>
-            <p class="cart-item-meta">Qty: ${i.quantity}</p>
+            <p class="cart-item-meta">Qty: <button onclick="updateCartQuantity(${i.id}, ${i.quantity - 1})" aria-label="Decrease quantity">−</button> ${i.quantity} <button onclick="updateCartQuantity(${i.id}, ${i.quantity + 1})" aria-label="Increase quantity">+</button></p>
             <p class="cart-item-price">${formatPrice(i.price * i.quantity)}</p>
             <button class="cart-item-remove" onclick="removeFromCart(${i.id})">Remove</button>
           </div>
@@ -108,7 +124,7 @@ function renderCart() {
           </div>
           <div class="cart-item-info" style="padding-left: 20px;">
             <p class="cart-item-name" style="font-size: 1.2rem; margin-bottom: 8px;">${i.name}</p>
-            <p class="cart-item-meta" style="font-size: 0.85rem;">Quantity: ${i.quantity}</p>
+            <p class="cart-item-meta" style="font-size: 0.85rem;">Quantity: <button onclick="updateCartQuantity(${i.id}, ${i.quantity - 1})" aria-label="Decrease quantity">−</button> ${i.quantity} <button onclick="updateCartQuantity(${i.id}, ${i.quantity + 1})" aria-label="Increase quantity">+</button></p>
             <p class="cart-item-price" style="font-size: 1.1rem; margin-top: 10px;">${formatPrice(i.price * i.quantity)}</p>
             <button class="cart-item-remove" style="margin-top: 12px; color: #c0392b;" onclick="removeFromCart(${i.id})">Remove</button>
           </div>
@@ -153,7 +169,7 @@ function getCheckoutData() {
 }
 
 function validateCheckoutData(data) {
-  return data.shipping_address && data.shipping_city && data.shipping_state && data.shipping_pincode && data.shipping_phone;
+  return data.shipping_address?.trim() && data.shipping_city?.trim() && data.shipping_state?.trim() && /^[0-9]{6}$/.test(data.shipping_pincode.trim()) && /^[0-9+ ()-]{10,16}$/.test(data.shipping_phone.trim());
 }
 
 async function placeOrder() {

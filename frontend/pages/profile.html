@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Account - DURGAS</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/products.css">
+  <link rel="stylesheet" href="/css/cart.css">
+</head>
+<body>
+  <div class="offer-banner">DURGAS account</div>
+  <nav id="mainNav">
+    <a href="/" class="nav-logo"><img src="/main logo.jpeg" alt="Durgas Logo" class="logo"></a>
+    <ul class="nav-links"><li><a href="/">Home</a></li><li><a href="/products">Shop</a></li><li><a href="/about">About</a></li><li><a href="/contact">Contact</a></li></ul>
+    <div class="nav-icons"><button class="nav-icon-btn" title="Cart" onclick="window.location.href='/cart'">Bag</button><button class="nav-icon-btn" title="Sign out" onclick="logoutUser()">Exit</button></div>
+  </nav>
+  <main class="page active" style="padding:70px 5vw;min-height:70vh">
+    <p class="section-tag">My account</p>
+    <h1 class="section-title">Profile <em>&amp; orders</em></h1>
+    <div style="display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:50px;max-width:1100px;margin:40px auto">
+      <section>
+        <h2 class="modal-title">Saved details</h2>
+        <form id="profileForm">
+          <div class="form-group"><label class="form-label">Full name</label><input class="form-input" id="profileName" required></div>
+          <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="profileEmail" type="email" disabled></div>
+          <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="profilePhone" type="tel"></div>
+          <div class="form-group"><label class="form-label">Address</label><textarea class="form-input form-textarea" id="profileAddress"></textarea></div>
+          <div class="form-group"><label class="form-label">City</label><input class="form-input" id="profileCity"></div>
+          <div class="form-group"><label class="form-label">State</label><input class="form-input" id="profileState"></div>
+          <div class="form-group"><label class="form-label">Pincode</label><input class="form-input" id="profilePincode" inputmode="numeric"></div>
+          <button class="btn-primary" type="submit"><span>Save details</span></button>
+          <p class="auth-error" id="profileMessage"></p>
+        </form>
+      </section>
+      <section>
+        <h2 class="modal-title">Order history</h2>
+        <div id="ordersList"><p class="loading-msg">Loading orders...</p></div>
+      </section>
+    </div>
+  </main>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    function renderOrders(orders) {
+      const target = document.getElementById('ordersList');
+      target.innerHTML = orders.length ? orders.map(order => `<article style="border-top:1px solid var(--beige-dark);padding:20px 0"><div style="display:flex;justify-content:space-between;gap:16px"><strong>${order.order_number}</strong><span>${order.status}</span></div><p>${new Date(order.created_at).toLocaleDateString('en-IN')} - ${formatPrice(order.total_amount)}</p><p>${order.shipping_address}, ${order.shipping_city}, ${order.shipping_state} ${order.shipping_pincode}</p><p>${(order.items || []).map(item => `${item.product_name} x ${item.quantity}`).join(', ')}</p></article>`).join('') : '<p class="loading-msg">No orders yet.</p>';
+    }
+    async function loadProfile() {
+      if (!userToken) { window.location.href = '/login'; return; }
+      const profileRes = await apiFetch('/auth/profile');
+      if (!profileRes.ok) { logoutUser(); return; }
+      const profile = await profileRes.json();
+      currentUser = profile;
+      localStorage.setItem('currentUser', JSON.stringify(profile));
+      Object.entries({ profileName: profile.full_name, profileEmail: profile.email, profilePhone: profile.phone, profileAddress: profile.address, profileCity: profile.city, profileState: profile.state, profilePincode: profile.pincode }).forEach(([id, value]) => { document.getElementById(id).value = value || ''; });
+      const ordersRes = await apiFetch('/orders');
+      renderOrders(ordersRes.ok ? await ordersRes.json() : []);
+    }
+    document.getElementById('profileForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      const message = document.getElementById('profileMessage');
+      const res = await apiFetch('/auth/profile', { method: 'PUT', body: JSON.stringify({ full_name: profileName.value, phone: profilePhone.value, address: profileAddress.value, city: profileCity.value, state: profileState.value, pincode: profilePincode.value }) });
+      const data = await res.json();
+      message.textContent = res.ok ? 'Details saved.' : data.message;
+      if (res.ok) { currentUser = data; localStorage.setItem('currentUser', JSON.stringify(data)); }
+    });
+    loadProfile().catch(() => { document.getElementById('profileMessage').textContent = 'Could not load your account.'; });
+  </script>
+</body>
+</html>

@@ -7,6 +7,11 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+const validShipping = (data) => [
+  data.shipping_address, data.shipping_city, data.shipping_state,
+  data.shipping_pincode, data.shipping_phone,
+].every((value) => typeof value === 'string' && value.trim().length > 0);
+
 const generateOrderNumber = () => {
   return 'DUR-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 };
@@ -23,6 +28,8 @@ const placeOrderInDb = (userId, shippingData, payment_method, paymentMeta = {}, 
     if (err) return callback(err);
     if (!cartItems.length) return callback(Object.assign(new Error('Cart is empty'), { status: 400 }), null, null);
 
+    const unavailable = cartItems.find((item) => item.quantity < 1 || item.quantity > item.stock);
+    if (unavailable) return callback(Object.assign(new Error(`Insufficient stock for ${unavailable.name}`), { status: 400 }), null, null);
     const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const orderNumber = generateOrderNumber();
     const paymentStatus = payment_method === 'razorpay' ? 'paid' : 'pending';
@@ -96,7 +103,10 @@ exports.createOrder = (req, res) => {
     return res.status(400).json({ message: 'Use Razorpay checkout for online payment.' });
   }
 
-  if (!shipping_address || !shipping_city || !shipping_state || !shipping_pincode || !shipping_phone) {
+  if (!['cod'].includes(payment_method || 'cod')) {
+    return res.status(400).json({ message: 'Payment method must be COD or Razorpay.' });
+  }
+  if (!validShipping({ shipping_address, shipping_city, shipping_state, shipping_pincode, shipping_phone })) {
     return res.status(400).json({ message: 'Complete shipping details are required.' });
   }
 
@@ -169,7 +179,7 @@ exports.verifyRazorpayOrder = (req, res) => {
     return res.status(400).json({ message: 'Missing Razorpay payment details.' });
   }
 
-  if (!shipping_address || !shipping_city || !shipping_state || !shipping_pincode || !shipping_phone) {
+  if (!validShipping({ shipping_address, shipping_city, shipping_state, shipping_pincode, shipping_phone })) {
     return res.status(400).json({ message: 'Complete shipping details are required.' });
   }
 
@@ -203,7 +213,7 @@ exports.verifyRazorpayOrder = (req, res) => {
 };
 
 exports.getOrders = (req, res) => {
-  const isAdmin = req.user.role === 'superadmin';
+  const isAdmin = ['superadmin', 'admin'].includes(req.user.role);
   const sql = isAdmin
     ? `SELECT o.*, u.full_name, u.email FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC`
     : `SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC`;
@@ -232,7 +242,7 @@ exports.getOrders = (req, res) => {
 };
 
 exports.getOrderById = (req, res) => {
-  const isAdmin = req.user.role === 'superadmin';
+  const isAdmin = ['superadmin', 'admin'].includes(req.user.role);
   let sql = 'SELECT * FROM orders WHERE id = ?';
   const params = [req.params.id];
 
@@ -258,6 +268,10 @@ exports.getOrderById = (req, res) => {
 
 exports.updateOrderStatus = (req, res) => {
   const { status } = req.body;
+  const allowedStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+  if (!allowedStatuses.includes(status)) {
+    return res.status(400).json({ message: 'Invalid order status.' });
+  }
   db.query(
     'UPDATE orders SET status = ? WHERE id = ?',
     [status, req.params.id],
