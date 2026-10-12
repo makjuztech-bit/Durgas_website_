@@ -32,3 +32,4 @@ Thumbs.db
 !.vscode/launch.json
 !.vscode/settings.json
 .idea/
+.backup_before_upgrade/

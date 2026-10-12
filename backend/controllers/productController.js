@@ -291,10 +291,12 @@ exports.deleteProduct = (req, res) => {
           canArchive: true,
         });
       }
-      db.query('DELETE FROM products WHERE id = ?', [productId], (err, result) => {
-        if (err) return res.status(500).json({ message: 'Failed to delete product.' });
-        if (!result.affectedRows) return res.status(404).json({ message: 'Product not found' });
-        res.json({ message: 'Product deleted' });
+      db.query('DELETE FROM product_images WHERE product_id = ?', [productId], () => {
+        db.query('DELETE FROM products WHERE id = ?', [productId], (err, result) => {
+          if (err) return res.status(500).json({ message: 'Failed to delete product.' });
+          if (!result.affectedRows) return res.status(404).json({ message: 'Product not found' });
+          res.json({ message: 'Product deleted' });
+        });
       });
     }
   );

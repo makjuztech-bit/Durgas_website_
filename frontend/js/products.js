@@ -91,7 +91,22 @@ function onSortChange(sortVal) {
   renderFilteredShop();
 }
 
-function filterShop() {
+function filterShop(e) {
+  if (e && e.target && e.target.type === 'checkbox') {
+    if (e.target.dataset.category === 'all' && e.target.checked) {
+      document.querySelectorAll('#shopCategoryFilters input').forEach(c => {
+        if (c.dataset.category !== 'all') c.checked = false;
+      });
+    } else if (e.target.dataset.category !== 'all' && e.target.checked) {
+      const allCb = document.querySelector('#shopCategoryFilters input[data-category="all"]');
+      if (allCb) allCb.checked = false;
+    }
+  }
+  const anyChecked = [...document.querySelectorAll('#shopCategoryFilters input:checked')].length > 0;
+  if (!anyChecked) {
+    const allCb = document.querySelector('#shopCategoryFilters input[data-category="all"]');
+    if (allCb) allCb.checked = true;
+  }
   shopPage = 1;
   renderFilteredShop();
 }
@@ -319,13 +334,17 @@ async function loadProductDetail(idOrSku) {
     if (mainImg) {
       mainImg.src = images[0].image_path;
       mainImg.alt = p.name;
+      mainImg.onerror = function() {
+        this.onerror = null;
+        this.src = 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80';
+      };
     }
 
     const thumbsEl = document.getElementById('galleryThumbs');
     if (thumbsEl) {
       thumbsEl.innerHTML = images.map((img, i) =>
         `<div class="thumb${i === 0 ? ' active' : ''}" onclick="changeImg(this, '${img.image_path}')">
-          <img src="${img.image_path}" alt="${p.name}">
+          <img src="${img.image_path}" alt="${p.name}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=200&q=80';">
         </div>`
       ).join('');
     }
@@ -554,12 +573,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 3. Load shop catalogue if on shop page
   if (document.getElementById('shopGrid')) {
-    loadCategories().then(() => {
+    loadCategories().then(async () => {
+      await loadShopProducts();
+      const qParam = params.get('q');
       const categoryParam = params.get('category');
-      if (categoryParam) {
+      if (qParam) {
+        const searchInput = document.getElementById('shopSearchInput');
+        if (searchInput) searchInput.value = qParam;
+        onShopSearch(qParam);
+      } else if (categoryParam) {
         filterByCategory(categoryParam);
-      } else {
-        loadShopProducts();
       }
     });
   }

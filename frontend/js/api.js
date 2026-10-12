@@ -45,7 +45,7 @@ function buildProductCard(p) {
 
   return `<div class="product-card fade-up" onclick="showProductDetail('${p.sku || p.id}')">
     <div class="product-img">
-      <img src="${img}" alt="${p.name}" loading="lazy" decoding="async">
+      <img src="${img}" alt="${p.name}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500&q=80';">
       ${badge}
       <div class="product-actions">
         <button class="action-btn" onclick="addToWishlist(event, ${p.id})" title="Add to Wishlist">♡</button>
@@ -87,10 +87,19 @@ function buyNowDirect(event, id) {
     sessionStorage.setItem('durgas_buy_now', JSON.stringify({ product: prod, quantity: 1, size: prod.available_sizes?.split(',')?.[0]?.trim() || 'Standard' }));
     window.location.href = '/cart?buynow=1';
   } else {
-    fetch(API + '/products/' + id).then(r => r.json()).then(p => {
-      sessionStorage.setItem('durgas_buy_now', JSON.stringify({ product: p, quantity: 1, size: p.available_sizes?.split(',')?.[0]?.trim() || 'Standard' }));
-      window.location.href = '/cart?buynow=1';
-    });
+    fetch(API + '/products/' + id)
+      .then(r => {
+        if (!r.ok) throw new Error('Product not found');
+        return r.json();
+      })
+      .then(p => {
+        sessionStorage.setItem('durgas_buy_now', JSON.stringify({ product: p, quantity: 1, size: p.available_sizes?.split(',')?.[0]?.trim() || 'Standard' }));
+        window.location.href = '/cart?buynow=1';
+      })
+      .catch(err => {
+        console.error('Buy Now fetch failed:', err);
+        window.location.href = '/cart';
+      });
   }
 }
 
@@ -100,9 +109,15 @@ function openWhatsAppForProduct(event, id) {
   if (prod && window.DURGAS_WHATSAPP) {
     window.DURGAS_WHATSAPP.openProductOrder(prod);
   } else {
-    fetch(API + '/products/' + id).then(r => r.json()).then(p => {
-      if (window.DURGAS_WHATSAPP) window.DURGAS_WHATSAPP.openProductOrder(p);
-    });
+    fetch(API + '/products/' + id)
+      .then(r => {
+        if (!r.ok) throw new Error('Product not found');
+        return r.json();
+      })
+      .then(p => {
+        if (window.DURGAS_WHATSAPP) window.DURGAS_WHATSAPP.openProductOrder(p);
+      })
+      .catch(err => console.error('WhatsApp order fetch failed:', err));
   }
 }
 

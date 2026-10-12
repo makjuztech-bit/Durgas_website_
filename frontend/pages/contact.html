@@ -10,64 +10,41 @@
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/products.css">
   <link rel="stylesheet" href="/css/cart.css">
+  <link rel="stylesheet" href="/css/whatsapp.css">
 </head>
 <body>
 <div class="cursor" id="cursor"></div>
 <div class="cursor-ring" id="cursorRing"></div>
 
-<!-- Cart Sidebar -->
-<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
-<div class="cart-sidebar" id="cartSidebar">
-  <div class="cart-header">
-    <h3 class="cart-title">Your Bag</h3>
-    <button class="cart-close" onclick="closeCart()">✕</button>
-  </div>
-  <div class="cart-items" id="cartItems">
-    <div class="cart-empty">
-      <div class="cart-empty-icon">♡</div>
-      <p>Your bag is empty</p>
-      <button class="btn-primary" onclick="closeCart(); window.location.href='/products'"><span>Shop Now</span></button>
-    </div>
-  </div>
-  <div class="cart-footer" id="cartFooter" style="display:none">
-    <div class="cart-total">
-      <span>Total</span>
-      <span id="cartTotal">₹0</span>
-    </div>
-    <button class="cart-checkout" onclick="proceedToCheckout()">Proceed to Checkout</button>
-  </div>
-</div>
-
 <!-- Mobile Nav -->
 <div class="mobile-nav" id="mobileNav">
   <button class="mobile-close" onclick="closeMobileNav()">✕</button>
   <a href="/" onclick="closeMobileNav()">Home</a>
-  <a href="/products" onclick="closeMobileNav()">Shop</a>
+  <a href="/products" onclick="closeMobileNav()">Shop Catalogue</a>
   <a href="/about" onclick="closeMobileNav()">About</a>
   <a href="/contact" onclick="closeMobileNav()">Contact</a>
 </div>
 
 <!-- Offer Banner -->
 <div class="offer-banner">
-  ✦ Use code <span>DURGAS10</span> for 10% off your first purchase &nbsp;·&nbsp; Free shipping on orders above ₹5,000 ✦
+  ✦ Free Insured Shipping Across India on Orders Above ₹5,000 &nbsp;·&nbsp; Direct WhatsApp: 7448882444 ✦
 </div>
 
 <!-- Navigation -->
 <nav id="mainNav">
   <a href="/" class="nav-logo">
-    <img src="/main logo.jpeg" alt="Durgas Logo" class="logo">
+    <img src="/durgas main logo.jpeg" alt="Durgas Logo" class="logo">
   </a>
   <ul class="nav-links">
     <li><a href="/">Home</a></li>
-    <li><a href="/products">Shop</a></li>
+    <li><a href="/products">Shop Catalogue</a></li>
     <li><a href="/about">About</a></li>
-    <li><a href="/contact">Contact</a></li>
+    <li><a href="/contact" class="active">Contact</a></li>
   </ul>
   <div class="nav-icons">
-    <button class="nav-icon-btn" title="Search">⌕</button>
     <button class="nav-icon-btn" title="Wishlist" onclick="openWishlist()">♡</button>
     <button class="nav-icon-btn" title="Account" onclick="openAuthModal()" id="accountBtn">◎</button>
-    <button class="nav-icon-btn" title="Cart" onclick="openCart()">
+    <button class="nav-icon-btn" title="Cart" onclick="window.location.href='/cart'">
       ⟨bag⟩<span class="cart-count" id="cartCountBadge">0</span>
     </button>
     <button class="hamburger" onclick="openMobileNav()">
@@ -75,6 +52,26 @@
     </button>
   </div>
 </nav>
+
+<!-- Flipkart-Style Category Navigation Strip -->
+<div class="fk-category-strip">
+  <div class="fk-category-strip-inner">
+    <a href="/products?category=Five-Metal%20Jewellery" class="fk-cat-item"><div class="fk-cat-icon">⚜️</div><span>Five-Metal</span></a>
+    <a href="/products?category=Traditional%20Jewellery" class="fk-cat-item"><div class="fk-cat-icon">👑</div><span>Traditional</span></a>
+    <a href="/products?category=Gold%20Jewellery" class="fk-cat-item"><div class="fk-cat-icon">✨</div><span>Gold Style</span></a>
+    <a href="/products?category=Rings" class="fk-cat-item"><div class="fk-cat-icon">💍</div><span>Rings</span></a>
+    <a href="/products?category=Necklaces" class="fk-cat-item"><div class="fk-cat-icon">📿</div><span>Necklaces</span></a>
+    <a href="/products?category=Chains" class="fk-cat-item"><div class="fk-cat-icon">⛓️</div><span>Chains</span></a>
+    <a href="/products?category=Earrings" class="fk-cat-item"><div class="fk-cat-icon">💎</div><span>Earrings</span></a>
+    <a href="/products?category=Bangles" class="fk-cat-item"><div class="fk-cat-icon">⭕</div><span>Bangles</span></a>
+    <a href="/products?category=Bracelets" class="fk-cat-item"><div class="fk-cat-icon">💫</div><span>Bracelets</span></a>
+    <a href="/products?category=Pendants" class="fk-cat-item"><div class="fk-cat-icon">🏵️</div><span>Pendants</span></a>
+    <a href="/products?category=Bridal%20Jewellery" class="fk-cat-item"><div class="fk-cat-icon">👰</div><span>Bridal</span></a>
+    <a href="/products?category=Daily%20Wear%20Jewellery" class="fk-cat-item"><div class="fk-cat-icon">⭐</div><span>Daily Wear</span></a>
+    <a href="/products?category=Temple%20Jewellery" class="fk-cat-item"><div class="fk-cat-icon">🛕</div><span>Temple</span></a>
+    <a href="/products?category=Antique-Finish%20Jewellery" class="fk-cat-item"><div class="fk-cat-icon">🏺</div><span>Antique Finish</span></a>
+  </div>
+</div>
 
 <!-- ==================== CONTACT PAGE ==================== -->
 <div class="page active" id="page-contact">
@@ -90,11 +87,11 @@
       <div class="contact-details">
         <div class="contact-item">
           <div class="contact-item-icon">⌂</div>
-          <div><h5>Studio Address</h5><p>42, Zaveri Bazaar, Kalbadevi<br>Mumbai, Maharashtra 400002</p></div>
+          <div><h5>Showroom &amp; Studio</h5><p>Durgas Fine Jewellery Showroom<br>Certified South Indian Jewellery</p></div>
         </div>
         <div class="contact-item">
           <div class="contact-item-icon">✆</div>
-          <div><h5>Phone & WhatsApp</h5><p>+91 98765 43210<br>Mon–Sat, 10am–7pm</p></div>
+          <div><h5>Phone &amp; WhatsApp</h5><p><a href="https://wa.me/917448882444" target="_blank" style="color:#D4AF37;text-decoration:none">+91 7448882444</a><br>Mon–Sat, 10am–8pm</p></div>
         </div>
         <div class="contact-item">
           <div class="contact-item-icon">✉</div>
@@ -250,6 +247,7 @@
   </div>
 </footer>
 
+<script src="/js/whatsapp.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/auth.js"></script>
 <script src="/js/cart.js"></script>
