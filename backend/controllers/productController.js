@@ -94,7 +94,8 @@ exports.getProductById = (req, res) => {
 
 exports.addProduct = (req, res) => {
   const {
-    name, description, category_id, material, purity,
+    name, tamil_name, description, category_id, material, purity,
+    metal_composition, available_sizes,
     weight, price, old_price, stock, badge, sku,
   } = req.body;
 
@@ -107,18 +108,21 @@ exports.addProduct = (req, res) => {
 
   const sql = `
     INSERT INTO products
-    (name, description, category_id, material, purity, weight, price, old_price, stock, badge, sku)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    (name, tamil_name, description, category_id, material, purity, metal_composition, available_sizes, weight, price, old_price, stock, badge, sku)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   db.query(
     sql,
     [
       name.trim(),
+      tamil_name?.trim() || null,
       description?.trim() || null,
       category_id ? parseInt(category_id, 10) : null,
       material?.trim() || null,
       purity?.trim() || null,
+      metal_composition?.trim() || null,
+      available_sizes?.trim() || null,
       weight ? parseFloat(weight) : null,
       parsedPrice,
       old_price ? parseFloat(old_price) : null,
@@ -164,6 +168,7 @@ exports.updateProduct = (req, res) => {
   const {
     name, description, category_id, material, purity,
     weight, price, old_price, stock, badge, sku, is_active,
+    tamil_name, metal_composition, available_sizes,
   } = req.body;
 
   // Server-side validation
@@ -175,8 +180,8 @@ exports.updateProduct = (req, res) => {
 
   const sql = `
     UPDATE products SET
-      name = ?, description = ?, category_id = ?, material = ?,
-      purity = ?, weight = ?, price = ?, old_price = ?,
+      name = ?, tamil_name = ?, description = ?, category_id = ?, material = ?,
+      purity = ?, metal_composition = ?, available_sizes = ?, weight = ?, price = ?, old_price = ?,
       stock = ?, badge = ?, sku = ?, is_active = ?
     WHERE id = ?
   `;
@@ -185,10 +190,13 @@ exports.updateProduct = (req, res) => {
     sql,
     [
       name.trim(),
+      tamil_name?.trim() || null,
       description?.trim() || null,
       category_id ? parseInt(category_id, 10) : null,
       material?.trim() || null,
       purity?.trim() || null,
+      metal_composition?.trim() || null,
+      available_sizes?.trim() || null,
       weight ? parseFloat(weight) : null,
       parsedPrice,
       old_price ? parseFloat(old_price) : null,

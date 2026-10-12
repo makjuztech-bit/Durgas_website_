@@ -290,7 +290,7 @@ exports.verifyRazorpayOrder = (req, res) => {
 exports.getOrders = (req, res) => {
   const isAdmin = ['superadmin', 'admin'].includes(req.user.role);
   const sql = isAdmin
-    ? `SELECT o.*, u.full_name, u.email FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC`
+    ? `SELECT o.*, COALESCE(o.customer_name, u.full_name, 'Guest Customer') AS full_name, u.email FROM orders o LEFT JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC`
     : `SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC`;
   const params = isAdmin ? [] : [req.user.id];
 
@@ -469,3 +469,73 @@ exports.razorpayWebhook = async (req, res) => {
     connection.release();
   }
 };
+
+exports.recordWhatsAppInquiry = async (req, res) => {
+  const { customer_name, customer_phone, shipping_address, shipping_city, shipping_state, shipping_pincode, items, total_amount, notes } = req.body;
+
+  try {
+    const userId = req.user?.id || null;
+    const orderNumber = 'WA-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+    const invoiceNumber = 'WA-INQ-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    const total = parseFloat(total_amount) || 0;
+    const subtotal = Math.round((total / 1.03) * 100) / 100;
+    const taxAmount = Math.round((total - subtotal) * 100) / 100;
+
+    const orderResult = await db.query(
+      `INSERT INTO orders 
+      (user_id, order_number, subtotal_amount, tax_amount, total_amount, invoice_number, 
+       shipping_address, shipping_city, shipping_state, shipping_pincode, shipping_phone, 
+       payment_method, payment_status, status, order_source, customer_name, customer_notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'whatsapp', 'pending', 'pending', 'whatsapp', ?, ?)`,
+      [
+        userId,
+        orderNumber,
+        subtotal,
+        taxAmount,
+        total,
+        invoiceNumber,
+        (shipping_address || '').trim(),
+        (shipping_city || '').trim(),
+        (shipping_state || 'Tamil Nadu').trim(),
+        (shipping_pincode || '').trim(),
+        (customer_phone || '').trim(),
+        (customer_name || 'Customer').trim(),
+        (notes || 'WhatsApp Order Inquiry initiated by customer').trim(),
+      ]
+    );
+
+    const orderId = orderResult.insertId;
+
+    if (Array.isArray(items) && items.length && orderId) {
+      for (const item of items) {
+        const itemPrice = parseFloat(item.price) || 0;
+        const itemQty = parseInt(item.quantity, 10) || 1;
+        const itemTax = Math.round((itemPrice * itemQty * 0.03) * 100) / 100;
+        await db.query(
+          `INSERT INTO order_items (order_id, product_id, product_name, quantity, price, tax_rate, tax_amount, hallmark_details)
+           VALUES (?, ?, ?, ?, ?, 3.0, ?, ?)`,
+          [
+            orderId,
+            item.product_id || item.id || null,
+            item.name || 'Jewellery Item',
+            itemQty,
+            itemPrice,
+            itemTax,
+            item.metal_composition || 'Five Metals / Iypponnu Verified',
+          ]
+        ).catch(() => {});
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      order_id: orderId,
+      order_number: orderNumber,
+      message: 'WhatsApp order inquiry recorded',
+    });
+  } catch (err) {
+    console.error('Error recording WhatsApp inquiry:', err.message);
+    res.status(500).json({ message: 'Error recording WhatsApp inquiry: ' + err.message });
+  }
+};
+

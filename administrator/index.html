@@ -143,6 +143,7 @@
   <a class="nav-item" data-section="orders" onclick="showSection('orders')">Orders</a>
   <a class="nav-item" data-section="customers" onclick="showSection('customers')">Customers</a>
   <a class="nav-item" data-section="reviews" onclick="showSection('reviews')">Reviews</a>
+  <a class="nav-item" data-section="settings" onclick="showSection('settings')">WhatsApp & Settings</a>
   <a class="nav-item" style="margin-top:40px;color:#c0392b" onclick="adminLogout()">Logout</a>
 </aside>
 
@@ -162,7 +163,7 @@
     </div>
     <div class="panel">
       <h3 class="panel-title">Recent Orders</h3>
-      <table><thead><tr><th>Order #</th><th>Customer</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+      <table><thead><tr><th>Order #</th><th>Source</th><th>Customer</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
       <tbody id="recentOrdersTable"></tbody></table>
     </div>
   </div>
@@ -187,18 +188,23 @@
         <input type="hidden" id="editProductId">
         <div class="form-grid">
           <div class="form-group"><label class="form-label">Product Name *</label><input type="text" class="form-input" id="pName" required></div>
+          <div class="form-group"><label class="form-label">Tamil Name (தமிழ் பெயர்)</label><input type="text" class="form-input" id="pTamilName" placeholder="ஐம்பொன் மோதிரம்"></div>
           <div class="form-group"><label class="form-label">Category *</label><select class="form-select" id="pCategory" required></select></div>
+          <div class="form-group"><label class="form-label">SKU / Product ID</label><input type="text" class="form-input" id="pSku" placeholder="DJ-PN-001"></div>
+          <div class="form-group full"><label class="form-label">Verified Metal Composition (Five Metals / Panchaloha)</label><input type="text" class="form-input" id="pMetalComposition" placeholder="e.g. Copper 80%, Brass 15%, Lead 3%, Silver 1%, Gold 1%"></div>
+          <div class="form-group full"><label class="form-label">Available Sizes / Dimensions</label><input type="text" class="form-input" id="pAvailableSizes" placeholder="e.g. 12, 14, 16, 18, 20 or Free Size"></div>
           <div class="form-group full"><label class="form-label">Description</label><textarea class="form-textarea" id="pDescription"></textarea></div>
-          <div class="form-group"><label class="form-label">Material</label><input type="text" class="form-input" id="pMaterial" placeholder="18K Gold"></div>
-          <div class="form-group"><label class="form-label">Purity</label><input type="text" class="form-input" id="pPurity" placeholder="Diamond"></div>
+          <div class="form-group"><label class="form-label">Material</label><input type="text" class="form-input" id="pMaterial" placeholder="Five Metals (Panchaloha / ஐம்பொன்)"></div>
+          <div class="form-group"><label class="form-label">Purity</label><input type="text" class="form-input" id="pPurity" placeholder="Authentic 5-Metal Alloy"></div>
           <div class="form-group"><label class="form-label">Weight (g)</label><input type="number" step="0.01" class="form-input" id="pWeight"></div>
-          <div class="form-group"><label class="form-label">SKU</label><input type="text" class="form-input" id="pSku"></div>
           <div class="form-group"><label class="form-label">Price (₹) *</label><input type="number" class="form-input" id="pPrice" required></div>
           <div class="form-group"><label class="form-label">Old Price (₹)</label><input type="number" class="form-input" id="pOldPrice"></div>
           <div class="form-group"><label class="form-label">Stock *</label><input type="number" class="form-input" id="pStock" required value="10"></div>
           <div class="form-group"><label class="form-label">Badge</label>
             <select class="form-select" id="pBadge">
               <option value="">None</option>
+              <option value="Five Metals">Five Metals (Panchaloha)</option>
+              <option value="Iypponnu">Iypponnu (Aimpon)</option>
               <option value="New">New</option>
               <option value="Sale">Sale</option>
               <option value="Best Seller">Best Seller</option>
@@ -223,6 +229,7 @@
       <input type="hidden" id="editCategoryId">
       <div class="form-grid">
         <div class="form-group"><label class="form-label">Name *</label><input type="text" class="form-input" id="catName"></div>
+        <div class="form-group"><label class="form-label">Tamil Name (தமிழ் பெயர்)</label><input type="text" class="form-input" id="catTamilName" placeholder="ஐம்பொன் நகைகள்"></div>
         <div class="form-group"><label class="form-label">Image URL</label><input type="text" class="form-input" id="catImage"></div>
         <div class="form-group full"><label class="form-label">Description</label><textarea class="form-textarea" id="catDescription"></textarea></div>
       </div>
@@ -230,16 +237,16 @@
       <button class="btn btn-sm" style="background:var(--beige);margin-left:8px" onclick="hideAddCategory()">Cancel</button>
     </div>
     <div class="panel">
-      <table><thead><tr><th>Name</th><th>Products</th><th>Actions</th></tr></thead>
+      <table><thead><tr><th>Name</th><th>Tamil Name</th><th>Products</th><th>Actions</th></tr></thead>
       <tbody id="categoriesTable"></tbody></table>
     </div>
   </div>
 
   <!-- Orders -->
   <div class="section" id="section-orders">
-    <div class="page-header"><h1 class="page-title">Orders</h1></div>
+    <div class="page-header"><h1 class="page-title">Orders & Inquiries</h1></div>
     <div class="panel">
-      <table><thead><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+      <table><thead><tr><th>Order #</th><th>Source</th><th>Customer & Phone</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
       <tbody id="ordersTable"></tbody></table>
     </div>
   </div>
@@ -259,6 +266,33 @@
     <div class="panel">
       <table><thead><tr><th>Product</th><th>Reviewer</th><th>Rating</th><th>Review</th><th>Date</th></tr></thead>
       <tbody id="reviewsTable"></tbody></table>
+    </div>
+  </div>
+
+  <!-- WhatsApp & Settings -->
+  <div class="section" id="section-settings">
+    <div class="page-header"><h1 class="page-title">Store & WhatsApp Settings</h1></div>
+    <div class="panel" style="max-width:700px">
+      <form id="settingsForm" onsubmit="saveSettings(event)">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label class="form-label">WhatsApp Business Number (Country Code + Number, no + or spaces) *</label>
+            <input type="text" class="form-input" id="cfgWhatsappNumber" required placeholder="917448882444">
+            <small style="color:var(--gray);font-size:0.75rem;margin-top:4px;display:block;">Configured shop number: Durgas Jewellery <strong>7448882444</strong> (917448882444). Used for all customer WhatsApp orders &amp; inquiries.</small>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Store Name *</label>
+            <input type="text" class="form-input" id="cfgStoreName" required placeholder="Durgas Jewellery">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Standard Delivery Charge (₹)</label>
+            <input type="number" class="form-input" id="cfgDeliveryCharge" value="0" min="0">
+            <small style="color:var(--gray);font-size:0.75rem;margin-top:4px;display:block;">Set 0 for Free Delivery across India.</small>
+          </div>
+        </div>
+        <div id="settingsAlert" style="margin-top:12px;font-size:0.85rem;display:none;padding:10px;border-radius:2px;"></div>
+        <button type="submit" class="btn btn-primary" style="margin-top:16px">Save Settings</button>
+      </form>
     </div>
   </div>
 
@@ -344,6 +378,7 @@ function showSection(name) {
   else if (name === 'orders') loadOrders();
   else if (name === 'customers') loadCustomers();
   else if (name === 'reviews') loadReviews();
+  else if (name === 'settings') loadSettings();
 }
 
 async function loadDashboard() {
@@ -358,13 +393,13 @@ async function loadDashboard() {
   const orders = await ordersRes.json();
   document.getElementById('recentOrdersTable').innerHTML = orders.slice(0, 5).map(o => `
     <tr>
-      <td>${o.order_number}</td>
+      <td><strong>${o.order_number}</strong></td>
+      <td>${o.order_source === 'whatsapp' ? '<span class="badge" style="background:#25D366;color:#ffffff;font-weight:600;">WhatsApp</span>' : '<span class="badge badge-processing">Website</span>'}</td>
       <td>${o.full_name || '—'}</td>
       <td>${formatPrice(o.total_amount)}</td>
-      <td>${o.payment_method || '—'} / ${o.payment_status || '—'}${o.razorpay_payment_id ? `<br><small>${o.razorpay_payment_id}</small>` : ''}</td>
       <td>${statusBadge(o.status)}</td>
       <td>${formatDate(o.created_at)}</td>
-    </tr>`).join('') || '<tr><td colspan="5">No orders yet</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="6">No orders yet</td></tr>';
 }
 
 async function loadProducts() {
@@ -373,7 +408,7 @@ async function loadProducts() {
   document.getElementById('productsTable').innerHTML = products.map(p => `
     <tr>
       <td>${p.image ? `<img src="${p.image}" class="product-thumb">` : '—'}</td>
-      <td>${p.name}</td>
+      <td><strong>${p.name}</strong>${p.tamil_name ? `<br><small style="color:var(--gray)">${p.tamil_name}</small>` : ''}</td>
       <td>${p.category_name || '—'}</td>
       <td>${formatPrice(p.price)}</td>
       <td>${p.stock}</td>
@@ -389,7 +424,7 @@ async function loadCategorySelect() {
   const res = await apiFetch('/categories');
   categories = await res.json();
   document.getElementById('pCategory').innerHTML = categories.map(c =>
-    `<option value="${c.id}">${c.name}</option>`
+    `<option value="${c.id}">${c.name}${c.tamil_name ? ' (' + c.tamil_name + ')' : ''}</option>`
   ).join('');
 }
 
@@ -398,6 +433,9 @@ function resetProductForm() {
   document.getElementById('editProductId').value = '';
   document.getElementById('productFormTitle').textContent = 'Add Product';
   document.getElementById('pStock').value = 10;
+  document.getElementById('pTamilName').value = '';
+  document.getElementById('pMetalComposition').value = '';
+  document.getElementById('pAvailableSizes').value = '';
 }
 
 async function saveProduct(e) {
@@ -405,8 +443,11 @@ async function saveProduct(e) {
   const editId = document.getElementById('editProductId').value;
   const formData = new FormData();
   formData.append('name', document.getElementById('pName').value);
+  formData.append('tamil_name', document.getElementById('pTamilName').value);
   formData.append('description', document.getElementById('pDescription').value);
   formData.append('category_id', document.getElementById('pCategory').value);
+  formData.append('metal_composition', document.getElementById('pMetalComposition').value);
+  formData.append('available_sizes', document.getElementById('pAvailableSizes').value);
   formData.append('material', document.getElementById('pMaterial').value);
   formData.append('purity', document.getElementById('pPurity').value);
   formData.append('weight', document.getElementById('pWeight').value);
@@ -438,8 +479,11 @@ async function editProduct(id) {
   document.getElementById('editProductId').value = p.id;
   document.getElementById('productFormTitle').textContent = 'Edit Product';
   document.getElementById('pName').value = p.name;
+  document.getElementById('pTamilName').value = p.tamil_name || '';
   document.getElementById('pDescription').value = p.description || '';
   document.getElementById('pCategory').value = p.category_id;
+  document.getElementById('pMetalComposition').value = p.metal_composition || '';
+  document.getElementById('pAvailableSizes').value = p.available_sizes || '';
   document.getElementById('pMaterial').value = p.material || '';
   document.getElementById('pPurity').value = p.purity || '';
   document.getElementById('pWeight').value = p.weight || '';
@@ -463,7 +507,8 @@ async function loadCategories() {
   categories = await res.json();
   document.getElementById('categoriesTable').innerHTML = categories.map(c => `
     <tr>
-      <td>${c.name}</td>
+      <td><strong>${c.name}</strong></td>
+      <td>${c.tamil_name || '—'}</td>
       <td>${c.product_count || 0}</td>
       <td>
         <button class="btn btn-edit" onclick="editCategory(${c.id})">Edit</button>
@@ -477,6 +522,7 @@ function showAddCategory() {
   document.getElementById('editCategoryId').value = '';
   document.getElementById('catFormTitle').textContent = 'Add Category';
   document.getElementById('catName').value = '';
+  document.getElementById('catTamilName').value = '';
   document.getElementById('catImage').value = '';
   document.getElementById('catDescription').value = '';
 }
@@ -490,6 +536,7 @@ function editCategory(id) {
   document.getElementById('editCategoryId').value = c.id;
   document.getElementById('catFormTitle').textContent = 'Edit Category';
   document.getElementById('catName').value = c.name;
+  document.getElementById('catTamilName').value = c.tamil_name || '';
   document.getElementById('catImage').value = c.image || '';
   document.getElementById('catDescription').value = c.description || '';
 }
@@ -498,6 +545,7 @@ async function saveCategory() {
   const editId = document.getElementById('editCategoryId').value;
   const body = {
     name: document.getElementById('catName').value,
+    tamil_name: document.getElementById('catTamilName').value,
     image: document.getElementById('catImage').value,
     description: document.getElementById('catDescription').value,
   };
@@ -519,10 +567,16 @@ async function loadOrders() {
   const orders = await res.json();
   document.getElementById('ordersTable').innerHTML = orders.map(o => `
     <tr>
-      <td>${o.order_number}</td>
-      <td>${o.full_name || '—'}</td>
+      <td><strong>${o.order_number}</strong></td>
+      <td>${o.order_source === 'whatsapp' ? '<span class="badge" style="background:#25D366;color:#ffffff;font-weight:600;">WhatsApp Order</span>' : '<span class="badge badge-processing">Website</span>'}</td>
+      <td>
+        <strong>${o.full_name || 'Guest'}</strong><br>
+        <small style="color:var(--gray)">${o.shipping_phone || o.phone || '—'}</small>
+        ${o.customer_notes ? `<br><small style="color:#b37d14;font-style:italic">Note: ${o.customer_notes}</small>` : ''}
+      </td>
       <td>${o.items?.length || 0} items</td>
       <td>${formatPrice(o.total_amount)}</td>
+      <td><span style="font-size:0.75rem;text-transform:uppercase">${o.payment_method || '—'}</span><br><small style="color:var(--gray)">${o.payment_status || '—'}</small></td>
       <td>${statusBadge(o.status)}</td>
       <td>${formatDate(o.created_at)}</td>
       <td>
@@ -534,11 +588,57 @@ async function loadOrders() {
           <option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelled</option>
         </select>
       </td>
-    </tr>`).join('') || '<tr><td colspan="7">No orders yet</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="9">No orders yet</td></tr>';
 }
 
 async function updateOrderStatus(id, status) {
   await apiFetch(`/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
+}
+
+async function loadSettings() {
+  try {
+    const res = await apiFetch('/admin/settings');
+    const data = await res.json();
+    document.getElementById('cfgWhatsappNumber').value = data.whatsapp_number || '917448882444';
+    document.getElementById('cfgStoreName').value = data.store_name || 'Durgas Jewellery';
+    document.getElementById('cfgDeliveryCharge').value = data.delivery_charge !== undefined ? data.delivery_charge : 0;
+  } catch (e) {
+    console.error('Failed to load settings:', e);
+  }
+}
+
+async function saveSettings(e) {
+  e.preventDefault();
+  const alertEl = document.getElementById('settingsAlert');
+  alertEl.style.display = 'none';
+  try {
+    const body = {
+      whatsapp_number: document.getElementById('cfgWhatsappNumber').value,
+      store_name: document.getElementById('cfgStoreName').value,
+      delivery_charge: parseFloat(document.getElementById('cfgDeliveryCharge').value) || 0
+    };
+    const res = await apiFetch('/admin/settings', {
+      method: 'PUT',
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alertEl.style.display = 'block';
+      alertEl.style.background = '#d4edda';
+      alertEl.style.color = '#155724';
+      alertEl.textContent = 'Settings updated successfully!';
+    } else {
+      alertEl.style.display = 'block';
+      alertEl.style.background = '#f8d7da';
+      alertEl.style.color = '#721c24';
+      alertEl.textContent = data.message || 'Failed to update settings';
+    }
+  } catch (err) {
+    alertEl.style.display = 'block';
+    alertEl.style.background = '#f8d7da';
+    alertEl.style.color = '#721c24';
+    alertEl.textContent = 'Network error saving settings';
+  }
 }
 
 async function loadCustomers() {

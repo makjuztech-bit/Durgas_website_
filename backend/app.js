@@ -97,6 +97,7 @@ app.use('/api/contact', require('./routes/contactRoutes'));
 app.use('/api/newsletter', require('./routes/newsletterRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/settings', require('./routes/settingsRoutes'));
 
 // Serve static assets from frontend folder only (never project root)
 app.use(express.static(path.join(__dirname, '..', 'frontend'), {

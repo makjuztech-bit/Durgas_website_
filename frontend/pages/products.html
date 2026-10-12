@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/products.css">
   <link rel="stylesheet" href="/css/cart.css">
+  <link rel="stylesheet" href="/css/whatsapp.css">
 </head>
 <body>
 <div class="cursor" id="cursor"></div>
@@ -79,60 +80,52 @@
 <!-- ==================== SHOP PAGE ==================== -->
 <div class="page active" id="page-shop">
   <div class="page-hero">
-    <p class="section-tag">Our Collection</p>
-    <h1 class="section-title">Shop All <em>Jewellery</em></h1>
-    <div class="breadcrumb"><a href="/">Home</a> <span>/</span> <span>Shop</span></div>
+    <p class="section-tag">Panchaloha & Iypponnu Collections / ஐம்பொன் நகைகள்</p>
+    <h1 class="section-title">Five Metals & <em>Iypponnu Jewellery</em></h1>
+    <div class="breadcrumb"><a href="/">Home</a> <span>/</span> <span>Shop Five Metals</span></div>
   </div>
   <div class="shop-layout">
     <aside class="shop-filters">
       <div class="filter-section">
-        <p class="filter-title">Category</p>
+        <p class="filter-title">Collections / வகைகள்</p>
         <div class="filter-options" id="shopCategoryFilters">
-          <label class="filter-opt"><input type="checkbox" checked data-category="all" onchange="filterShop()"> All Jewellery</label>
+          <label class="filter-opt"><input type="checkbox" checked data-category="all" onchange="filterShop()"> All Collections</label>
         </div>
       </div>
       <div class="filter-section">
-        <p class="filter-title">Material</p>
+        <p class="filter-title">Metal Composition</p>
         <div class="filter-options">
-          <label class="filter-opt"><input type="checkbox"> Gold</label>
-          <label class="filter-opt"><input type="checkbox"> Silver</label>
-          <label class="filter-opt"><input type="checkbox"> Bronze</label>
-          <label class="filter-opt"><input type="checkbox"> Zinc</label>
-          <label class="filter-opt"><input type="checkbox"> Copper</label>
+          <label class="filter-opt"><input type="checkbox" checked onchange="filterShop()"> Panchaloha (Five Metals)</label>
+          <label class="filter-opt"><input type="checkbox" checked onchange="filterShop()"> Iypponnu / Aimpon</label>
+          <label class="filter-opt"><input type="checkbox" checked onchange="filterShop()"> Temple Traditional Alloy</label>
         </div>
       </div>
       <div class="filter-section">
-        <p class="filter-title">Price Range</p>
-        <div class="price-range">
-          <div class="price-inputs">
-            <input type="text" class="form-input" placeholder="₹ Min">
-            <span style="color:var(--gray);font-size:.8rem">—</span>
-            <input type="text" class="form-input" placeholder="₹ Max">
-          </div>
-          <button class="btn-primary" style="padding:10px 20px;font-size:.65rem"><span>Apply</span></button>
-        </div>
-      </div>
-      <div class="filter-section">
-        <p class="filter-title">Gemstone</p>
-        <div class="filter-options">
-          <label class="filter-opt"><input type="checkbox"> Diamond</label>
-          <label class="filter-opt"><input type="checkbox"> Emerald</label>
-          <label class="filter-opt"><input type="checkbox"> Ruby</label>
-          <label class="filter-opt"><input type="checkbox"> Sapphire</label>
-          <label class="filter-opt"><input type="checkbox"> Pearl</label>
+        <p class="filter-title">Quick Ordering Help</p>
+        <div style="background:#FAF6EF;border-left:3px solid var(--wa-green,#25D366);padding:12px;border-radius:4px;font-size:0.8rem;line-height:1.4">
+          <p style="font-weight:600;color:var(--maroon,#6B1724);margin-bottom:4px">Order on WhatsApp</p>
+          <p style="color:#555;margin-bottom:8px">Have questions or want customized sizes? Chat directly with Durgas Jewellery.</p>
+          <a href="https://wa.me/917448882444?text=Hello%20Durgas%20Jewellery!%20I%20need%20help%20with%20ordering." target="_blank" class="btn-whatsapp-order" style="padding:8px 12px;font-size:0.75rem">
+            Chat on WhatsApp
+          </a>
         </div>
       </div>
     </aside>
     <div class="shop-main">
-      <div class="shop-toolbar">
+      <div class="shop-toolbar" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
         <p class="results-count" id="shopResultsCount">Loading products...</p>
+        
+        <div style="flex:1;max-width:320px;position:relative">
+          <input type="text" id="shopSearchInput" placeholder="Search by name, ID, or metal..." class="form-input" style="padding:10px 14px 10px 36px;border-radius:4px;width:100%" oninput="onShopSearch(this.value)">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#888;pointer-events:none">🔍</span>
+        </div>
+
         <select class="sort-select" id="shopSort" onchange="loadShopProducts()">
           <option>Sort: Featured</option>
           <option>Newest First</option>
           <option>Price: Low to High</option>
           <option>Price: High to Low</option>
           <option>Best Sellers</option>
-          <option>Most Reviewed</option>
         </select>
       </div>
       <div class="shop-grid" id="shopGrid"></div>
@@ -259,6 +252,7 @@
   </div>
 </footer>
 
+<script src="/js/whatsapp.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/auth.js"></script>
 <script src="/js/cart.js"></script>

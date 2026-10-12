@@ -12,18 +12,19 @@ async function loadCategories() {
           <img src="${c.image || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&q=80'}" alt="${c.name}">
           <div class="cat-overlay">
             <p class="cat-name">${c.name}</p>
+            ${c.tamil_name ? `<p class="cat-tamil" style="color:var(--gold,#D4AF37);font-size:0.85rem;margin-top:2px;">${c.tamil_name}</p>` : ''}
             <p class="cat-count">${c.product_count || 0} Pieces</p>
           </div>
           <a href="/products?category=${encodeURIComponent(c.slug || c.name)}" class="cat-link">
-            <span class="cat-shop-btn">Shop Now →</span>
+            <span class="cat-shop-btn">View Collection →</span>
           </a>
         </div>`).join('');
     }
 
     const filterEl = document.getElementById('shopCategoryFilters');
     if (filterEl) {
-      filterEl.innerHTML = `<label class="filter-opt"><input type="checkbox" checked data-category="all" onchange="filterShop()"> All Jewellery</label>` +
-        cats.map(c => `<label class="filter-opt"><input type="checkbox" data-category="${c.slug || c.name}" onchange="filterShop()"> ${c.name}</label>`).join('');
+      filterEl.innerHTML = `<label class="filter-opt"><input type="checkbox" checked data-category="all" onchange="filterShop()"> All Collections</label>` +
+        cats.map(c => `<label class="filter-opt"><input type="checkbox" data-category="${c.slug || c.name}" onchange="filterShop()"> <strong>${c.name}</strong> ${c.tamil_name ? `<small style="display:block;color:#888;font-size:0.75rem">${c.tamil_name}</small>` : ''}</label>`).join('');
     }
     if (typeof observeFadeUps === 'function') observeFadeUps();
   } catch (e) { console.error('Categories load failed:', e); }
@@ -64,6 +65,51 @@ async function loadHomeProducts() {
   } catch (e) { console.error('Products load failed:', e); }
 }
 
+let currentSearchQuery = '';
+
+function onShopSearch(query) {
+  currentSearchQuery = (query || '').toLowerCase().trim();
+  renderFilteredShop();
+}
+
+function renderFilteredShop() {
+  const checked = [...document.querySelectorAll('#shopCategoryFilters input:checked')];
+  const categories = checked.map(c => c.dataset.category).filter(c => c !== 'all');
+
+  let filtered = allProducts;
+  if (categories.length && !checked.find(c => c.dataset.category === 'all')?.checked) {
+    filtered = filtered.filter(p =>
+      categories.some(cat =>
+        (p.category_name || '').toLowerCase() === cat.toLowerCase()
+      )
+    );
+  }
+
+  if (currentSearchQuery) {
+    filtered = filtered.filter(p =>
+      (p.name && p.name.toLowerCase().includes(currentSearchQuery)) ||
+      (p.tamil_name && p.tamil_name.toLowerCase().includes(currentSearchQuery)) ||
+      (p.sku && p.sku.toLowerCase().includes(currentSearchQuery)) ||
+      (p.metal_composition && p.metal_composition.toLowerCase().includes(currentSearchQuery)) ||
+      (p.material && p.material.toLowerCase().includes(currentSearchQuery)) ||
+      (p.description && p.description.toLowerCase().includes(currentSearchQuery))
+    );
+  }
+
+  const countEl = document.getElementById('shopResultsCount');
+  if (countEl) {
+    countEl.innerHTML = `Showing <strong>${filtered.length}</strong> of ${allProducts.length} items`;
+  }
+
+  const gridEl = document.getElementById('shopGrid');
+  if (gridEl) {
+    gridEl.innerHTML = filtered.length
+      ? filtered.map(buildProductCard).join('')
+      : '<p class="loading-msg" style="padding:40px;text-align:center;color:#888;">No jewellery found matching your search. Try another category or search term.</p>';
+  }
+  if (typeof observeFadeUps === 'function') observeFadeUps();
+}
+
 async function loadShopProducts() {
   const sort = document.getElementById('shopSort')?.value || '';
   let sortParam = '';
@@ -71,45 +117,21 @@ async function loadShopProducts() {
   else if (sort.includes('High to Low')) sortParam = 'price_desc';
   else if (sort.includes('Newest')) sortParam = 'newest';
 
-  const checked = [...document.querySelectorAll('#shopCategoryFilters input:checked')];
-  const categories = checked.map(c => c.dataset.category).filter(c => c !== 'all');
-
   try {
     let url = API + '/products' + (sortParam ? '?sort=' + sortParam : '');
     const res = await fetch(url);
     allProducts = await res.json();
-
-    let filtered = allProducts;
-    if (categories.length && !checked.find(c => c.dataset.category === 'all')?.checked) {
-      filtered = allProducts.filter(p =>
-        categories.some(cat =>
-          (p.category_name || '').toLowerCase() === cat.toLowerCase()
-        )
-      );
-    }
-
-    const countEl = document.getElementById('shopResultsCount');
-    if (countEl) {
-      countEl.innerHTML = `Showing <strong>${filtered.length}</strong> of ${allProducts.length} products`;
-    }
-
-    const gridEl = document.getElementById('shopGrid');
-    if (gridEl) {
-      gridEl.innerHTML = filtered.length
-        ? filtered.map(buildProductCard).join('')
-        : '<p class="loading-msg">No products found.</p>';
-    }
-    if (typeof observeFadeUps === 'function') observeFadeUps();
+    renderFilteredShop();
   } catch (e) { console.error('Shop load failed:', e); }
 }
 
-function filterShop() { loadShopProducts(); }
+function filterShop() { renderFilteredShop(); }
 
 function filterByCategory(cat) {
   document.querySelectorAll('#shopCategoryFilters input').forEach(c => {
     c.checked = c.dataset.category === cat;
   });
-  loadShopProducts();
+  renderFilteredShop();
 }
 
 async function loadProductDetail(id) {
@@ -128,10 +150,38 @@ async function loadProductDetail(id) {
     
     const nameEl = document.getElementById('detailName');
     if (nameEl) nameEl.textContent = p.name;
+
+    const tamilEl = document.getElementById('detailTamilName');
+    if (tamilEl) tamilEl.textContent = p.tamil_name || '';
+
+    const compEl = document.getElementById('detailCompositionText');
+    if (compEl) compEl.textContent = p.metal_composition || p.material || 'Traditional Five Metals (Panchaloha) composition';
+
+    const weightEl = document.getElementById('detailWeightText');
+    if (weightEl) weightEl.textContent = p.weight ? `Net Weight: ${p.weight}g` : '';
+
+    const sizeBox = document.getElementById('detailSizeBox');
+    const sizeOptions = document.getElementById('detailSizeOptions');
+    if (sizeOptions) {
+      if (p.available_sizes) {
+        const sizes = p.available_sizes.split(',').map(s => s.trim()).filter(Boolean);
+        if (sizes.length) {
+          selectedDetailSize = sizes[0];
+          sizeOptions.innerHTML = sizes.map((s, i) =>
+            `<button type="button" class="size-btn${i === 0 ? ' active' : ''}" onclick="selectDetailSize(this, '${s}')">${s}</button>`
+          ).join('');
+          if (sizeBox) sizeBox.style.display = 'block';
+        } else if (sizeBox) {
+          sizeBox.style.display = 'none';
+        }
+      } else if (sizeBox) {
+        sizeBox.style.display = 'none';
+      }
+    }
     
     const metaEl = document.getElementById('detailMeta');
     if (metaEl) {
-      metaEl.innerHTML = [p.material, p.purity, p.sku ? 'SKU: ' + p.sku : ''].filter(Boolean).map(s => `<span>${s}</span>`).join(' · ');
+      metaEl.innerHTML = [p.material, p.purity, 'ID: ' + (p.sku || ('DJ-' + p.id))].filter(Boolean).map(s => `<span>${s}</span>`).join(' · ');
     }
     
     const descEl = document.getElementById('detailDesc');
@@ -289,3 +339,27 @@ function updateProductSeo(p) {
   };
   script.textContent = JSON.stringify(structuredData);
 }
+
+let selectedDetailQty = 1;
+let selectedDetailSize = '';
+
+function changeDetailQty(delta) {
+  selectedDetailQty = Math.max(1, Math.min(50, selectedDetailQty + delta));
+  const input = document.getElementById('detailQtyInput');
+  if (input) input.value = selectedDetailQty;
+}
+
+function selectDetailSize(btn, size) {
+  selectedDetailSize = size;
+  document.querySelectorAll('#detailSizeOptions .size-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function orderCurrentProductWhatsApp() {
+  if (!currentProduct) return;
+  const size = selectedDetailSize || document.querySelector('#detailSizeOptions .size-btn.active')?.textContent || '';
+  if (window.DURGAS_WHATSAPP) {
+    window.DURGAS_WHATSAPP.openProductOrder(currentProduct, selectedDetailQty);
+  }
+}
+

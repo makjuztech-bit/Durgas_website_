@@ -317,16 +317,16 @@ exports.listOrders = async (req, res) => {
     const countResult = await db.query(
       `SELECT COUNT(*) AS total
        FROM orders o
-       JOIN users u ON o.user_id = u.id
+       LEFT JOIN users u ON o.user_id = u.id
        WHERE ${where}`,
       params
     );
     const total = Number(countResult[0].total);
 
     const orders = await db.query(
-      `SELECT o.*, u.full_name, u.email, u.phone
+      `SELECT o.*, COALESCE(o.customer_name, u.full_name, 'Guest Customer') AS full_name, u.email, COALESCE(o.shipping_phone, u.phone) AS phone
        FROM orders o
-       JOIN users u ON o.user_id = u.id
+       LEFT JOIN users u ON o.user_id = u.id
        WHERE ${where}
        ORDER BY ${orderBy}
        LIMIT ? OFFSET ?`,
@@ -371,9 +371,9 @@ exports.getOrderDetail = async (req, res) => {
 
   try {
     const orders = await db.query(
-      `SELECT o.*, u.full_name, u.email, u.phone
+      `SELECT o.*, COALESCE(o.customer_name, u.full_name, 'Guest Customer') AS full_name, u.email, COALESCE(o.shipping_phone, u.phone) AS phone
        FROM orders o
-       JOIN users u ON o.user_id = u.id
+       LEFT JOIN users u ON o.user_id = u.id
        WHERE o.id = ?`,
       [orderId]
     );

@@ -7,6 +7,7 @@ router.post('/webhook', orderController.razorpayWebhook);
 router.post('/payment', auth, orderController.createRazorpayOrder);
 router.post('/payment/failure', auth, orderController.paymentFailed);
 router.post('/verify', auth, orderController.verifyRazorpayOrder);
+router.post('/whatsapp', orderController.recordWhatsAppInquiry);
 router.post('/', auth, orderController.createOrder);
 router.get('/', auth, orderController.getOrders);
 router.get('/:id', auth, orderController.getOrderById);

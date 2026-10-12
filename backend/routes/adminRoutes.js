@@ -56,6 +56,10 @@ router.get('/customers', adminController.listCustomers);
 // GET /api/admin/customers/:id
 router.get('/customers/:id', adminController.getCustomerDetail);
 
+// ─── Settings ────────────────────────────────────────────────────────────────
+router.get('/settings', require('../controllers/settingsController').getSettings);
+router.put('/settings', require('../controllers/settingsController').updateSettings);
+
 // ─── Reviews ─────────────────────────────────────────────────────────────────
 // GET /api/admin/reviews?status=&search=&page=&limit=
 router.get('/reviews', adminController.listReviews);

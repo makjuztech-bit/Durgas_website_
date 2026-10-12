@@ -16,12 +16,12 @@ exports.getCategories = (req, res) => {
 };
 
 exports.addCategory = (req, res) => {
-  const { name, slug, image, description } = req.body;
+  const { name, tamil_name, slug, image, description } = req.body;
   const categorySlug = slug || name.toLowerCase().replace(/\s+/g, '-');
 
   db.query(
-    'INSERT INTO categories (name, slug, image, description) VALUES (?, ?, ?, ?)',
-    [name, categorySlug, image, description],
+    'INSERT INTO categories (name, tamil_name, slug, image, description) VALUES (?, ?, ?, ?, ?)',
+    [name, tamil_name || null, categorySlug, image, description],
     (err, result) => {
       if (err) return res.status(500).json({ message: err.message });
       res.status(201).json({ message: 'Category created', id: result.insertId });
@@ -30,11 +30,11 @@ exports.addCategory = (req, res) => {
 };
 
 exports.updateCategory = (req, res) => {
-  const { name, slug, image, description } = req.body;
+  const { name, tamil_name, slug, image, description } = req.body;
 
   db.query(
-    'UPDATE categories SET name = ?, slug = ?, image = ?, description = ? WHERE id = ?',
-    [name, slug, image, description, req.params.id],
+    'UPDATE categories SET name = ?, tamil_name = ?, slug = ?, image = ?, description = ? WHERE id = ?',
+    [name, tamil_name || null, slug, image, description, req.params.id],
     (err, result) => {
       if (err) return res.status(500).json({ message: err.message });
       if (!result.affectedRows) return res.status(404).json({ message: 'Category not found' });

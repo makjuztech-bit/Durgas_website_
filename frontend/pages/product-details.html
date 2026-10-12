@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/products.css">
   <link rel="stylesheet" href="/css/cart.css">
+  <link rel="stylesheet" href="/css/whatsapp.css">
 </head>
 <body>
 <div class="cursor" id="cursor"></div>
@@ -96,39 +97,53 @@
       <div class="product-detail-info">
         <div class="product-detail-meta" id="detailMeta"></div>
         <h1 class="product-detail-name" id="detailName"></h1>
+        <p class="detail-tamil-name" id="detailTamilName" style="color:var(--maroon,#6B1724);font-size:1.15rem;font-weight:500;margin-top:-6px;margin-bottom:10px"></p>
         <div class="product-detail-rating">
           <div class="detail-stars" id="detailStars"></div>
           <span class="rating-count" id="detailRatingCount"></span>
         </div>
         <div class="product-detail-price" id="detailPrice"></div>
+
+        <!-- Verified Metal Composition Details -->
+        <div class="composition-card" id="detailCompositionCard" style="background:#FAF6EF;border:1px solid #DFD7C7;border-left:4px solid #D4AF37;padding:12px 16px;border-radius:4px;margin:16px 0">
+          <p style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;color:#8B6914;font-weight:600;margin-bottom:4px">Verified Metal Composition / உலோக விபரம்</p>
+          <p id="detailCompositionText" style="font-size:0.92rem;color:#222;font-weight:500;line-height:1.4"></p>
+          <p id="detailWeightText" style="font-size:0.8rem;color:#666;margin-top:6px;font-weight:500"></p>
+        </div>
+
         <p class="product-desc" id="detailDesc"></p>
-        <div class="product-options">
-          <p class="option-label">Ring Size</p>
-          <div class="size-options">
-            <button class="size-btn">5</button>
-            <button class="size-btn">6</button>
-            <button class="size-btn active">7</button>
-            <button class="size-btn">8</button>
-            <button class="size-btn">9</button>
+
+        <!-- Dynamic Size Picker -->
+        <div class="product-options" id="detailSizeBox" style="display:none">
+          <p class="option-label">Available Sizes / அளவு</p>
+          <div class="size-options" id="detailSizeOptions"></div>
+        </div>
+
+        <!-- Quantity Selector -->
+        <div style="display:flex;align-items:center;gap:14px;margin:18px 0">
+          <span style="font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:#666;font-weight:500">Quantity:</span>
+          <div class="wa-qty-picker">
+            <button type="button" onclick="changeDetailQty(-1)">−</button>
+            <input type="number" id="detailQtyInput" value="1" min="1" max="50" readonly>
+            <button type="button" onclick="changeDetailQty(1)">+</button>
           </div>
         </div>
-        <div class="product-options">
-          <p class="option-label">Metal</p>
-          <div class="material-options">
-            <button class="mat-btn active"><div class="mat-dot" style="background:#C9A84C"></div> 18K Yellow Gold</button>
-            <button class="mat-btn"><div class="mat-dot" style="background:#e8b4b8"></div> Rose Gold</button>
-            <button class="mat-btn"><div class="mat-dot" style="background:#e8e8e8"></div> White Gold</button>
-          </div>
-        </div>
-        <div class="detail-actions">
-          <button class="detail-add-cart" id="detailAddCart">Add to Bag</button>
+
+        <!-- Action Buttons -->
+        <div class="detail-actions" style="display:flex;gap:12px;flex-wrap:wrap">
+          <button class="detail-add-cart" id="detailAddCart" style="flex:1;min-width:160px">Add to Bag</button>
+          <button class="btn-whatsapp-order" id="detailOrderWhatsApp" onclick="orderCurrentProductWhatsApp()" style="flex:1.4;min-width:210px;padding:14px 20px;font-size:0.88rem">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.885-9.888 9.885m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Order on WhatsApp (7448882444)
+          </button>
           <button class="detail-wishlist" id="detailWishlist" onclick="addToWishlistDetail()">♡</button>
         </div>
+
         <div class="product-perks">
-          <div class="perk"><span class="perk-icon">✓</span> Free Shipping</div>
-          <div class="perk"><span class="perk-icon">✓</span> IGI Certified</div>
-          <div class="perk"><span class="perk-icon">✓</span> Lifetime Polish</div>
-          <div class="perk"><span class="perk-icon">✓</span> Free Engraving</div>
+          <div class="perk"><span class="perk-icon">✓</span> Free Safe Delivery</div>
+          <div class="perk"><span class="perk-icon">✓</span> Five Metals Agamic Ratio</div>
+          <div class="perk"><span class="perk-icon">✓</span> Direct WhatsApp Support</div>
+          <div class="perk"><span class="perk-icon">✓</span> Shop Certified Purity</div>
         </div>
       </div>
     </div>
@@ -250,6 +265,7 @@
   </div>
 </footer>
 
+<script src="/js/whatsapp.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/auth.js"></script>
 <script src="/js/cart.js"></script>

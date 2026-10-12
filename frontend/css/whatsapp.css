@@ -1,0 +1,470 @@
+/* ==========================================================================
+   DURGAS JEWELLERY — WhatsApp Ordering & South Indian Heritage Styling
+   ========================================================================== */
+
+:root {
+  --wa-green: #25D366;
+  --wa-green-dark: #128C7E;
+  --wa-green-hover: #1EBE5D;
+  --maroon: #6B1724;
+  --maroon-dark: #4A0E17;
+  --maroon-light: #8A2536;
+  --heritage-gold: #D4AF37;
+  --gold-gradient: linear-gradient(135deg, #D4AF37 0%, #AA771C 100%);
+  --wa-gradient: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+}
+
+/* --- WhatsApp Action Buttons --- */
+.btn-whatsapp-order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 18px;
+  background: var(--wa-gradient);
+  color: #FFFFFF !important;
+  font-family: var(--font-sans, 'Jost', sans-serif);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.28);
+  margin-top: 8px;
+  text-decoration: none;
+}
+
+.btn-whatsapp-order:hover {
+  background: linear-gradient(135deg, #1EBE5D 0%, #0E7468 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(37, 211, 102, 0.4);
+}
+
+.btn-whatsapp-order svg {
+  flex-shrink: 0;
+}
+
+/* Secondary / Outline WhatsApp Button */
+.btn-whatsapp-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 16px;
+  background: transparent;
+  color: var(--wa-green-dark) !important;
+  border: 1.5px solid var(--wa-green);
+  font-family: var(--font-sans, 'Jost', sans-serif);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  margin-top: 6px;
+}
+
+.btn-whatsapp-outline:hover {
+  background: rgba(37, 211, 102, 0.08);
+  border-color: var(--wa-green-dark);
+}
+
+/* Product Card Actions Container */
+.product-card-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/* --- Metal Composition & Tamil Meta in Cards --- */
+.product-tamil-name {
+  font-size: 0.85rem;
+  color: var(--maroon);
+  font-weight: 500;
+  margin-top: 2px;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.product-sku-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: #777;
+  background: #F0ECE4;
+  padding: 2px 7px;
+  border-radius: 2px;
+  margin-bottom: 6px;
+}
+
+.product-metal-badge {
+  font-size: 0.72rem;
+  color: var(--maroon-light);
+  background: rgba(107, 23, 36, 0.06);
+  border: 1px solid rgba(107, 23, 36, 0.15);
+  padding: 3px 8px;
+  border-radius: 3px;
+  margin-bottom: 8px;
+  display: inline-block;
+  line-height: 1.3;
+}
+
+/* --- Floating WhatsApp Button --- */
+.wa-floating-btn {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 60px;
+  height: 60px;
+  background: var(--wa-gradient);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45);
+  z-index: 9999;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+  text-decoration: none;
+}
+
+.wa-floating-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 26px rgba(37, 211, 102, 0.6);
+}
+
+.wa-floating-tooltip {
+  position: absolute;
+  right: 70px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #111;
+  color: #fff;
+  font-size: 0.75rem;
+  font-family: var(--font-sans, 'Jost', sans-serif);
+  padding: 6px 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.wa-floating-btn:hover .wa-floating-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(-4px);
+}
+
+/* --- WhatsApp Modals --- */
+.wa-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 13, 13, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.wa-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.wa-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -46%) scale(0.96);
+  width: 90%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #FFFDF9;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+  z-index: 10001;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: var(--font-sans, 'Jost', sans-serif);
+}
+
+.wa-modal.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.wa-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  background: #FAF6EF;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.wa-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wa-icon-bubble {
+  font-size: 1.4rem;
+}
+
+.wa-brand h3 {
+  font-family: var(--font-serif, 'Cormorant Garamond', serif);
+  font-size: 1.35rem;
+  color: var(--maroon);
+  font-weight: 500;
+  margin: 0;
+}
+
+.wa-brand p {
+  font-size: 0.72rem;
+  color: #777;
+  margin: 0;
+}
+
+.wa-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: #888;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.wa-close-btn:hover {
+  color: #222;
+}
+
+.wa-modal-body {
+  padding: 22px 24px;
+}
+
+.wa-product-summary {
+  display: flex;
+  gap: 14px;
+  padding: 12px;
+  background: #F9F5EC;
+  border-radius: 6px;
+  margin-bottom: 18px;
+  border-left: 3px solid var(--heritage-gold);
+}
+
+.wa-summary-img {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.wa-summary-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.wa-summary-info h4 {
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 2px;
+  color: #111;
+}
+
+.wa-tamil-title {
+  font-size: 0.8rem;
+  color: var(--maroon);
+  margin-bottom: 4px;
+}
+
+.wa-sku-pill {
+  font-size: 0.65rem;
+  background: #ECE5D8;
+  color: #555;
+  padding: 1px 6px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.wa-metal-pill {
+  font-size: 0.72rem;
+  color: #555;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.wa-price-highlight {
+  font-family: var(--font-serif, 'Cormorant Garamond', serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--maroon);
+  display: block;
+}
+
+.wa-form-row {
+  margin-bottom: 14px;
+}
+
+.wa-form-row label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.wa-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #DFD7C7;
+  border-radius: 4px;
+  background: #FFFFFF;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: #222;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.wa-input:focus {
+  outline: none;
+  border-color: var(--heritage-gold);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+}
+
+.wa-qty-picker {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #DFD7C7;
+  border-radius: 4px;
+  background: #FFF;
+}
+
+.wa-qty-picker button {
+  width: 38px;
+  height: 38px;
+  background: #FAF6EF;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: #333;
+}
+
+.wa-qty-picker input {
+  width: 50px;
+  height: 38px;
+  text-align: center;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.wa-pricing-box {
+  background: #FAF6EF;
+  padding: 14px 16px;
+  border-radius: 6px;
+  margin-top: 16px;
+  margin-bottom: 18px;
+  border: 1px dashed rgba(212, 175, 55, 0.4);
+}
+
+.wa-price-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  color: #555;
+}
+
+.wa-total-row {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--maroon);
+  padding-top: 6px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  margin-bottom: 8px;
+}
+
+.wa-note {
+  display: block;
+  font-size: 0.72rem;
+  color: #27ae60;
+  margin-top: 4px;
+}
+
+.wa-submit-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--wa-gradient);
+  color: #FFF;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+}
+
+.wa-submit-btn:hover {
+  background: linear-gradient(135deg, #1EBE5D 0%, #0E7468 100%);
+  transform: translateY(-1px);
+}
+
+.wa-cart-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  font-size: 0.85rem;
+}
+
+.wa-cart-summary-item img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .wa-floating-btn {
+    bottom: 20px;
+    right: 20px;
+    width: 52px;
+    height: 52px;
+  }
+  .wa-modal {
+    width: 95%;
+    padding: 0;
+  }
+  .wa-modal-body {
+    padding: 16px;
+  }
+}
