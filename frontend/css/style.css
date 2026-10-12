@@ -31,37 +31,13 @@ body {
   background: var(--white);
   color: var(--text);
   overflow-x: hidden;
-  cursor: none;
+  cursor: auto;
 }
 
-/* Custom Cursor */
-.cursor {
-  position: fixed;
-  width: 8px;
-  height: 8px;
-  background: var(--gold);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9999;
-  transform: translate(-50%, -50%);
-  transition: transform 0.1s, width 0.3s, height 0.3s, opacity 0.3s;
-}
-
+/* Custom Cursor (hidden to keep standard mouse pointer reliable) */
+.cursor,
 .cursor-ring {
-  position: fixed;
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--gold);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9998;
-  transform: translate(-50%, -50%);
-  transition: transform 0.15s, width 0.3s, height 0.3s, opacity 0.3s;
-  opacity: 0.6;
-}
-
-body:hover .cursor {
-  opacity: 1;
+  display: none !important;
 }
 
 /* Scrollbar */
@@ -101,14 +77,16 @@ nav {
   position: sticky;
   top: 0;
   z-index: 90;
-  background: rgba(250, 250, 247, 0.95);
+  background: rgba(250, 250, 247, 0.98);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--beige-dark);
-  padding: 0 5vw;
+  padding: 0 4vw;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 72px;
+  gap: 16px;
+  min-height: 72px;
+  height: auto;
   transition: var(--transition);
 }
 
@@ -123,7 +101,7 @@ nav.scrolled {
   letter-spacing: 0.15em;
   color: var(--black);
   text-decoration: none;
-  cursor: none;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
 }
@@ -140,9 +118,15 @@ nav.scrolled {
 
 .nav-links {
   display: flex;
-  gap: 2.5rem;
+  gap: 1.8rem;
   list-style: none;
   align-items: center;
+}
+
+@media (max-width: 1150px) {
+  .nav-links {
+    gap: 1rem;
+  }
 }
 
 .nav-links a {
@@ -153,7 +137,7 @@ nav.scrolled {
   text-decoration: none;
   font-weight: 400;
   position: relative;
-  cursor: none;
+  cursor: pointer;
   transition: color var(--transition);
 }
 
@@ -185,7 +169,7 @@ nav.scrolled {
 .nav-icon-btn {
   background: none;
   border: none;
-  cursor: none;
+  cursor: pointer;
   color: var(--text);
   font-size: 1.1rem;
   transition: color var(--transition);
@@ -217,7 +201,7 @@ nav.scrolled {
   display: none;
   flex-direction: column;
   gap: 5px;
-  cursor: none;
+  cursor: pointer;
   background: none;
   border: none;
 }
@@ -254,7 +238,7 @@ nav.scrolled {
   text-decoration: none;
   letter-spacing: 0.1em;
   transition: color var(--transition);
-  cursor: none;
+  cursor: pointer;
 }
 
 .mobile-nav a:hover {
@@ -269,24 +253,25 @@ nav.scrolled {
   border: none;
   color: var(--white);
   font-size: 1.5rem;
-  cursor: none;
+  cursor: pointer;
 }
 
 /* Hero */
 .hero {
-  height: 100vh;
-  min-height: 600px;
+  min-height: 520px;
+  height: auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
   position: relative;
   overflow: hidden;
+  background: #FFFDF9;
 }
 
 .hero-content {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 80px 5vw 80px 8vw;
+  padding: 60px 5vw 60px 8vw;
   position: relative;
   z-index: 2;
 }
@@ -347,7 +332,7 @@ nav.scrolled {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   border: none;
-  cursor: none;
+  cursor: pointer;
   text-decoration: none;
   display: inline-block;
   transition: var(--transition);
@@ -382,7 +367,7 @@ nav.scrolled {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   border: 1px solid var(--black);
-  cursor: none;
+  cursor: pointer;
   text-decoration: none;
   display: inline-block;
   transition: var(--transition);
@@ -420,10 +405,12 @@ nav.scrolled {
 .hero-badge {
   position: absolute;
   bottom: 48px;
-  left: -16px;
+  left: 24px;
   background: var(--white);
-  padding: 20px 28px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+  padding: 18px 24px;
+  border-radius: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
   font-family: var(--font-serif);
 }
 
@@ -453,7 +440,7 @@ nav.scrolled {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--gray);
-  cursor: none;
+  cursor: pointer;
 }
 
 .scroll-line {
@@ -549,7 +536,7 @@ section {
   text-transform: uppercase;
   color: var(--gold);
   text-decoration: none;
-  cursor: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -613,13 +600,16 @@ section {
 .testi-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
+  gap: 20px;
 }
 
 .testi-card {
   background: var(--white);
-  padding: 40px 36px;
+  padding: 36px 30px;
   position: relative;
+  border-radius: 8px;
+  border: 1px solid #EAE5D9;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.03);
 }
 
 .testi-quote {
@@ -752,7 +742,7 @@ section {
   aspect-ratio: 1;
   overflow: hidden;
   position: relative;
-  cursor: none;
+  cursor: pointer;
   background: var(--beige);
 }
 
@@ -844,7 +834,7 @@ section {
   font-size: 0.65rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  cursor: none;
+  cursor: pointer;
   font-family: var(--font-sans);
   transition: background var(--transition);
 }
@@ -897,7 +887,7 @@ footer {
   color: rgba(255, 255, 255, 0.45);
   font-size: 0.8rem;
   text-decoration: none;
-  cursor: none;
+  cursor: pointer;
   transition: var(--transition);
 }
 
@@ -928,7 +918,7 @@ footer {
   font-size: 0.82rem;
   color: rgba(255, 255, 255, 0.4);
   text-decoration: none;
-  cursor: none;
+  cursor: pointer;
   transition: color var(--transition);
 }
 
@@ -1013,7 +1003,7 @@ footer {
   background: none;
   border: none;
   font-size: 1.2rem;
-  cursor: none;
+  cursor: pointer;
   color: var(--gray);
 }
 
@@ -1039,14 +1029,9 @@ footer {
 
 /* Animate in */
 .fade-up {
-  opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.7s ease, transform 0.7s ease;
-}
-
-.fade-up.visible {
   opacity: 1;
   transform: translateY(0);
+  transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
 /* Responsive */
@@ -1068,6 +1053,10 @@ footer {
 }
 
 @media (max-width: 900px) {
+  section {
+    padding: 60px 5vw;
+  }
+
   .hero {
     grid-template-columns: 1fr;
   }
@@ -1149,6 +1138,10 @@ footer {
 }
 
 @media (max-width: 580px) {
+  section {
+    padding: 40px 5vw;
+  }
+
   .cat-grid {
     grid-template-columns: 1fr 1fr;
   }

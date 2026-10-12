@@ -43,18 +43,9 @@ function closeMobileNav() {
   if (mob) mob.classList.remove('open'); 
 }
 
-// Intersection Observer for fade-up animations
+// Fade-up animations
 function observeFadeUps() {
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach((entry, i) => {
-      if (entry.isIntersecting) {
-        setTimeout(() => entry.target.classList.add('visible'), i * 80);
-        obs.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.12 });
-  document.querySelectorAll('.fade-up:not(.visible)').forEach(el => obs.observe(el));
-  bindCursorHover();
+  document.querySelectorAll('.fade-up').forEach(el => el.classList.add('visible'));
 }
 
 // Contact form submission

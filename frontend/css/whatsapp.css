@@ -520,40 +520,47 @@
 .fk-category-strip {
   background: #FFFFFF;
   border-bottom: 1px solid #EAE5D9;
-  padding: 14px 5vw;
+  padding: 12px 5vw;
   box-shadow: 0 2px 8px rgba(0,0,0,0.03);
   position: relative;
-  z-index: 10;
+  z-index: 80;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
+.fk-category-strip::-webkit-scrollbar {
+  height: 4px;
+}
+
+.fk-category-strip::-webkit-scrollbar-thumb {
+  background: #D4AF37;
+  border-radius: 4px;
+}
+
+.fk-category-strip-inner,
 .fk-cat-container {
-  display: flex;
+  display: flex !important;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  justify-content: flex-start;
+  gap: 18px;
+  min-width: max-content;
   max-width: 1400px;
   margin: 0 auto;
 }
 
-.fk-cat-container::-webkit-scrollbar {
-  display: none;
-}
-
 .fk-cat-item {
-  display: flex;
+  display: inline-flex !important;
   flex-direction: column;
   align-items: center;
   gap: 6px;
   text-decoration: none;
   color: #333333;
-  min-width: 80px;
+  min-width: 78px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
   padding: 4px 6px;
   border-radius: 6px;
+  text-align: center;
 }
 
 .fk-cat-item:hover {
@@ -561,9 +568,37 @@
   transform: translateY(-2px);
 }
 
+.fk-cat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1.5px solid #EADBBE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FAF6EF;
+  font-size: 1.3rem;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.fk-cat-item:hover .fk-cat-icon {
+  border-color: #D4AF37;
+  background: #FFFDF9;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.28);
+  transform: scale(1.08);
+}
+
+.fk-cat-item span {
+  font-size: 0.74rem;
+  font-weight: 500;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
 .fk-cat-img-box {
-  width: 54px;
-  height: 54px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: 2px solid #EADBBE;
   overflow: hidden;
@@ -574,74 +609,90 @@
   transition: all 0.2s ease;
 }
 
-.fk-cat-item:hover .fk-cat-img-box {
-  border-color: #D4AF37;
-  box-shadow: 0 4px 10px rgba(212, 175, 55, 0.25);
-}
-
 .fk-cat-img-box img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.fk-cat-title {
-  font-size: 0.76rem;
-  font-weight: 500;
-  text-align: center;
-  white-space: nowrap;
-}
-
 /* Top Header Flipkart-style Search Bar */
 .fk-header-search {
   flex: 1;
-  max-width: 480px;
-  margin: 0 24px;
+  max-width: 460px;
+  margin: 0 20px;
   position: relative;
-}
-
-.fk-search-input-wrap {
   display: flex;
   align-items: center;
   background: #F8F5EE;
   border: 1.5px solid #DFD7C7;
   border-radius: 24px;
-  padding: 4px 6px 4px 16px;
+  padding: 3px 6px 3px 16px;
   transition: all 0.25s ease;
 }
 
-.fk-search-input-wrap:focus-within {
+.fk-header-search:focus-within {
   border-color: #D4AF37;
   background: #FFFFFF;
   box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
 }
 
-.fk-search-input {
+.fk-header-search input {
   border: none;
   background: transparent;
   outline: none;
   width: 100%;
   font-family: var(--font-sans, 'Jost', sans-serif);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   color: #222;
+  padding: 6px 0;
 }
 
-.fk-search-btn {
+.fk-header-search button {
   background: #D4AF37;
   border: none;
   color: #FFFFFF;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  flex-shrink: 0;
   transition: background 0.2s ease;
+  font-size: 0.85rem;
 }
 
-.fk-search-btn:hover {
+.fk-header-search button:hover {
   background: #AA771C;
+}
+
+@media (max-width: 900px) {
+  .fk-header-search {
+    margin: 0 10px;
+    max-width: 260px;
+  }
+}
+
+@media (max-width: 650px) {
+  .fk-header-search {
+    display: none;
+  }
+}
+
+/* Showroom Trust Bar */
+.fk-trust-bar,
+.trust-bar {
+  background: #FAF6EF;
+  border-bottom: 1px solid #DFD7C7;
+  padding: 10px 5vw;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 0.8rem;
+  color: #444;
 }
 
 /* Trust Bar */

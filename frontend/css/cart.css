@@ -17,7 +17,7 @@
   display: flex; justify-content: space-between; align-items: center;
 }
 .cart-title { font-family: var(--font-serif); font-size: 1.4rem; font-weight: 300; }
-.cart-close { background: none; border: none; font-size: 1.2rem; cursor: none; color: var(--gray); }
+.cart-close { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--gray); }
 .cart-items { flex: 1; overflow-y: auto; padding: 20px 28px; }
 .cart-item {
   display: flex; gap: 16px; padding: 16px 0;
@@ -28,10 +28,10 @@
 .cart-item-name { font-family: var(--font-serif); font-size: 0.95rem; margin-bottom: 4px; }
 .cart-item-meta { font-size: 0.7rem; color: var(--gray); letter-spacing: 0.08em; }
 .cart-item-price { font-size: 0.9rem; font-weight: 500; margin-top: 8px; }
-.cart-item-remove { background: none; border: none; color: var(--gray); font-size: 0.75rem; cursor: none; margin-top: 8px; display: block; letter-spacing: 0.1em; text-transform: uppercase; }
+.cart-item-remove { background: none; border: none; color: var(--gray); font-size: 0.75rem; cursor: pointer; margin-top: 8px; display: block; letter-spacing: 0.1em; text-transform: uppercase; }
 .cart-footer { padding: 20px 28px 32px; border-top: 1px solid var(--beige-dark); }
 .cart-total { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 500; margin-bottom: 20px; }
-.cart-checkout { width: 100%; background: var(--black); color: var(--white); border: none; padding: 16px; font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; cursor: none; font-family: var(--font-sans); transition: background var(--transition); }
+.cart-checkout { width: 100%; background: var(--black); color: var(--white); border: none; padding: 16px; font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; font-family: var(--font-sans); transition: background var(--transition); }
 .cart-checkout:hover { background: var(--gold); }
 .cart-empty { text-align: center; padding: 60px 20px; }
 .cart-empty-icon { font-size: 2.5rem; color: var(--beige-dark); margin-bottom: 16px; }
