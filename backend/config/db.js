@@ -1,6 +1,12 @@
+const path = require('path');
+if (!process.env.DATABASE_URL) {
+  require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+  require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
+}
 const { Pool } = require('pg');
 const { translateSql, formatResult } = require('./sql');
 const { validateDatabaseUrl } = require('./connectionString');
+const { supabase, supabaseAdmin } = require('./supabaseClient');
 
 const connectionString = process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL || process.env.SUPABASE_DB_URL;
 if (!connectionString) {
@@ -12,7 +18,7 @@ const sslConfig = () => {
   if (process.env.DB_SSL === 'false') return false;
   if (connectionString.includes('supabase') || process.env.DB_SSL === 'true') {
     return {
-      rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
+      rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED === 'true',
     };
   }
   return false;
@@ -53,6 +59,8 @@ const executeQuery = (sql, params = [], callback) => {
 const db = {
   query: executeQuery,
   pool,
+  supabase,
+  supabaseAdmin,
   ping: () => pool.query('SELECT 1'),
   close: () => pool.end(),
   getConnection: (callback) => {

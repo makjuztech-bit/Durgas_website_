@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const compression = require('compression');
 const db = require('./config/db');
 const { createSecurityMiddleware } = require('./middleware/security');
+const { supabaseSessionMiddleware } = require('./middleware/supabaseAuth');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -74,6 +75,8 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+app.use(supabaseSessionMiddleware);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   maxAge: '7d',
