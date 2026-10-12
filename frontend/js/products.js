@@ -136,6 +136,8 @@ async function loadProductDetail(id) {
     
     const descEl = document.getElementById('detailDesc');
     if (descEl) descEl.textContent = p.description || '';
+
+    updateProductSeo(p);
     
     const starsEl = document.getElementById('detailStars');
     if (starsEl) starsEl.innerHTML = renderStars(5);
@@ -233,3 +235,57 @@ document.addEventListener('DOMContentLoaded', () => {
     loadHomeProducts();
   }
 });
+
+function updateProductSeo(p) {
+  if (!p) return;
+  document.title = `${p.name} — DURGAS Fine Jewellery`;
+  const setMeta = (property, content) => {
+    let el = document.querySelector(`meta[property="${property}"]`) || document.querySelector(`meta[name="${property}"]`);
+    if (!el) {
+      el = document.createElement('meta');
+      if (property.startsWith('og:')) el.setAttribute('property', property);
+      else el.setAttribute('name', property);
+      document.head.appendChild(el);
+    }
+    el.setAttribute('content', content);
+  };
+
+  const img = (typeof getProductImage === 'function') ? getProductImage(p) : (p.image || '');
+  const desc = p.description || `${p.name} handcrafted by DURGAS Fine Jewellery. Certified purity ${p.purity || 'BIS Hallmark'}.`;
+  setMeta('description', desc);
+  setMeta('og:title', `${p.name} — DURGAS Fine Jewellery`);
+  setMeta('og:description', desc);
+  setMeta('og:image', img);
+  setMeta('og:url', window.location.href);
+  setMeta('twitter:card', 'summary_large_image');
+
+  // Schema.org Product structured data
+  let script = document.getElementById('productJsonLd');
+  if (!script) {
+    script = document.createElement('script');
+    script.id = 'productJsonLd';
+    script.type = 'application/ld+json';
+    document.head.appendChild(script);
+  }
+  const structuredData = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": p.name,
+    "image": [img],
+    "description": desc,
+    "sku": p.sku || `DUR-${p.id}`,
+    "brand": {
+      "@type": "Brand",
+      "name": "DURGAS"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": window.location.href,
+      "priceCurrency": "INR",
+      "price": p.price,
+      "availability": p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "itemCondition": "https://schema.org/NewCondition"
+    }
+  };
+  script.textContent = JSON.stringify(structuredData);
+}

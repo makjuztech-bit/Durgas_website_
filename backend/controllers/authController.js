@@ -31,7 +31,7 @@ exports.register = async (req, res) => {
       [full_name.trim(), email.trim().toLowerCase(), hashed, phone?.trim() || null, 'customer'],
       (err, result) => {
         if (err) {
-          if (err.code === 'ER_DUP_ENTRY') {
+          if (err.code === '23505') {
             return res.status(409).json({ message: 'Email already registered.' });
           }
           return res.status(500).json({ message: err.message });

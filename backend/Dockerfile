@@ -1,0 +1,31 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Set non-root user for security
+RUN chown -R node:node /app
+USER node
+
+# Only copy necessary files from builder
+COPY --from=builder --chown=node:node /app/package*.json ./
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/app.js ./
+COPY --from=builder --chown=node:node /app/config ./config
+COPY --from=builder --chown=node:node /app/controllers ./controllers
+COPY --from=builder --chown=node:node /app/middleware ./middleware
+COPY --from=builder --chown=node:node /app/routes ./routes
+COPY --from=builder --chown=node:node /app/uploads ./uploads
+
+ENV NODE_ENV=production
+
+EXPOSE 5000
+
+CMD ["npm", "start"]

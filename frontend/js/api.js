@@ -42,7 +42,7 @@ function buildProductCard(p) {
 
   return `<div class="product-card fade-up" onclick="showProductDetail(${p.id})">
     <div class="product-img">
-      <img src="${img}" alt="${p.name}">
+      <img src="${img}" alt="${p.name}" loading="lazy" decoding="async">
       ${badge}
       <div class="product-actions">
         <button class="action-btn" onclick="addToWishlist(event, ${p.id})" title="Wishlist">♡</button>

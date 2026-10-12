@@ -12,7 +12,7 @@ exports.subscribe = (req, res) => {
     [email],
     (err, result) => {
       if (err) {
-        if (err.code === 'ER_DUP_ENTRY') {
+        if (err.code === '23505') {
           return res.status(409).json({ message: 'Email already subscribed.' });
         }
         return res.status(500).json({ message: err.message });

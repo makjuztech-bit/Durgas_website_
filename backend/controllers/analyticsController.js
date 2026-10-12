@@ -5,7 +5,7 @@ exports.getDashboardStats = (req, res) => {
     totalProducts: 'SELECT COUNT(*) AS count FROM products',
     totalOrders: 'SELECT COUNT(*) AS count FROM orders',
     totalCustomers: "SELECT COUNT(*) AS count FROM users WHERE role = 'customer'",
-    totalRevenue: 'SELECT COALESCE(SUM(total_amount), 0) AS total FROM orders WHERE status != "cancelled"',
+    totalRevenue: "SELECT COALESCE(SUM(total_amount), 0) AS total FROM orders WHERE status != 'cancelled'",
   };
 
   const stats = {};

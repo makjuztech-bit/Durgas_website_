@@ -51,8 +51,9 @@ exports.updateCart = (req, res) => {
     return res.status(400).json({ message: 'Quantity must be an integer between 1 and 99.' });
   }
   db.query(
-    `UPDATE cart c JOIN products p ON p.id = c.product_id
-     SET c.quantity = ? WHERE c.id = ? AND c.user_id = ? AND p.stock >= ?`,
+    `UPDATE cart SET quantity = ?
+     WHERE id = ? AND user_id = ?
+       AND EXISTS (SELECT 1 FROM products p WHERE p.id = cart.product_id AND p.stock >= ?)`,
     [quantity, req.params.id, req.user.id, quantity],
     (err, result) => {
       if (err) return res.status(500).json({ message: err.message });

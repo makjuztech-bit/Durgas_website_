@@ -3,13 +3,16 @@ const bcrypt = require('bcryptjs');
 const db = require('../config/db');
 
 async function seedAdmin() {
-  const email = 'admin@durgas.com';
-  const password = 'Admin@123';
+  const email = process.env.SEED_ADMIN_EMAIL;
+  const password = process.env.SEED_ADMIN_PASSWORD;
+  if (!email || !password || password.length < 12) {
+    throw new Error('Set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD (at least 12 characters) before seeding an administrator.');
+  }
   const hashed = await bcrypt.hash(password, 10);
 
   db.query('SELECT id FROM users WHERE email = ?', [email], (err, rows) => {
     if (err) {
-      console.error('Err0r:', err.message);
+      console.error('Admin seed failed:', err.message);
       process.exit(1);
     }
 
@@ -24,12 +27,10 @@ async function seedAdmin() {
 
       (insErr) => {
         if (insErr) {
-          console.error('Err0r:', insErr.message);
+          console.error('Admin seed failed:', insErr.message);
           process.exit(1);
         }
-        console.log('Super Admin created successfully!');
-        console.log('Email:', email);
-        console.log('Password:', password);
+        console.log('Administrator created successfully.');
         process.exit(0);
       }
     );

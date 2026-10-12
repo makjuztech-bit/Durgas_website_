@@ -17,7 +17,7 @@ const formatProduct = (product, images) => ({
 });
 
 exports.getProducts = (req, res) => {
-  const { category, badge, limit, sort } = req.query;
+  const { category, badge, limit, offset, sort, search } = req.query;
   let sql = `
     SELECT p.*, c.name AS category_name
     FROM products p
@@ -34,6 +34,11 @@ exports.getProducts = (req, res) => {
     sql += ' AND p.badge = ?';
     params.push(badge);
   }
+  if (search) {
+    sql += ' AND (p.name ILIKE ? OR p.description ILIKE ? OR p.sku ILIKE ?)';
+    const searchTerm = `%${search}%`;
+    params.push(searchTerm, searchTerm, searchTerm);
+  }
 
   if (sort === 'price_asc') sql += ' ORDER BY p.price ASC';
   else if (sort === 'price_desc') sql += ' ORDER BY p.price DESC';
@@ -43,6 +48,10 @@ exports.getProducts = (req, res) => {
   if (limit) {
     sql += ' LIMIT ?';
     params.push(parseInt(limit, 10));
+    if (offset) {
+      sql += ' OFFSET ?';
+      params.push(parseInt(offset, 10));
+    }
   }
 
   db.query(sql, params, async (err, products) => {
@@ -89,6 +98,13 @@ exports.addProduct = (req, res) => {
     weight, price, old_price, stock, badge, sku,
   } = req.body;
 
+  // Server-side validation
+  if (!name || !name.trim()) return res.status(400).json({ message: 'Product name is required.' });
+  const parsedPrice = parseFloat(price);
+  if (isNaN(parsedPrice) || parsedPrice <= 0) return res.status(400).json({ message: 'Price must be a positive number.' });
+  const parsedStock = parseInt(stock, 10);
+  if (isNaN(parsedStock) || parsedStock < 0) return res.status(400).json({ message: 'Stock must be a non-negative integer.' });
+
   const sql = `
     INSERT INTO products
     (name, description, category_id, material, purity, weight, price, old_price, stock, badge, sku)
@@ -97,9 +113,26 @@ exports.addProduct = (req, res) => {
 
   db.query(
     sql,
-    [name, description, category_id, material, purity, weight, price, old_price, stock, badge, sku],
+    [
+      name.trim(),
+      description?.trim() || null,
+      category_id ? parseInt(category_id, 10) : null,
+      material?.trim() || null,
+      purity?.trim() || null,
+      weight ? parseFloat(weight) : null,
+      parsedPrice,
+      old_price ? parseFloat(old_price) : null,
+      parsedStock,
+      badge?.trim() || null,
+      sku?.trim() || null,
+    ],
     (err, result) => {
-      if (err) return res.status(500).json({ message: err.message });
+      if (err) {
+        if (err.code === '23505' && err.message.includes('sku')) {
+          return res.status(409).json({ message: 'A product with this SKU already exists.' });
+        }
+        return res.status(500).json({ message: 'Failed to create product.' });
+      }
 
       const productId = result.insertId;
       const files = req.files || [];
@@ -108,17 +141,18 @@ exports.addProduct = (req, res) => {
         return res.status(201).json({ message: 'Product created', id: productId });
       }
 
+      // Build array of [productId, path, isPrimary] rows for bulk insert
       const imageValues = files.map((file, i) => [
         productId,
-        '/uploads/' + file.filename,
-        i === 0 ? 1 : 0,
+        file.path || ('/uploads/' + file.filename),
+        i === 0,
       ]);
 
       db.query(
         'INSERT INTO product_images (product_id, image_path, is_primary) VALUES ?',
         [imageValues],
         (imgErr) => {
-          if (imgErr) return res.status(500).json({ message: imgErr.message });
+          if (imgErr) return res.status(500).json({ message: 'Product created but images failed to save.' });
           res.status(201).json({ message: 'Product created with images', id: productId });
         }
       );
@@ -132,6 +166,13 @@ exports.updateProduct = (req, res) => {
     weight, price, old_price, stock, badge, sku, is_active,
   } = req.body;
 
+  // Server-side validation
+  if (!name || !name.trim()) return res.status(400).json({ message: 'Product name is required.' });
+  const parsedPrice = parseFloat(price);
+  if (isNaN(parsedPrice) || parsedPrice <= 0) return res.status(400).json({ message: 'Price must be a positive number.' });
+  const parsedStock = parseInt(stock, 10);
+  if (isNaN(parsedStock) || parsedStock < 0) return res.status(400).json({ message: 'Stock must be a non-negative integer.' });
+
   const sql = `
     UPDATE products SET
       name = ?, description = ?, category_id = ?, material = ?,
@@ -142,9 +183,28 @@ exports.updateProduct = (req, res) => {
 
   db.query(
     sql,
-    [name, description, category_id, material, purity, weight, price, old_price, stock, badge, sku, is_active ?? 1, req.params.id],
+    [
+      name.trim(),
+      description?.trim() || null,
+      category_id ? parseInt(category_id, 10) : null,
+      material?.trim() || null,
+      purity?.trim() || null,
+      weight ? parseFloat(weight) : null,
+      parsedPrice,
+      old_price ? parseFloat(old_price) : null,
+      parsedStock,
+      badge?.trim() || null,
+      sku?.trim() || null,
+      !(is_active === false || is_active === 0 || is_active === '0' || is_active === 'false'),
+      req.params.id,
+    ],
     (err, result) => {
-      if (err) return res.status(500).json({ message: err.message });
+      if (err) {
+        if (err.code === '23505' && err.message.includes('sku')) {
+          return res.status(409).json({ message: 'A product with this SKU already exists.' });
+        }
+        return res.status(500).json({ message: 'Failed to update product.' });
+      }
       if (!result.affectedRows) return res.status(404).json({ message: 'Product not found' });
 
       const files = req.files || [];
@@ -155,15 +215,15 @@ exports.updateProduct = (req, res) => {
       const productId = req.params.id;
       const imageValues = files.map((file, i) => [
         productId,
-        '/uploads/' + file.filename,
-        i === 0 ? 1 : 0,
+        file.path || ('/uploads/' + file.filename),
+        i === 0,
       ]);
 
       db.query(
         'INSERT INTO product_images (product_id, image_path, is_primary) VALUES ?',
         [imageValues],
         (imgErr) => {
-          if (imgErr) return res.status(500).json({ message: imgErr.message });
+          if (imgErr) return res.status(500).json({ message: 'Product updated but new images failed to save.' });
           res.json({ message: 'Product updated with new images' });
         }
       );
@@ -172,11 +232,28 @@ exports.updateProduct = (req, res) => {
 };
 
 exports.deleteProduct = (req, res) => {
-  db.query('DELETE FROM products WHERE id = ?', [req.params.id], (err, result) => {
-    if (err) return res.status(500).json({ message: err.message });
-    if (!result.affectedRows) return res.status(404).json({ message: 'Product not found' });
-    res.json({ message: 'Product deleted' });
-  });
+  const productId = parseInt(req.params.id, 10);
+  if (!productId) return res.status(400).json({ message: 'Invalid product ID.' });
+
+  // Guard: check if this product exists in any order_items
+  db.query(
+    'SELECT COUNT(*) AS cnt FROM order_items WHERE product_id = ?',
+    [productId],
+    (checkErr, checkRows) => {
+      if (checkErr) return res.status(500).json({ message: 'Failed to check product references.' });
+      if (Number(checkRows[0].cnt) > 0) {
+        return res.status(409).json({
+          message: 'This product exists in customer orders and cannot be permanently deleted. Archive it instead to preserve order history.',
+          canArchive: true,
+        });
+      }
+      db.query('DELETE FROM products WHERE id = ?', [productId], (err, result) => {
+        if (err) return res.status(500).json({ message: 'Failed to delete product.' });
+        if (!result.affectedRows) return res.status(404).json({ message: 'Product not found' });
+        res.json({ message: 'Product deleted' });
+      });
+    }
+  );
 };
 
 exports.getAllProductsAdmin = (req, res) => {

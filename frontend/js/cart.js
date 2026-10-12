@@ -103,8 +103,12 @@ function renderCart() {
           </div>
         </div>`).join('');
       const total = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
+      const subtotal = Math.round((total / 1.03) * 100) / 100;
+      const gst = Math.round((total - subtotal) * 100) / 100;
       const totalEl = document.getElementById('cartTotal');
-      if (totalEl) totalEl.textContent = formatPrice(total);
+      if (totalEl) {
+        totalEl.innerHTML = `${formatPrice(total)}<br><small style="font-size:0.7rem;color:#888;font-weight:normal">Incl. ₹${gst.toLocaleString('en-IN')} (3% GST)</small>`;
+      }
       sidebarFooter.style.display = 'block';
     }
   }
@@ -130,8 +134,12 @@ function renderCart() {
           </div>
         </div>`).join('');
       const total = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
+      const subtotal = Math.round((total / 1.03) * 100) / 100;
+      const gst = Math.round((total - subtotal) * 100) / 100;
       const mainTotalEl = document.getElementById('mainCartTotal');
-      if (mainTotalEl) mainTotalEl.textContent = formatPrice(total);
+      if (mainTotalEl) {
+        mainTotalEl.innerHTML = `${formatPrice(total)}<br><small style="font-size:0.75rem;color:#888;font-weight:normal">Includes ₹${gst.toLocaleString('en-IN')} (3% GST: 1.5% CGST + 1.5% SGST)</small>`;
+      }
       mainFooter.style.display = 'block';
     }
   }

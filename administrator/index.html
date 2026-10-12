@@ -306,7 +306,7 @@ async function adminLogin() {
     });
     const data = await res.json();
     if (!res.ok) { errEl.textContent = data.message; return; }
-    if (data.user.role !== 'superadmin') { errEl.textContent = 'Admin access only.'; return; }
+    if (data.user.role !== 'superadmin' && data.user.role !== 'admin') { errEl.textContent = 'Admin access only.'; return; }
 
     token = null;
     document.getElementById('adminName').textContent = data.user.full_name;

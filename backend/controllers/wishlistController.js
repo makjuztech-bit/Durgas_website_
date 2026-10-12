@@ -12,7 +12,7 @@ exports.addToWishlist = (req, res) => {
     [req.user.id, product_id],
     (err, result) => {
       if (err) {
-        if (err.code === 'ER_DUP_ENTRY') {
+        if (err.code === '23505') {
           return res.status(409).json({ message: 'Already in wishlist' });
         }
         return res.status(500).json({ message: err.message });

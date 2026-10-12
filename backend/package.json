@@ -5,8 +5,9 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js",
-    "seed": "node scripts/seed-admin.js"
+    "dev": "node --watch app.js",
+    "seed": "node scripts/seed-admin.js",
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",
@@ -14,15 +15,18 @@
   "type": "commonjs",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^1.41.3",
+    "compression": "^1.8.2",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
-    "mysql2": "^3.22.5",
+    "multer-storage-cloudinary": "^4.0.0",
+    "nodemailer": "^10.1.0",
+    "pg": "^8.14.1",
     "razorpay": "^2.9.8"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.14"
   }
 }

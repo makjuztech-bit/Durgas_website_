@@ -3,6 +3,7 @@ const router = express.Router();
 const orderController = require('../controllers/orderController');
 const { auth, adminOnly } = require('../middleware/auth');
 
+router.post('/webhook', orderController.razorpayWebhook);
 router.post('/payment', auth, orderController.createRazorpayOrder);
 router.post('/payment/failure', auth, orderController.paymentFailed);
 router.post('/verify', auth, orderController.verifyRazorpayOrder);

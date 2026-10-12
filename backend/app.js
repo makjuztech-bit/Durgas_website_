@@ -3,20 +3,56 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const crypto = require('crypto');
+const compression = require('compression');
+const db = require('./config/db');
+const { createSecurityMiddleware } = require('./middleware/security');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const { securityHeaders, apiLimiter, authLimiter } = createSecurityMiddleware();
 
+app.use(securityHeaders);
+app.use(compression());
+
+// Strict CORS configuration
 app.use(cors({
   origin: (origin, callback) => {
-    const allowedOrigins = (process.env.FRONTEND_ORIGINS || 'http://localhost:5000').split(',').map((value) => value.trim());
+    const isProd = process.env.NODE_ENV === 'production';
+    const defaultOrigins = isProd ? [] : ['http://localhost:5000', 'http://127.0.0.1:5000', 'http://localhost:3000'];
+    const configured = (process.env.FRONTEND_ORIGINS || '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const allowedOrigins = [...defaultOrigins, ...configured];
     if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error('Origin is not allowed'));
+    return callback(new Error('Origin is not allowed by CORS policy'));
   },
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
 }));
-app.use(express.json());
+
+// Block direct access to internal, hidden, or source files
+app.use((req, res, next) => {
+  const pathLower = req.path.toLowerCase();
+  if (
+    pathLower.includes('/.env') ||
+    pathLower.includes('/.git') ||
+    pathLower.includes('/node_modules') ||
+    pathLower.includes('/package.json') ||
+    pathLower.includes('/package-lock.json') ||
+    pathLower.includes('/schema.sql') ||
+    pathLower.includes('/docker-compose')
+  ) {
+    return res.status(404).json({ message: 'Not found' });
+  }
+  next();
+});
+
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
@@ -31,11 +67,21 @@ app.use((req, res, next) => {
   if (!req.cookies.csrf_token) {
     const csrfToken = crypto.randomBytes(32).toString('hex');
     res.setHeader('Set-Cookie', `csrf_token=${csrfToken}; Path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
+    req.csrfToken = csrfToken;
+  } else {
+    req.csrfToken = req.cookies.csrf_token;
   }
   next();
 });
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '7d',
+  dotfiles: 'deny',
+}));
+
+app.use('/api', apiLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
@@ -46,12 +92,15 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/contact', require('./routes/contactRoutes'));
 app.use('/api/newsletter', require('./routes/newsletterRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 
-// Serve static assets from frontend folder first
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
-app.use(express.static(path.join(__dirname, '..')));
+// Serve static assets from frontend folder only (never project root)
+app.use(express.static(path.join(__dirname, '..', 'frontend'), {
+  maxAge: '1d',
+  dotfiles: 'deny',
+}));
 
-// Route mappings for clean URLs pointing to the split HTML pages
+// Route mappings for clean URLs pointing to frontend pages
 app.get('/products', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'products.html'));
 });
@@ -77,19 +126,117 @@ app.get('/about', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'about.html'));
 });
 
+// Legal and compliance pages
+app.get('/privacy-policy', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'privacy-policy.html'));
+});
+app.get('/terms-and-conditions', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'terms-and-conditions.html'));
+});
+app.get('/shipping-policy', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'shipping-policy.html'));
+});
+app.get('/refund-policy', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'refund-policy.html'));
+});
+
+// Admin panel route
 app.get('/administrator', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'administrator', 'index.html'));
+});
+
+// SEO: Robots.txt & Dynamic Sitemap
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  const siteUrl = process.env.APP_URL || 'https://durgasjewellers.com';
+  res.send(`User-agent: *\nAllow: /\nDisallow: /administrator\nDisallow: /api/\nDisallow: /profile\nDisallow: /cart\nSitemap: ${siteUrl}/sitemap.xml\n`);
+});
+
+app.get('/sitemap.xml', async (req, res) => {
+  const baseUrl = process.env.APP_URL || 'https://durgasjewellers.com';
+  try {
+    const productsResult = await db.query('SELECT id, created_at FROM products WHERE is_active = TRUE ORDER BY id ASC').catch(() => []);
+    const items = Array.isArray(productsResult) ? productsResult : (productsResult?.rows || []);
+
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+
+    const staticPages = [
+      { loc: '/', priority: '1.0', changefreq: 'daily' },
+      { loc: '/products', priority: '0.9', changefreq: 'daily' },
+      { loc: '/about', priority: '0.7', changefreq: 'monthly' },
+      { loc: '/contact', priority: '0.7', changefreq: 'monthly' },
+      { loc: '/privacy-policy', priority: '0.3', changefreq: 'yearly' },
+      { loc: '/terms-and-conditions', priority: '0.3', changefreq: 'yearly' },
+      { loc: '/shipping-policy', priority: '0.4', changefreq: 'monthly' },
+      { loc: '/refund-policy', priority: '0.4', changefreq: 'monthly' },
+    ];
+
+    staticPages.forEach((p) => {
+      xml += `  <url><loc>${baseUrl}${p.loc}</loc><changefreq>${p.changefreq}</changefreq><priority>${p.priority}</priority></url>\n`;
+    });
+
+    items.forEach((prod) => {
+      xml += `  <url><loc>${baseUrl}/product-details?id=${prod.id}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>\n`;
+    });
+
+    xml += '</urlset>';
+    res.type('application/xml');
+    res.send(xml);
+  } catch (err) {
+    res.status(500).send('Error generating sitemap');
+  }
 });
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
 });
 
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: err.message || 'Internal server error' });
+// Database-aware health check
+app.get('/health', async (req, res) => {
+  try {
+    await db.ping();
+    res.status(200).json({ status: 'ok', database: 'connected', timestamp: new Date() });
+  } catch (err) {
+    res.status(503).json({ status: 'unhealthy', database: 'disconnected', timestamp: new Date() });
+  }
 });
 
-app.listen(PORT, () => {
+app.use((err, req, res, next) => {
+  // Never expose stack traces or internal details to clients
+  const status = err.status || err.statusCode || 500;
+  const safeMessage = status < 500 ? (err.message || 'Bad request') : 'Internal server error';
+  if (status >= 500) console.error('[server error]', err.stack);
+  res.status(status).json({ message: safeMessage });
+});
+
+const server = app.listen(PORT, () => {
   console.log(`DURGAS server running on http://localhost:${PORT}`);
 });
+
+// Graceful shutdown handling
+let isShuttingDown = false;
+const handleShutdown = (signal) => {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  console.log(`Received ${signal}. Gracefully stopping DURGAS server...`);
+
+  server.close(() => {
+    console.log('HTTP connections closed. Terminating database pool...');
+    db.close().then(() => {
+      console.log('Database pool terminated safely.');
+      process.exit(0);
+    }).catch((err) => {
+      console.error('Error closing database pool:', err.message);
+      process.exit(1);
+    });
+  });
+
+  setTimeout(() => {
+    console.error('Graceful shutdown timeout exceeded (10s). Exiting immediately.');
+    process.exit(1);
+  }, 10000).unref();
+};
+
+process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+process.on('SIGINT', () => handleShutdown('SIGINT'));
