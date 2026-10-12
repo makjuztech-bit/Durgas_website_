@@ -73,3 +73,7 @@ test('requireSupabaseAuth allows authenticated request when req.user is populate
 
   assert.equal(nextCalled, true, 'Should allow request with valid user');
 });
+
+test.after(async () => {
+  await db.close().catch(() => {});
+});
