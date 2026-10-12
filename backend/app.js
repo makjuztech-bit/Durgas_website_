@@ -146,7 +146,7 @@ app.get('/refund-policy', (req, res) => {
 });
 
 // Admin panel route
-app.get('/administrator', (req, res) => {
+app.get(['/administrator', '/administrator/index.html', '/admin'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'administrator', 'index.html'));
 });
 
