@@ -203,10 +203,10 @@
           <div class="form-group"><label class="form-label">Badge</label>
             <select class="form-select" id="pBadge">
               <option value="">None</option>
-              <option value="Five Metals">Five Metals (Panchaloha)</option>
-              <option value="Iypponnu">Iypponnu (Aimpon)</option>
-              <option value="New">New</option>
-              <option value="Sale">Sale</option>
+              <option value="Five-Metal">Five-Metal Jewellery</option>
+              <option value="Traditional">Traditional Jewellery</option>
+              <option value="New">New Arrival</option>
+              <option value="Sale">Special Offer</option>
               <option value="Best Seller">Best Seller</option>
             </select>
           </div>
@@ -408,7 +408,7 @@ async function loadProducts() {
   document.getElementById('productsTable').innerHTML = products.map(p => `
     <tr>
       <td>${p.image ? `<img src="${p.image}" class="product-thumb">` : '—'}</td>
-      <td><strong>${p.name}</strong>${p.tamil_name ? `<br><small style="color:var(--gray)">${p.tamil_name}</small>` : ''}</td>
+      <td><strong>${p.name}</strong><br><small style="color:var(--gray)">SKU: ${p.sku || ('DJ-' + p.id)}</small></td>
       <td>${p.category_name || '—'}</td>
       <td>${formatPrice(p.price)}</td>
       <td>${p.stock}</td>
@@ -424,7 +424,7 @@ async function loadCategorySelect() {
   const res = await apiFetch('/categories');
   categories = await res.json();
   document.getElementById('pCategory').innerHTML = categories.map(c =>
-    `<option value="${c.id}">${c.name}${c.tamil_name ? ' (' + c.tamil_name + ')' : ''}</option>`
+    `<option value="${c.id}">${c.name}</option>`
   ).join('');
 }
 

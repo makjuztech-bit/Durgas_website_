@@ -72,14 +72,16 @@ exports.getProducts = (req, res) => {
 };
 
 exports.getProductById = (req, res) => {
+  const param = req.params.id;
+  const isNumeric = /^\d+$/.test(param);
   const sql = `
-    SELECT p.*, c.name AS category_name
+    SELECT p.*, c.name AS category_name, c.slug AS category_slug
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
-    WHERE p.id = ?
+    WHERE ${isNumeric ? '(p.id = ? OR p.sku = ?)' : '(p.sku = ? OR p.id::text = ?)'}
   `;
 
-  db.query(sql, [req.params.id], async (err, rows) => {
+  db.query(sql, [param, param], async (err, rows) => {
     if (err) return res.status(500).json({ message: err.message });
     if (!rows.length) return res.status(404).json({ message: 'Product not found' });
 
@@ -89,6 +91,40 @@ exports.getProductById = (req, res) => {
     } catch (e) {
       res.status(500).json({ message: e.message });
     }
+  });
+};
+
+exports.getRelatedProducts = (req, res) => {
+  const param = req.params.id;
+  const isNumeric = /^\d+$/.test(param);
+  
+  const findSql = `SELECT id, category_id FROM products WHERE ${isNumeric ? '(id = ? OR sku = ?)' : '(sku = ? OR id::text = ?)'}`;
+  db.query(findSql, [param, param], (err, target) => {
+    if (err || !target.length) return res.json([]);
+    const { id, category_id } = target[0];
+
+    const sql = `
+      SELECT p.*, c.name AS category_name
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.category_id = ? AND p.id != ? AND p.is_active = TRUE
+      ORDER BY p.price ASC
+      LIMIT 6
+    `;
+    db.query(sql, [category_id, id], async (relErr, relProducts) => {
+      if (relErr) return res.json([]);
+      try {
+        const result = await Promise.all(
+          relProducts.map(async (p) => {
+            const images = await getProductImages(p.id);
+            return formatProduct(p, images);
+          })
+        );
+        res.json(result);
+      } catch (e) {
+        res.json([]);
+      }
+    });
   });
 };
 

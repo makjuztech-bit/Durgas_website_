@@ -56,19 +56,18 @@
 <!-- Navigation -->
 <nav id="mainNav">
   <a href="/" class="nav-logo">
-    <img src="/main logo.jpeg" alt="Durgas Logo" class="logo">
+    <img src="/durgas main logo.jpeg" alt="Durgas Logo" class="logo">
   </a>
   <ul class="nav-links">
     <li><a href="/">Home</a></li>
-    <li><a href="/products">Shop</a></li>
+    <li><a href="/products">Shop Catalogue</a></li>
     <li><a href="/about">About</a></li>
     <li><a href="/contact">Contact</a></li>
   </ul>
   <div class="nav-icons">
-    <button class="nav-icon-btn" title="Search">⌕</button>
     <button class="nav-icon-btn" title="Wishlist" onclick="openWishlist()">♡</button>
     <button class="nav-icon-btn" title="Account" onclick="openAuthModal()" id="accountBtn">◎</button>
-    <button class="nav-icon-btn" title="Cart" onclick="openCart()">
+    <button class="nav-icon-btn" title="Cart" onclick="window.location.href='/cart'">
       ⟨bag⟩<span class="cart-count" id="cartCountBadge">0</span>
     </button>
     <button class="hamburger" onclick="openMobileNav()">
@@ -77,58 +76,148 @@
   </div>
 </nav>
 
+<!-- Flipkart-Style Category Navigation Strip -->
+<div class="fk-category-strip">
+  <div class="fk-category-strip-inner">
+    <a href="/products?category=Five-Metal%20Jewellery" class="fk-cat-item">
+      <div class="fk-cat-icon">⚜️</div>
+      <span>Five-Metal</span>
+    </a>
+    <a href="/products?category=Traditional%20Jewellery" class="fk-cat-item">
+      <div class="fk-cat-icon">👑</div>
+      <span>Traditional</span>
+    </a>
+    <a href="/products?category=Gold%20Jewellery" class="fk-cat-item">
+      <div class="fk-cat-icon">✨</div>
+      <span>Gold Style</span>
+    </a>
+    <a href="/products?category=Rings" class="fk-cat-item">
+      <div class="fk-cat-icon">💍</div>
+      <span>Rings</span>
+    </a>
+    <a href="/products?category=Necklaces" class="fk-cat-item">
+      <div class="fk-cat-icon">📿</div>
+      <span>Necklaces</span>
+    </a>
+    <a href="/products?category=Chains" class="fk-cat-item">
+      <div class="fk-cat-icon">⛓️</div>
+      <span>Chains</span>
+    </a>
+    <a href="/products?category=Earrings" class="fk-cat-item">
+      <div class="fk-cat-icon">💎</div>
+      <span>Earrings</span>
+    </a>
+    <a href="/products?category=Bangles" class="fk-cat-item">
+      <div class="fk-cat-icon">⭕</div>
+      <span>Bangles</span>
+    </a>
+    <a href="/products?category=Bracelets" class="fk-cat-item">
+      <div class="fk-cat-icon">💫</div>
+      <span>Bracelets</span>
+    </a>
+    <a href="/products?category=Pendants" class="fk-cat-item">
+      <div class="fk-cat-icon">🏵️</div>
+      <span>Pendants</span>
+    </a>
+    <a href="/products?category=Bridal%20Jewellery" class="fk-cat-item">
+      <div class="fk-cat-icon">👰</div>
+      <span>Bridal</span>
+    </a>
+    <a href="/products?category=Daily%20Wear%20Jewellery" class="fk-cat-item">
+      <div class="fk-cat-icon">⭐</div>
+      <span>Daily Wear</span>
+    </a>
+    <a href="/products?category=Temple%20Jewellery" class="fk-cat-item">
+      <div class="fk-cat-icon">🛕</div>
+      <span>Temple</span>
+    </a>
+    <a href="/products?category=Antique-Finish%20Jewellery" class="fk-cat-item">
+      <div class="fk-cat-icon">🏺</div>
+      <span>Antique Finish</span>
+    </a>
+  </div>
+</div>
+
 <!-- ==================== SHOP PAGE ==================== -->
 <div class="page active" id="page-shop">
   <div class="page-hero">
-    <p class="section-tag">Panchaloha & Iypponnu Collections / ஐம்பொன் நகைகள்</p>
-    <h1 class="section-title">Five Metals & <em>Iypponnu Jewellery</em></h1>
-    <div class="breadcrumb"><a href="/">Home</a> <span>/</span> <span>Shop Five Metals</span></div>
+    <p class="section-tag">Fine Indian Jewellery Catalogue</p>
+    <h1 class="section-title">Discover <em>Timeless Elegance</em></h1>
+    <div class="breadcrumb"><a href="/">Home</a> <span>/</span> <span>All Jewellery</span></div>
   </div>
   <div class="shop-layout">
     <aside class="shop-filters">
       <div class="filter-section">
-        <p class="filter-title">Collections / வகைகள்</p>
+        <p class="filter-title">Categories</p>
         <div class="filter-options" id="shopCategoryFilters">
-          <label class="filter-opt"><input type="checkbox" checked data-category="all" onchange="filterShop()"> All Collections</label>
+          <label class="filter-opt"><input type="checkbox" checked data-category="all" onchange="filterShop()"> All Categories</label>
         </div>
       </div>
+      
       <div class="filter-section">
-        <p class="filter-title">Metal Composition</p>
+        <p class="filter-title">Price Range</p>
+        <div class="filter-options" id="shopPriceFilters">
+          <label class="filter-opt"><input type="radio" name="priceRange" value="all" checked onchange="filterShop()"> All Prices</label>
+          <label class="filter-opt"><input type="radio" name="priceRange" value="under2000" onchange="filterShop()"> Under ₹2,000</label>
+          <label class="filter-opt"><input type="radio" name="priceRange" value="2000to5000" onchange="filterShop()"> ₹2,000 – ₹5,000</label>
+          <label class="filter-opt"><input type="radio" name="priceRange" value="5000to10000" onchange="filterShop()"> ₹5,000 – ₹10,000</label>
+          <label class="filter-opt"><input type="radio" name="priceRange" value="above10000" onchange="filterShop()"> Above ₹10,000</label>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <p class="filter-title">Availability</p>
         <div class="filter-options">
-          <label class="filter-opt"><input type="checkbox" checked onchange="filterShop()"> Panchaloha (Five Metals)</label>
-          <label class="filter-opt"><input type="checkbox" checked onchange="filterShop()"> Iypponnu / Aimpon</label>
-          <label class="filter-opt"><input type="checkbox" checked onchange="filterShop()"> Temple Traditional Alloy</label>
+          <label class="filter-opt"><input type="checkbox" id="filterInStock" checked onchange="filterShop()"> In Stock Only</label>
         </div>
       </div>
+
       <div class="filter-section">
-        <p class="filter-title">Quick Ordering Help</p>
-        <div style="background:#FAF6EF;border-left:3px solid var(--wa-green,#25D366);padding:12px;border-radius:4px;font-size:0.8rem;line-height:1.4">
-          <p style="font-weight:600;color:var(--maroon,#6B1724);margin-bottom:4px">Order on WhatsApp</p>
-          <p style="color:#555;margin-bottom:8px">Have questions or want customized sizes? Chat directly with Durgas Jewellery.</p>
-          <a href="https://wa.me/917448882444?text=Hello%20Durgas%20Jewellery!%20I%20need%20help%20with%20ordering." target="_blank" class="btn-whatsapp-order" style="padding:8px 12px;font-size:0.75rem">
-            Chat on WhatsApp
+        <p class="filter-title">Customer Rating</p>
+        <div class="filter-options">
+          <label class="filter-opt"><input type="radio" name="ratingFilter" value="all" checked onchange="filterShop()"> All Ratings</label>
+          <label class="filter-opt"><input type="radio" name="ratingFilter" value="4plus" onchange="filterShop()"> 4★ & above</label>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <p class="filter-title">WhatsApp Order Assistance</p>
+        <div style="background:#FAF6EF;border-left:3px solid var(--wa-green,#25D366);padding:14px;border-radius:4px;font-size:0.8rem;line-height:1.4">
+          <p style="font-weight:600;color:var(--maroon,#6B1724);margin-bottom:4px">Durgas Jewellery Direct Support</p>
+          <p style="color:#555;margin-bottom:10px">Need assistance with size selection or custom designs? Connect directly on WhatsApp.</p>
+          <a href="https://wa.me/917448882444?text=Hello%20Durgas%20Jewellery!%20I%20would%20like%20assistance%20with%20ordering." target="_blank" class="btn-whatsapp-order" style="padding:9px 14px;font-size:0.75rem">
+            Chat on WhatsApp (7448882444)
           </a>
         </div>
       </div>
     </aside>
+
     <div class="shop-main">
-      <div class="shop-toolbar" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-        <p class="results-count" id="shopResultsCount">Loading products...</p>
+      <div class="shop-toolbar" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;background:#fff;padding:12px 18px;border-radius:6px;border:1px solid #EAE5D9;">
+        <p class="results-count" id="shopResultsCount" style="margin:0;font-size:0.88rem;color:#555;">Loading products...</p>
         
-        <div style="flex:1;max-width:320px;position:relative">
-          <input type="text" id="shopSearchInput" placeholder="Search by name, ID, or metal..." class="form-input" style="padding:10px 14px 10px 36px;border-radius:4px;width:100%" oninput="onShopSearch(this.value)">
+        <div style="flex:1;max-width:340px;position:relative">
+          <input type="text" id="shopSearchInput" placeholder="Search by name, ID, or style..." class="form-input" style="padding:9px 14px 9px 36px;border-radius:20px;width:100%;background:#FAF6EF;border:1px solid #DFD7C7" oninput="onShopSearch(this.value)">
           <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#888;pointer-events:none">🔍</span>
         </div>
 
-        <select class="sort-select" id="shopSort" onchange="loadShopProducts()">
-          <option>Sort: Featured</option>
-          <option>Newest First</option>
-          <option>Price: Low to High</option>
-          <option>Price: High to Low</option>
-          <option>Best Sellers</option>
+        <select class="sort-select" id="shopSort" onchange="onSortChange(this.value)" style="padding:9px 14px;border-radius:4px;border:1px solid #DFD7C7;background:#fff;font-size:0.85rem">
+          <option value="featured">Sort by: Featured</option>
+          <option value="price_asc">Price: Low to High</option>
+          <option value="price_desc">Price: High to Low</option>
+          <option value="newest">Newest First</option>
+          <option value="rating">Customer Rating</option>
         </select>
       </div>
+
       <div class="shop-grid" id="shopGrid"></div>
+
+      <!-- Load More Button -->
+      <div id="shopLoadMoreContainer" style="text-align:center;margin:40px 0;display:none">
+        <button id="shopLoadMoreBtn" class="btn-outline" onclick="loadMoreShopProducts()" style="padding:14px 36px;font-size:0.85rem;border-radius:4px">
+          Load More Products
+        </button>
+      </div>
     </div>
   </div>
   

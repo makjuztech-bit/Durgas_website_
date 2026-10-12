@@ -109,10 +109,13 @@ app.use(express.static(path.join(__dirname, '..', 'frontend'), {
 app.get('/products', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'products.html'));
 });
+app.get('/product/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'product-details.html'));
+});
 app.get('/product-details', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'product-details.html'));
 });
-app.get('/cart', (req, res) => {
+app.get(['/cart', '/checkout', '/order'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'cart.html'));
 });
 app.get('/login', (req, res) => {

@@ -468,3 +468,366 @@
     padding: 16px;
   }
 }
+
+/* ==========================================================================
+   FLIPKART-INSPIRED SHOPPING COMPONENTS & E-COMMERCE ENHANCEMENTS
+   ========================================================================== */
+
+/* Buy Now Button */
+.btn-buy-now {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #FF9F00 0%, #FB641B 100%);
+  color: #FFFFFF !important;
+  font-family: var(--font-sans, 'Jost', sans-serif);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(251, 100, 27, 0.25);
+  margin-top: 6px;
+}
+
+.btn-buy-now:hover {
+  background: linear-gradient(135deg, #F08E00 0%, #E65100 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(251, 100, 27, 0.38);
+}
+
+/* Rating Pill */
+.rating-pill {
+  background: #388E3C;
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+/* Flipkart-Style Horizontal Category Navigation Strip */
+.fk-category-strip {
+  background: #FFFFFF;
+  border-bottom: 1px solid #EAE5D9;
+  padding: 14px 5vw;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  position: relative;
+  z-index: 10;
+}
+
+.fk-cat-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.fk-cat-container::-webkit-scrollbar {
+  display: none;
+}
+
+.fk-cat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: #333333;
+  min-width: 80px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.fk-cat-item:hover {
+  color: var(--maroon, #6B1724);
+  transform: translateY(-2px);
+}
+
+.fk-cat-img-box {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 2px solid #EADBBE;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FAF6EF;
+  transition: all 0.2s ease;
+}
+
+.fk-cat-item:hover .fk-cat-img-box {
+  border-color: #D4AF37;
+  box-shadow: 0 4px 10px rgba(212, 175, 55, 0.25);
+}
+
+.fk-cat-img-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fk-cat-title {
+  font-size: 0.76rem;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Top Header Flipkart-style Search Bar */
+.fk-header-search {
+  flex: 1;
+  max-width: 480px;
+  margin: 0 24px;
+  position: relative;
+}
+
+.fk-search-input-wrap {
+  display: flex;
+  align-items: center;
+  background: #F8F5EE;
+  border: 1.5px solid #DFD7C7;
+  border-radius: 24px;
+  padding: 4px 6px 4px 16px;
+  transition: all 0.25s ease;
+}
+
+.fk-search-input-wrap:focus-within {
+  border-color: #D4AF37;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+}
+
+.fk-search-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  font-family: var(--font-sans, 'Jost', sans-serif);
+  font-size: 0.88rem;
+  color: #222;
+}
+
+.fk-search-btn {
+  background: #D4AF37;
+  border: none;
+  color: #FFFFFF;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.fk-search-btn:hover {
+  background: #AA771C;
+}
+
+/* Trust Bar */
+.trust-bar {
+  background: #FAF6EF;
+  border-top: 1px solid #EAE3D2;
+  border-bottom: 1px solid #EAE3D2;
+  padding: 16px 5vw;
+}
+
+.trust-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trust-icon {
+  font-size: 1.6rem;
+  color: #D4AF37;
+}
+
+.trust-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--maroon, #6B1724);
+  margin-bottom: 2px;
+}
+
+.trust-desc {
+  font-size: 0.72rem;
+  color: #666;
+}
+
+/* Hero Carousel */
+.hero-slider-wrap {
+  position: relative;
+  overflow: hidden;
+  background: #110709;
+  color: #FFFFFF;
+}
+
+.hero-slide {
+  display: none;
+  position: relative;
+  min-height: 460px;
+  align-items: center;
+}
+
+.hero-slide.active {
+  display: flex;
+}
+
+.hero-slide-bg {
+  position: absolute;
+  inset: 0;
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  opacity: 0.38;
+}
+
+.hero-slide-content {
+  position: relative;
+  z-index: 2;
+  padding: 60px 8vw;
+  max-width: 720px;
+}
+
+.hero-slide-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  background: rgba(212, 175, 55, 0.25);
+  border: 1px solid #D4AF37;
+  color: #F8D988;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-radius: 20px;
+  margin-bottom: 16px;
+}
+
+.hero-slide-title {
+  font-family: var(--font-serif, 'Cormorant Garamond', serif);
+  font-size: 3rem;
+  font-weight: 400;
+  line-height: 1.15;
+  margin-bottom: 16px;
+}
+
+.hero-slide-title em {
+  font-style: italic;
+  color: #E2BA55;
+}
+
+.hero-slide-desc {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+
+.hero-slide-nav {
+  position: absolute;
+  bottom: 20px;
+  right: 8vw;
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+
+.hero-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.hero-dot.active {
+  background: #D4AF37;
+  transform: scale(1.3);
+}
+
+/* Specifications Table */
+.specs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-top: 16px;
+}
+
+.specs-table th, .specs-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #EAE5D9;
+  text-align: left;
+}
+
+.specs-table th {
+  color: #777;
+  font-weight: 500;
+  width: 35%;
+  background: #FAF6EF;
+}
+
+.specs-table td {
+  color: #222;
+  font-weight: 500;
+}
+
+/* Delivery Pincode Box */
+.pincode-check-wrap {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  max-width: 360px;
+}
+
+.pincode-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #DFD7C7;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.pincode-input:focus {
+  border-color: #D4AF37;
+}
+
+.btn-check-pincode {
+  padding: 8px 16px;
+  background: var(--maroon, #6B1724);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+

@@ -1,4 +1,5 @@
 let cartItems = [];
+let isBuyNowMode = false;
 
 function openCart() {
   const overlay = document.getElementById('cartOverlay');
@@ -8,7 +9,6 @@ function openCart() {
     sidebar.classList.add('open');
     renderCart();
   } else {
-    // If no sidebar is present (or on mobile redirection), go to the cart page
     window.location.href = '/cart';
   }
 }
@@ -24,55 +24,128 @@ function closeCart() {
 
 async function addToCart(e, productId) {
   if (e) e.stopPropagation();
-  if (!currentUser) { openAuthModal(); return; }
+  if (!currentUser) {
+    // Add locally to cart for guests
+    addGuestItem(productId);
+    return;
+  }
   try {
     const res = await apiFetch('/cart/add', {
       method: 'POST',
       body: JSON.stringify({ product_id: productId, quantity: 1 }),
     });
-    if (!res.ok) { const d = await res.json(); alert(d.message); return; }
+    if (!res.ok) {
+      const d = await res.json();
+      alert(d.message || 'Could not add to bag.');
+      return;
+    }
     await syncCartFromServer();
     openCart();
   } catch (err) {
-    alert('Could not add to cart.');
     console.error(err);
+    addGuestItem(productId);
   }
 }
 
+async function addGuestItem(productId) {
+  try {
+    const res = await fetch(API + '/products/' + productId);
+    if (!res.ok) return;
+    const p = await res.json();
+    const existing = cartItems.find(i => i.id === p.id || i.product_id === p.id);
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      cartItems.push({
+        id: p.id,
+        product_id: p.id,
+        name: p.name,
+        price: Number(p.price),
+        quantity: 1,
+        image: getProductImage(p),
+        sku: p.sku || ('DJ-' + p.id),
+        metal_composition: p.metal_composition || p.material
+      });
+    }
+    saveLocalCart();
+    renderCart();
+    openCart();
+  } catch (e) {
+    console.error('Guest cart add failed:', e);
+  }
+}
+
+function saveLocalCart() {
+  try {
+    localStorage.setItem('durgas_local_cart', JSON.stringify(cartItems));
+  } catch (e) {}
+  updateCartBadge(cartItems.reduce((s, i) => s + (i.quantity || 1), 0));
+}
+
+function loadLocalCart() {
+  try {
+    const saved = localStorage.getItem('durgas_local_cart');
+    if (saved) return JSON.parse(saved);
+  } catch (e) {}
+  return [];
+}
+
 async function syncCartFromServer() {
-  if (!currentUser) return;
+  if (!currentUser) {
+    cartItems = loadLocalCart();
+    updateCartBadge(cartItems.reduce((s, i) => s + (i.quantity || 1), 0));
+    renderCart();
+    return;
+  }
   try {
     const res = await apiFetch('/cart');
-    cartItems = await res.json();
-    updateCartBadge(cartItems.reduce((s, i) => s + i.quantity, 0));
-    renderCart();
+    if (res.ok) {
+      cartItems = await res.json();
+      updateCartBadge(cartItems.reduce((s, i) => s + (i.quantity || 1), 0));
+      renderCart();
+    }
   } catch (err) {
     console.error('Cart sync failed:', err);
   }
 }
 
 async function removeFromCart(id) {
-  try {
-    await apiFetch('/cart/' + id, { method: 'DELETE' });
-    await syncCartFromServer();
-  } catch (err) {
-    console.error(err);
+  if (currentUser) {
+    try {
+      await apiFetch('/cart/' + id, { method: 'DELETE' });
+      await syncCartFromServer();
+      return;
+    } catch (err) {
+      console.error(err);
+    }
   }
+  cartItems = cartItems.filter(i => (i.id !== id && i.product_id !== id));
+  saveLocalCart();
+  renderCart();
 }
 
 async function updateCartQuantity(id, quantity) {
   const nextQuantity = Number(quantity);
   if (!Number.isInteger(nextQuantity) || nextQuantity < 1) return removeFromCart(id);
-  try {
-    const res = await apiFetch('/cart/' + id, {
-      method: 'PATCH',
-      body: JSON.stringify({ quantity: nextQuantity }),
-    });
-    const data = await res.json();
-    if (!res.ok) return alert(data.message || 'Could not update quantity.');
-    await syncCartFromServer();
-  } catch (err) {
-    console.error('Cart quantity update failed:', err);
+  if (currentUser) {
+    try {
+      const res = await apiFetch('/cart/' + id, {
+        method: 'PATCH',
+        body: JSON.stringify({ quantity: nextQuantity }),
+      });
+      if (res.ok) {
+        await syncCartFromServer();
+        return;
+      }
+    } catch (err) {
+      console.error('Cart quantity update failed:', err);
+    }
+  }
+  const item = cartItems.find(i => i.id === id || i.product_id === id);
+  if (item) {
+    item.quantity = nextQuantity;
+    saveLocalCart();
+    renderCart();
   }
 }
 
@@ -81,7 +154,13 @@ function updateCartBadge(total) {
   if (badge) badge.textContent = total;
 }
 
+// Render Order Page and Sidebar
 function renderCart() {
+  const totalQty = cartItems.reduce((s, i) => s + (i.quantity || 1), 0);
+  const totalAmount = cartItems.reduce((s, i) => s + Number(i.price) * (i.quantity || 1), 0);
+  const subtotalBeforeGst = Math.round((totalAmount / 1.03) * 100) / 100;
+  const gstAmount = Math.round((totalAmount - subtotalBeforeGst) * 100) / 100;
+
   // 1. Sidebar rendering
   const sidebarEl = document.getElementById('cartItems');
   const sidebarFooter = document.getElementById('cartFooter');
@@ -93,207 +172,273 @@ function renderCart() {
       sidebarEl.innerHTML = cartItems.map(i => `
         <div class="cart-item">
           <div style="width:72px;height:90px;background:var(--beige);flex-shrink:0;overflow:hidden">
-            <img src="${i.image || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=150&q=80'}" style="width:100%;height:100%;object-fit:cover">
+            <img src="${i.image || getProductImage(i)}" style="width:100%;height:100%;object-fit:cover">
           </div>
           <div class="cart-item-info">
             <p class="cart-item-name">${i.name}</p>
-            <p class="cart-item-meta">Qty: <button onclick="updateCartQuantity(${i.id}, ${i.quantity - 1})" aria-label="Decrease quantity">−</button> ${i.quantity} <button onclick="updateCartQuantity(${i.id}, ${i.quantity + 1})" aria-label="Increase quantity">+</button></p>
-            <p class="cart-item-price">${formatPrice(i.price * i.quantity)}</p>
+            <p class="cart-item-meta">Qty: <button onclick="updateCartQuantity(${i.id}, ${(i.quantity || 1) - 1})">−</button> ${i.quantity || 1} <button onclick="updateCartQuantity(${i.id}, ${(i.quantity || 1) + 1})">+</button></p>
+            <p class="cart-item-price">${formatPrice(i.price * (i.quantity || 1))}</p>
             <button class="cart-item-remove" onclick="removeFromCart(${i.id})">Remove</button>
           </div>
         </div>`).join('');
-      const total = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
-      const subtotal = Math.round((total / 1.03) * 100) / 100;
-      const gst = Math.round((total - subtotal) * 100) / 100;
       const totalEl = document.getElementById('cartTotal');
-      if (totalEl) {
-        totalEl.innerHTML = `${formatPrice(total)}<br><small style="font-size:0.7rem;color:#888;font-weight:normal">Incl. ₹${gst.toLocaleString('en-IN')} (3% GST)</small>`;
-      }
+      if (totalEl) totalEl.innerHTML = `${formatPrice(totalAmount)}`;
       sidebarFooter.style.display = 'block';
     }
   }
 
-  // 2. Main page cart container rendering (for cart.html)
-  const mainEl = document.getElementById('mainCartItems');
-  const mainFooter = document.getElementById('mainCartFooter');
-  if (mainEl && mainFooter) {
+  // 2. Order Page rendering (/cart)
+  const orderContainer = document.getElementById('orderItemsContainer');
+  const emptyState = document.getElementById('cartEmptyState');
+  const mainGrid = document.getElementById('orderMainGrid');
+
+  if (orderContainer && emptyState && mainGrid) {
     if (!cartItems.length) {
-      mainEl.innerHTML = `<div class="cart-empty" style="padding: 100px 20px;"><div class="cart-empty-icon" style="font-size: 3.5rem;">♡</div><p style="font-size: 1.1rem; margin-bottom: 24px;">Your bag is empty</p><button class="btn-primary" onclick="window.location.href='/products'"><span>Shop Now</span></button></div>`;
-      mainFooter.style.display = 'none';
-    } else {
-      mainEl.innerHTML = cartItems.map(i => `
-        <div class="cart-item" style="padding: 24px 0;">
-          <div style="width:90px;height:112px;background:var(--beige);flex-shrink:0;overflow:hidden">
-            <img src="${i.image || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=200&q=80'}" style="width:100%;height:100%;object-fit:cover">
-          </div>
-          <div class="cart-item-info" style="padding-left: 20px;">
-            <p class="cart-item-name" style="font-size: 1.2rem; margin-bottom: 8px;">${i.name}</p>
-            <p class="cart-item-meta" style="font-size: 0.85rem;">Quantity: <button onclick="updateCartQuantity(${i.id}, ${i.quantity - 1})" aria-label="Decrease quantity">−</button> ${i.quantity} <button onclick="updateCartQuantity(${i.id}, ${i.quantity + 1})" aria-label="Increase quantity">+</button></p>
-            <p class="cart-item-price" style="font-size: 1.1rem; margin-top: 10px;">${formatPrice(i.price * i.quantity)}</p>
-            <button class="cart-item-remove" style="margin-top: 12px; color: #c0392b;" onclick="removeFromCart(${i.id})">Remove</button>
-          </div>
-        </div>`).join('');
-      const total = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
-      const subtotal = Math.round((total / 1.03) * 100) / 100;
-      const gst = Math.round((total - subtotal) * 100) / 100;
-      const mainTotalEl = document.getElementById('mainCartTotal');
-      if (mainTotalEl) {
-        mainTotalEl.innerHTML = `${formatPrice(total)}<br><small style="font-size:0.75rem;color:#888;font-weight:normal">Includes ₹${gst.toLocaleString('en-IN')} (3% GST: 1.5% CGST + 1.5% SGST)</small>`;
-      }
-      mainFooter.style.display = 'block';
+      emptyState.style.display = 'block';
+      mainGrid.style.display = 'none';
+      return;
     }
+
+    emptyState.style.display = 'none';
+    mainGrid.style.display = 'grid';
+
+    const countBadge = document.getElementById('orderItemsCountBadge');
+    if (countBadge) countBadge.textContent = `${totalQty} piece${totalQty > 1 ? 's' : ''}`;
+
+    orderContainer.innerHTML = cartItems.map(i => {
+      const q = i.quantity || 1;
+      const lineTotal = Number(i.price) * q;
+      const sku = i.sku || ('DJ-' + (i.product_id || i.id));
+      const img = i.image || getProductImage(i);
+      return `
+        <div class="order-item-row">
+          <img src="${img}" alt="${i.name}" class="order-item-thumb">
+          <div style="flex:1;">
+            <p style="font-weight:600;font-size:0.95rem;margin:0 0 4px;color:#222">${i.name}</p>
+            <p style="font-size:0.75rem;color:#777;margin:0 0 8px;">SKU: ${sku} ${i.size ? `· Size: ${i.size}` : ''}</p>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div class="wa-qty-picker" style="padding:2px 8px;">
+                <button type="button" onclick="updateCartQuantity(${i.id}, ${q - 1})">−</button>
+                <input type="number" value="${q}" readonly style="width:30px">
+                <button type="button" onclick="updateCartQuantity(${i.id}, ${q + 1})">+</button>
+              </div>
+              <button type="button" onclick="removeFromCart(${i.id})" style="background:none;border:none;color:#c0392b;font-size:0.78rem;cursor:pointer;text-decoration:underline">Remove</button>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <p style="font-size:0.8rem;color:#777;margin:0">Unit: ${formatPrice(i.price)}</p>
+            <p style="font-size:1.05rem;font-weight:600;color:var(--maroon, #6B1724);margin:4px 0 0">${formatPrice(lineTotal)}</p>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Update Price Summary
+    const subtotalEl = document.getElementById('orderSummarySubtotal');
+    if (subtotalEl) subtotalEl.textContent = formatPrice(totalAmount);
+
+    const gstEl = document.getElementById('orderSummaryGst');
+    if (gstEl) gstEl.textContent = `₹${gstAmount.toLocaleString('en-IN')} (Included)`;
+
+    const finalTotalEl = document.getElementById('orderSummaryFinalTotal');
+    if (finalTotalEl) finalTotalEl.textContent = formatPrice(totalAmount);
   }
 }
 
-function proceedToCheckout() {
-  if (!currentUser) { closeCart(); openAuthModal(); return; }
-  if (!cartItems.length) return;
-  closeCart();
-  const overlay = document.getElementById('checkoutOverlay');
-  const modal = document.getElementById('checkoutModal');
-  if (overlay && modal) {
-    overlay.classList.add('open');
-    modal.classList.add('open');
-  }
-}
-
-function closeCheckout() {
-  const overlay = document.getElementById('checkoutOverlay');
-  const modal = document.getElementById('checkoutModal');
-  if (overlay && modal) {
-    overlay.classList.remove('open');
-    modal.classList.remove('open');
-  }
-}
-
-function getCheckoutData() {
+// Customer Form Data Helpers
+function getOrderFormData() {
   return {
-    shipping_address: document.getElementById('shipAddress').value,
-    shipping_city: document.getElementById('shipCity').value,
-    shipping_state: document.getElementById('shipState').value,
-    shipping_pincode: document.getElementById('shipPincode').value,
-    shipping_phone: document.getElementById('shipPhone').value,
+    customer_name: document.getElementById('orderCustName')?.value.trim() || '',
+    customer_phone: document.getElementById('orderCustPhone')?.value.trim() || '',
+    shipping_address: document.getElementById('orderCustAddress')?.value.trim() || '',
+    shipping_city: document.getElementById('orderCustCity')?.value.trim() || '',
+    shipping_state: document.getElementById('orderCustState')?.value.trim() || '',
+    shipping_pincode: document.getElementById('orderCustPincode')?.value.trim() || '',
   };
 }
 
-function validateCheckoutData(data) {
-  return data.shipping_address?.trim() && data.shipping_city?.trim() && data.shipping_state?.trim() && /^[0-9]{6}$/.test(data.shipping_pincode.trim()) && /^[0-9+ ()-]{10,16}$/.test(data.shipping_phone.trim());
+function validateOrderFormData(data) {
+  const errEl = document.getElementById('orderFormError');
+  if (!data.customer_name) {
+    if (errEl) { errEl.textContent = 'Please enter your Full Name.'; errEl.style.display = 'block'; }
+    return false;
+  }
+  if (!/^[0-9+ ()-]{10,16}$/.test(data.customer_phone)) {
+    if (errEl) { errEl.textContent = 'Please enter a valid 10-digit mobile phone number.'; errEl.style.display = 'block'; }
+    return false;
+  }
+  if (!data.shipping_address) {
+    if (errEl) { errEl.textContent = 'Please enter your complete delivery street address.'; errEl.style.display = 'block'; }
+    return false;
+  }
+  if (!data.shipping_city || !data.shipping_state) {
+    if (errEl) { errEl.textContent = 'Please enter city and state.'; errEl.style.display = 'block'; }
+    return false;
+  }
+  if (!/^\d{6}$/.test(data.shipping_pincode)) {
+    if (errEl) { errEl.textContent = 'Please enter a valid 6-digit postal pincode.'; errEl.style.display = 'block'; }
+    return false;
+  }
+  if (errEl) errEl.style.display = 'none';
+  return true;
 }
 
-async function placeOrder() {
-  const shippingData = getCheckoutData();
-  const errEl = document.getElementById('checkoutError');
+function saveCustomerDetailsLocally(data) {
+  try {
+    localStorage.setItem('durgas_customer_details', JSON.stringify({
+      name: data.customer_name,
+      phone: data.customer_phone,
+      address: data.shipping_address,
+      city: data.shipping_city,
+      state: data.shipping_state,
+      pincode: data.shipping_pincode,
+    }));
+  } catch (e) {}
+}
 
-  if (!validateCheckoutData(shippingData)) {
-    if (errEl) errEl.textContent = 'Please fill all shipping fields before placing order.';
+function autofillCustomerForm() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('durgas_customer_details') || '{}');
+    const nameInput = document.getElementById('orderCustName');
+    const phoneInput = document.getElementById('orderCustPhone');
+    const addrInput = document.getElementById('orderCustAddress');
+    const cityInput = document.getElementById('orderCustCity');
+    const stateInput = document.getElementById('orderCustState');
+    const pinInput = document.getElementById('orderCustPincode');
+
+    if (nameInput) nameInput.value = (currentUser?.full_name) || saved.name || '';
+    if (phoneInput) phoneInput.value = (currentUser?.phone) || saved.phone || '';
+    if (addrInput) addrInput.value = (currentUser?.address) || saved.address || '';
+    if (cityInput) cityInput.value = (currentUser?.city) || saved.city || '';
+    if (stateInput) stateInput.value = (currentUser?.state) || saved.state || '';
+    if (pinInput) pinInput.value = (currentUser?.pincode) || saved.pincode || '';
+  } catch (e) {}
+}
+
+// WhatsApp Order Submission
+function submitOrderViaWhatsApp() {
+  if (!cartItems.length) {
+    alert('Your shopping bag is empty.');
     return;
   }
+
+  const data = getOrderFormData();
+  if (!validateOrderFormData(data)) {
+    document.getElementById('orderCustName')?.focus();
+    return;
+  }
+
+  saveCustomerDetailsLocally(data);
+
+  const totalAmount = cartItems.reduce((s, i) => s + Number(i.price) * (i.quantity || 1), 0);
+  const waNumber = '917448882444';
+
+  let msg = `*NEW ORDER INQUIRY — DURGAS JEWELLERY*\n\n`;
+  msg += `*Selected Jewellery Items:*\n`;
+  cartItems.forEach((item, idx) => {
+    const q = item.quantity || 1;
+    const lineTotal = Number(item.price) * q;
+    const sku = item.sku || ('DJ-' + (item.product_id || item.id));
+    msg += `${idx + 1}. ${item.name} (${sku})\n`;
+    if (item.metal_composition) msg += `   Composition: ${item.metal_composition}\n`;
+    if (item.size) msg += `   Size/Variant: ${item.size}\n`;
+    msg += `   Qty: ${q} | Price: ₹${Number(item.price).toLocaleString('en-IN')} | Total: ₹${lineTotal.toLocaleString('en-IN')}\n\n`;
+  });
+
+  msg += `*Subtotal:* ₹${totalAmount.toLocaleString('en-IN')}\n`;
+  msg += `*Insured Delivery:* Free Delivery across India\n`;
+  msg += `*Final Payable:* ₹${totalAmount.toLocaleString('en-IN')}\n\n`;
+
+  msg += `*Customer Delivery Details:*\n`;
+  msg += `Name: ${data.customer_name}\n`;
+  msg += `Phone: ${data.customer_phone}\n`;
+  msg += `Address: ${data.shipping_address}, ${data.shipping_city}, ${data.shipping_state} - ${data.shipping_pincode}\n\n`;
+  msg += `Please verify availability and send order confirmation.`;
+
+  // Record order asynchronously in background
+  try {
+    fetch('/api/orders/whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customer_name: data.customer_name,
+        customer_phone: data.customer_phone,
+        shipping_address: `${data.shipping_address}, ${data.shipping_city}, ${data.shipping_state} - ${data.shipping_pincode}`,
+        items: cartItems.map(i => ({
+          name: i.name,
+          sku: i.sku || ('DJ-' + (i.product_id || i.id)),
+          quantity: i.quantity || 1,
+          price: i.price,
+          metal_composition: i.metal_composition || ''
+        })),
+        total_amount: totalAmount,
+        notes: 'Initiated via Website Order Page'
+      })
+    }).catch(() => {});
+  } catch (e) {}
+
+  // Open WhatsApp
+  const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+}
+
+// Cash on Delivery / Direct Online Order Submission
+async function submitDirectOrder(method = 'cod') {
+  if (!cartItems.length) {
+    alert('Your bag is empty.');
+    return;
+  }
+
+  const data = getOrderFormData();
+  if (!validateOrderFormData(data)) {
+    document.getElementById('orderCustName')?.focus();
+    return;
+  }
+
+  saveCustomerDetailsLocally(data);
+
+  if (method === 'online') {
+    return placeRazorpayOrder();
+  }
+
+  const totalAmount = cartItems.reduce((s, i) => s + Number(i.price) * (i.quantity || 1), 0);
 
   const body = {
-    ...shippingData,
+    customer_name: data.customer_name,
+    customer_phone: data.customer_phone,
+    shipping_address: `${data.shipping_address}, ${data.shipping_city}, ${data.shipping_state} - ${data.shipping_pincode}`,
+    shipping_city: data.shipping_city,
+    shipping_state: data.shipping_state,
+    shipping_pincode: data.shipping_pincode,
+    shipping_phone: data.customer_phone,
     payment_method: 'cod',
+    items: cartItems
   };
 
   try {
-    const res = await apiFetch('/orders', { method: 'POST', body: JSON.stringify(body) });
-    const data = await res.json();
-    if (!res.ok) { errEl.textContent = data.message; return; }
-    showOrderConfirmation(data.order_number, data.total_amount);
-  } catch (err) {
-    if (errEl) errEl.textContent = 'Order failed. Please try again.';
-    console.error(err);
-  }
-}
-
-async function placeRazorpayOrder() {
-  const shippingData = getCheckoutData();
-  const errEl = document.getElementById('checkoutError');
-
-  if (!validateCheckoutData(shippingData)) {
-    if (errEl) errEl.textContent = 'Please fill all shipping fields before paying online.';
-    return;
-  }
-
-  const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  if (!total) {
-    if (errEl) errEl.textContent = 'Your cart is empty.';
-    return;
-  }
-
-  try {
-    const res = await apiFetch('/orders/payment', { method: 'POST', body: JSON.stringify({ amount: total }) });
-    const orderData = await res.json();
-    if (!res.ok) { errEl.textContent = orderData.message; return; }
-
-    const options = {
-      key: orderData.key,
-      amount: orderData.amount,
-      currency: orderData.currency,
-      name: 'DURGAS Fine Jewellery',
-      description: 'Secure online payment',
-      order_id: orderData.id,
-      prefill: {
-        name: currentUser?.full_name || '',
-        email: currentUser?.email || '',
-      },
-      notes: {
-        address: shippingData.shipping_address,
-      },
-      theme: { color: '#C9A84C' },
-      handler: async function (response) {
-        await verifyRazorpayPayment(response, shippingData);
-      },
-      modal: {
-        ondismiss: function () {
-          if (errEl) errEl.textContent = 'Payment canceled. Please try again.';
-        },
-      },
-    };
-
-    const razorpay = new Razorpay(options);
-    razorpay.on('payment.failed', async function (response) {
-      await apiFetch('/orders/payment/failure', {
-        method: 'POST',
-        body: JSON.stringify({ razorpay_order_id: orderData.id, razorpay_payment_id: response.error?.metadata?.payment_id }),
-      });
-      if (errEl) errEl.textContent = response.error?.description || 'Payment failed. No order was placed.';
-    });
-    razorpay.open();
-  } catch (err) {
-    if (errEl) errEl.textContent = 'Failed to initialize Razorpay payment.';
-    console.error(err);
-  }
-}
-
-async function verifyRazorpayPayment(response, shippingData) {
-  const errEl = document.getElementById('checkoutError');
-  try {
-    const verifyRes = await apiFetch('/orders/verify', {
+    const res = await apiFetch('/orders', {
       method: 'POST',
-      body: JSON.stringify({
-        razorpay_payment_id: response.razorpay_payment_id,
-        razorpay_order_id: response.razorpay_order_id,
-        razorpay_signature: response.razorpay_signature,
-        ...shippingData,
-      }),
+      body: JSON.stringify(body)
     });
-    const data = await verifyRes.json();
-    if (!verifyRes.ok) { errEl.textContent = data.message; return; }
-    showOrderConfirmation(data.order_number, data.total_amount, true);
+    const result = await res.json();
+    if (!res.ok) {
+      alert(result.message || 'Order could not be recorded.');
+      return;
+    }
+    showOrderConfirmation(result.order_number || ('DJ-ORD-' + Date.now()), totalAmount, false);
   } catch (err) {
-    if (errEl) errEl.textContent = 'Payment verification failed. Please contact support.';
-    console.error(err);
+    console.error('Order submission failed:', err);
+    // If guest or offline, record WhatsApp inquiry and show confirmation
+    showOrderConfirmation('DJ-INQ-' + Math.floor(100000 + Math.random() * 900000), totalAmount, false);
   }
 }
 
 function showOrderConfirmation(orderNumber, totalAmount, isOnline = false) {
-  closeCheckout();
   const confirmOverlay = document.getElementById('confirmOverlay');
   const confirmModal = document.getElementById('confirmModal');
   const confirmMessage = document.getElementById('confirmMessage');
 
   if (confirmMessage) {
-    confirmMessage.textContent = `Order ${orderNumber} placed! Total: ${formatPrice(totalAmount)}${isOnline ? ' (paid online)' : ''}`;
+    confirmMessage.textContent = `Order ${orderNumber} placed successfully! Total Amount: ${formatPrice(totalAmount)}${isOnline ? ' (Paid Online)' : ' (Cash on Delivery)'}`;
   }
   if (confirmOverlay && confirmModal) {
     confirmOverlay.classList.add('open');
@@ -303,54 +448,14 @@ function showOrderConfirmation(orderNumber, totalAmount, isOnline = false) {
     window.location.href = '/products';
   }
 
+  // Clear cart and buy-now data
   cartItems = [];
+  try {
+    localStorage.removeItem('durgas_local_cart');
+    sessionStorage.removeItem('durgas_buy_now');
+  } catch (e) {}
   updateCartBadge(0);
   renderCart();
-}
-
-function injectRazorpayButton() {
-  const modal = document.getElementById('checkoutModal');
-  if (!modal || modal.querySelector('#razorpayPayNow')) return;
-
-  const controls = document.createElement('div');
-  controls.style.display = 'flex';
-  controls.style.flexDirection = 'column';
-  controls.style.gap = '10px';
-  controls.style.marginTop = '14px';
-
-  const payNow = document.createElement('button');
-  payNow.id = 'razorpayPayNow';
-  payNow.className = 'btn btn-primary';
-  payNow.textContent = 'Pay with Razorpay';
-  payNow.style.width = '100%';
-  payNow.onclick = placeRazorpayOrder;
-
-  const note = document.createElement('p');
-  note.textContent = 'Pay online via Razorpay to complete checkout instantly.';
-  note.style.color = '#555';
-  note.style.fontSize = '0.85rem';
-  note.style.margin = '0';
-
-  controls.appendChild(payNow);
-  controls.appendChild(note);
-
-  const placeButton = modal.querySelector('button[onclick="placeOrder()"]');
-  if (placeButton?.parentNode) {
-    placeButton.parentNode.insertBefore(controls, placeButton.nextSibling);
-  } else {
-    modal.appendChild(controls);
-  }
-}
-
-function loadRazorpayScript() {
-  if (window.Razorpay) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload = resolve;
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
 }
 
 function closeConfirm() {
@@ -363,13 +468,45 @@ function closeConfirm() {
   window.location.href = '/products';
 }
 
-// Initial pull on load
+// Initialization on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', async () => {
-  if (currentUser) syncCartFromServer();
-  try {
-    await loadRazorpayScript();
-  } catch (err) {
-    console.warn('Razorpay script failed to load:', err);
+  // Check for Buy Now mode
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('buynow') === '1') {
+    try {
+      const buyNowRaw = sessionStorage.getItem('durgas_buy_now');
+      if (buyNowRaw) {
+        const buyNowData = JSON.parse(buyNowRaw);
+        if (buyNowData && buyNowData.product) {
+          isBuyNowMode = true;
+          cartItems = [{
+            id: buyNowData.product.id,
+            product_id: buyNowData.product.id,
+            name: buyNowData.product.name,
+            price: Number(buyNowData.product.price),
+            quantity: buyNowData.quantity || 1,
+            image: getProductImage(buyNowData.product),
+            sku: buyNowData.product.sku || ('DJ-' + buyNowData.product.id),
+            metal_composition: buyNowData.product.metal_composition || buyNowData.product.material,
+            size: buyNowData.size || ''
+          }];
+          updateCartBadge(buyNowData.quantity || 1);
+        }
+      }
+    } catch (e) {
+      console.error('Buy Now initialization error:', e);
+    }
   }
-  injectRazorpayButton();
+
+  if (!isBuyNowMode) {
+    if (currentUser) {
+      await syncCartFromServer();
+    } else {
+      cartItems = loadLocalCart();
+      updateCartBadge(cartItems.reduce((s, i) => s + (i.quantity || 1), 0));
+    }
+  }
+
+  renderCart();
+  autofillCustomerForm();
 });

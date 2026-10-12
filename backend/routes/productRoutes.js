@@ -6,6 +6,7 @@ const { auth, adminOnly } = require('../middleware/auth');
 
 router.get('/', productController.getProducts);
 router.get('/admin/all', auth, adminOnly, productController.getAllProductsAdmin);
+router.get('/:id/related', productController.getRelatedProducts);
 router.get('/:id', productController.getProductById);
 router.post('/', auth, adminOnly, upload.array('images', 10), productController.addProduct);
 router.put('/:id', auth, adminOnly, upload.array('images', 10), productController.updateProduct);

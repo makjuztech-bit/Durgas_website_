@@ -73,11 +73,10 @@ const DURGAS_WHATSAPP = {
     const price = Number(product.price || 0);
     const total = price * qty;
     const prodId = product.sku || ('DJ-PR-' + product.id);
-    const prodUrl = window.location.origin + '/product-details?id=' + product.id;
+    const prodUrl = window.location.origin + '/product/' + (product.sku || product.id);
 
     let msg = `Hello ${this.shopName}! I would like to place an order.\n\n`;
     msg += `Product: ${product.name}\n`;
-    if (product.tamil_name) msg += `Tamil Name: ${product.tamil_name}\n`;
     msg += `Product ID: ${prodId}\n`;
     if (product.material || product.metal_composition) {
       msg += `Metal / Composition: ${product.metal_composition || product.material}\n`;
@@ -302,7 +301,7 @@ const DURGAS_WHATSAPP = {
   injectFloatingButton() {
     if (document.getElementById('waFloatingWidget')) return;
     const phone = this.getCleanNumber();
-    const defaultMsg = encodeURIComponent(`Hello ${this.shopName}! I have an inquiry about your Five Metals / Iypponnu jewellery collections.`);
+    const defaultMsg = encodeURIComponent(`Hello ${this.shopName}! I have an inquiry about your fine jewellery collections.`);
     const el = document.createElement('a');
     el.id = 'waFloatingWidget';
     el.href = `https://wa.me/${phone}?text=${defaultMsg}`;
@@ -336,9 +335,8 @@ const DURGAS_WHATSAPP = {
       <img src="${img}" alt="${product.name}" class="wa-summary-img">
       <div class="wa-summary-info">
         <h4>${product.name}</h4>
-        ${product.tamil_name ? `<p class="wa-tamil-title">${product.tamil_name}</p>` : ''}
         <span class="wa-sku-pill">ID: ${sku}</span>
-        <p class="wa-metal-pill">⚜ ${product.metal_composition || product.material || 'Five Metals / Iypponnu'}</p>
+        <p class="wa-metal-pill">⚜ ${product.metal_composition || product.material || 'Verified Metal Composition'}</p>
         <span class="wa-price-highlight">${this.formatInr(product.price)}</span>
       </div>
     `;

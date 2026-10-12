@@ -521,7 +521,7 @@ exports.recordWhatsAppInquiry = async (req, res) => {
             itemQty,
             itemPrice,
             itemTax,
-            item.metal_composition || 'Five Metals / Iypponnu Verified',
+            item.metal_composition || 'Five-Metal Jewellery Verified',
           ]
         ).catch(() => {});
       }
