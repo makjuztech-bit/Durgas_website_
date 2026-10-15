@@ -1,7 +1,11 @@
-const API = (
-  window.location.protocol === 'file:' ||
-  ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '5000')
-) ? 'http://localhost:5000/api' : '/api';
+const API = (typeof process !== 'undefined' && process.env?.BACKEND_URL)
+  ? (process.env.BACKEND_URL.replace(/\/+$/, '') + '/api')
+  : (
+      typeof window !== 'undefined' && (
+        window.location.protocol === 'file:' ||
+        ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '5000')
+      )
+    ) ? 'http://localhost:5000/api' : '/api';
 let userToken = localStorage.getItem('userToken') || null;
 let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
 if (currentUser && (currentUser.email === 'patron@durgas.com' || currentUser.full_name === 'Valued Patron' || (!currentUser.id && !currentUser.user_id && !currentUser.email))) {
