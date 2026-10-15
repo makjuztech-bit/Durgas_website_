@@ -1,7 +1,11 @@
 const helmet = require('helmet');
 const { rateLimit } = require('express-rate-limit');
 
-const createSecurityMiddleware = ({ apiLimit = 300, authLimit = 10, windowMs = 15 * 60 * 1000 } = {}) => ({
+const createSecurityMiddleware = ({
+  apiLimit = parseInt(process.env.API_LIMIT || '500', 10),
+  authLimit = parseInt(process.env.AUTH_LIMIT || (process.env.NODE_ENV === 'production' ? '20' : '500'), 10),
+  windowMs = 15 * 60 * 1000
+} = {}) => ({
   securityHeaders: helmet({
     contentSecurityPolicy: false,
     hsts: process.env.NODE_ENV === 'production' ? undefined : false,

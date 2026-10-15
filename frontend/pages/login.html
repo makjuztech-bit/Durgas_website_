@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign In — DURGAS</title>
-  <meta name="description" content="Sign in to your DURGAS account to manage orders, wishlist, and shipping details.">
+  <title>Customer Sign In — DURGAS Five Metal Jewellery</title>
+  <meta name="description" content="Sign in or create your DURGAS account to manage orders, wishlist, and shipping addresses.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@200;300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/products.css">
   <link rel="stylesheet" href="/css/cart.css">
@@ -19,32 +19,47 @@
 <div class="mobile-nav" id="mobileNav">
   <button class="mobile-close" onclick="closeMobileNav()">✕</button>
   <a href="/" onclick="closeMobileNav()">Home</a>
-  <a href="/products" onclick="closeMobileNav()">Shop</a>
+  <a href="/products" onclick="closeMobileNav()">Shop Catalogue</a>
   <a href="/about" onclick="closeMobileNav()">About</a>
   <a href="/contact" onclick="closeMobileNav()">Contact</a>
+  <a href="/cart" onclick="closeMobileNav()">Cart</a>
 </div>
 
 <!-- Offer Banner -->
 <div class="offer-banner">
-  ✦ Use code <span>DURGAS10</span> for 10% off your first purchase &nbsp;·&nbsp; Free shipping on orders above ₹5,000 ✦
+  ✦ Handcrafted Panchaloha Five-Metal Jewellery &nbsp;·&nbsp; Free Insured Express Delivery Across India ✦
 </div>
 
 <!-- Navigation -->
 <nav id="mainNav">
   <a href="/" class="nav-logo">
-    <img src="/main logo.jpeg" alt="Durgas Logo" class="logo">
+    <img src="/durgas main logo.jpeg" alt="DURGAS Logo" class="logo">
   </a>
   <ul class="nav-links">
     <li><a href="/">Home</a></li>
-    <li><a href="/products">Shop</a></li>
+    <li><a href="/products">Shop Catalogue</a></li>
     <li><a href="/about">About</a></li>
     <li><a href="/contact">Contact</a></li>
   </ul>
   <div class="nav-icons">
-    <button class="nav-icon-btn" title="Search">⌕</button>
     <button class="nav-icon-btn" title="Wishlist" onclick="openWishlist()">♡</button>
-    <button class="nav-icon-btn" title="Account" onclick="openAuthModal()" id="accountBtn">◎</button>
-    <button class="nav-icon-btn" title="Cart" onclick="openCart()">
+    <div class="patron-menu-wrap" id="accountMenuWrap">
+      <a href="/login" class="nav-auth-btn" id="accountBtn" title="Sign In to DURGAS">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Sign In</span>
+      </a>
+      <div class="patron-dropdown" id="patronDropdown" style="display:none;">
+        <div class="patron-dropdown-header">
+          <div class="patron-dropdown-name" id="patronDropdownName">My Account</div>
+          <div class="patron-dropdown-email" id="patronDropdownEmail"></div>
+        </div>
+        <a href="/profile" class="patron-dropdown-link">🛍️ My Orders &amp; Profile</a>
+        <a href="javascript:void(0)" onclick="openWishlist()" class="patron-dropdown-link">♡ My Wishlist</a>
+        <a href="/cart" class="patron-dropdown-link">🛒 Shopping Bag</a>
+        <button type="button" onclick="logoutUser()" class="patron-dropdown-link" style="color:#c0392b; border-top:1px solid #F0EAE1;">🚪 Sign Out</button>
+      </div>
+    </div>
+    <button class="nav-icon-btn" title="Cart" onclick="window.location.href='/cart'">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;display:inline-block"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="cart-count" id="cartCountBadge">0</span>
     </button>
     <button class="hamburger" onclick="openMobileNav()">
@@ -53,102 +68,218 @@
   </div>
 </nav>
 
-<!-- ==================== LOGIN PAGE ==================== -->
-<div class="page active" id="page-login" style="padding: 60px 5vw 90px; display: flex; align-items: center; justify-content: center; min-height: 75vh; background: var(--beige, #FAF6EF);">
-  <div style="background: var(--white); border: 1px solid var(--beige-dark); border-radius: 4px; padding: 44px 38px; width: 480px; max-width: 100%; box-shadow: 0 12px 40px rgba(0,0,0,0.05); position: relative;">
+<!-- ==================== MAIN AUTH PAGE ==================== -->
+<div class="page active" id="page-login" style="padding: 50px 5vw 80px; display: flex; align-items: center; justify-content: center; min-height: 80vh; background: #FAF7F2;">
+  <div style="background: #ffffff; border: 1px solid #E6DEC8; border-radius: 8px; padding: 40px 36px; width: 490px; max-width: 100%; box-shadow: 0 16px 45px rgba(107, 29, 47, 0.08); position: relative;">
     
     <div style="text-align: center; margin-bottom: 24px;">
-      <span style="font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); font-weight: 600;">Patron Authentication</span>
-      <h2 class="modal-title" style="margin: 6px 0 4px; font-family: var(--font-serif); font-size: 2rem; color: var(--maroon, #6B1D2F);">Welcome Back</h2>
-      <p class="modal-sub" style="font-size: 0.85rem; color: var(--gray); margin: 0;">Sign in to your DURGAS account with Password or Email OTP</p>
+      <span style="font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: #8B6914; font-weight: 700;">✦ DURGAS JEWELLERY ✦</span>
+      <h1 class="modal-title" style="margin: 8px 0 6px; font-family: var(--font-serif, 'Cormorant Garamond', serif); font-size: 2.1rem; color: #6B1D2F;">Customer Account</h1>
+      <p class="modal-sub" style="font-size: 0.85rem; color: #666; margin: 0; line-height: 1.5;">Sign in or create your account to track orders and save your favourites.</p>
     </div>
 
-    <!-- Dual Login Mode Switcher Tabs -->
-    <div class="auth-tabs" style="display: flex; gap: 8px; margin-bottom: 24px; background: #FAF6EF; padding: 4px; border-radius: 4px; border: 1px solid #EAE5D9;">
-      <button type="button" id="tabBtnPassword" class="auth-tab-btn active" onclick="switchLoginTab('password')" style="flex: 1; padding: 10px; border: none; background: #fff; color: var(--maroon, #6B1D2F); font-weight: 600; font-size: 0.8rem; cursor: pointer; border-radius: 3px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s;">
-        🔒 Password Login
+    <!-- Main Navigation Tabs -->
+    <div class="auth-nav-tabs" style="display: flex; gap: 6px; margin-bottom: 22px; background: #F6F1E9; padding: 5px; border-radius: 6px; border: 1px solid #E5DCCE;">
+      <button type="button" id="mainTabLogin" class="auth-nav-tab active" onclick="switchAuthMainTab('login')" style="flex: 1; padding: 10px 8px; border: none; background: #fff; color: #6B1D2F; font-weight: 700; font-size: 0.8rem; cursor: pointer; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.06); transition: all 0.2s;">
+        🔒 Sign In
       </button>
-      <button type="button" id="tabBtnOtp" class="auth-tab-btn" onclick="switchLoginTab('otp')" style="flex: 1; padding: 10px; border: none; background: transparent; color: #666; font-weight: 500; font-size: 0.8rem; cursor: pointer; border-radius: 3px; transition: all 0.2s;">
-        ✉️ Email OTP Login
+      <button type="button" id="mainTabRegister" class="auth-nav-tab" onclick="switchAuthMainTab('register')" style="flex: 1; padding: 10px 8px; border: none; background: transparent; color: #555; font-weight: 600; font-size: 0.8rem; cursor: pointer; border-radius: 4px; transition: all 0.2s;">
+        👤 Create Account
+      </button>
+      <button type="button" id="mainTabHelp" class="auth-nav-tab" onclick="switchAuthMainTab('help')" style="flex: 1; padding: 10px 8px; border: none; background: transparent; color: #555; font-weight: 600; font-size: 0.8rem; cursor: pointer; border-radius: 4px; transition: all 0.2s;">
+        🔑 Help
       </button>
     </div>
 
-    <!-- Alert / Status Notification -->
-    <div id="loginStatusAlert" style="display: none; padding: 12px 14px; border-radius: 4px; font-size: 0.82rem; margin-bottom: 20px; line-height: 1.5;"></div>
+    <!-- Alert / Status Notification for Login -->
+    <div id="loginStatusAlert" class="auth-status-alert" style="display:none; margin-bottom: 18px; padding: 12px 14px; border-radius: 4px; font-size: 0.82rem; line-height: 1.4;"></div>
 
-    <!-- MODE 1: PASSWORD LOGIN -->
-    <div id="modePasswordLogin">
-      <form onsubmit="handlePasswordLogin(event)">
-        <div class="form-group" style="margin-bottom: 18px;">
-          <label class="form-label" style="font-weight: 600; font-size: 0.8rem; color: #333; margin-bottom: 6px; display: block;">Email Address</label>
-          <input type="email" class="form-input" id="authEmail" placeholder="e.g. patron@durgasjewellery.com" required autocomplete="email">
-        </div>
-        <div class="form-group" style="margin-bottom: 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <label class="form-label" style="font-weight: 600; font-size: 0.8rem; color: #333; margin: 0;">Password</label>
-            <a href="javascript:void(0)" onclick="switchLoginTab('otp')" style="font-size: 0.75rem; color: var(--gold); text-decoration: none;">Forgot password? Sign in with OTP →</a>
+    <!-- ==================== SECTION 1: SIGN IN ==================== -->
+    <div id="authSectionLogin">
+      <!-- Subtabs: Password vs OTP -->
+      <div class="auth-sub-tabs" style="display: flex; border-bottom: 2px solid #F0EAE1; margin-bottom: 20px; gap: 20px;">
+        <button type="button" id="tabBtnPassword" class="auth-sub-tab active" onclick="switchLoginTab('password')" style="background: none; border: none; padding: 8px 4px; font-size: 0.82rem; font-weight: 700; color: #6B1D2F; border-bottom: 2px solid #6B1D2F; cursor: pointer;">
+          🔒 Password Sign-In
+        </button>
+        <button type="button" id="tabBtnOtp" class="auth-sub-tab" onclick="switchLoginTab('otp')" style="background: none; border: none; padding: 8px 4px; font-size: 0.82rem; font-weight: 500; color: #777; border-bottom: 2px solid transparent; cursor: pointer;">
+          ⚡ Instant OTP Sign-In
+        </button>
+      </div>
+
+      <!-- MODE 1A: PASSWORD LOGIN -->
+      <div id="modePasswordLogin">
+        <form onsubmit="handlePasswordLogin(event)">
+          <div class="form-group" style="margin-bottom: 18px;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #333; margin-bottom: 6px; display: block;">Email Address or 10-Digit Mobile Number</label>
+            <input type="text" class="form-input" id="authEmail" placeholder="e.g. name@example.com or 9876543210" required autocomplete="username" style="width: 100%; padding: 12px 14px; border: 1px solid #D9CFBE; border-radius: 4px; font-size: 0.88rem;">
           </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #333; margin: 0;">Password</label>
+              <a href="javascript:void(0)" onclick="switchAuthMainTab('help'); switchHelpTab('forgot-password');" style="font-size: 0.78rem; color: #8B6914; text-decoration: none; font-weight: 600;">Forgot password? →</a>
+            </div>
+            <div style="position: relative;">
+              <input type="password" class="form-input" id="authPassword" placeholder="••••••••" required autocomplete="current-password" style="width: 100%; padding: 12px 14px; padding-right: 75px; border: 1px solid #D9CFBE; border-radius: 4px; font-size: 0.88rem;">
+              <button type="button" onclick="togglePasswordVisibility('authPassword', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 10; background: none; border: none; cursor: pointer; color: #8B6914; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; padding: 6px 10px; text-transform: uppercase;" title="Toggle Password Visibility" aria-label="Show Password">SHOW</button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" id="btnSubmitPassword" style="width: 100%; padding: 14px; font-size: 0.82rem; letter-spacing: 0.16em; margin-top: 10px; background: #6B1D2F; color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; transition: background 0.2s;">
+            <span>Sign In with Password</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- MODE 1B: OTP LOGIN -->
+      <div id="modeOtpLogin" style="display: none;">
+        <form onsubmit="handleOtpSubmit(event)">
+          <div class="form-group" style="margin-bottom: 18px;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #333; margin-bottom: 6px; display: block;">Email Address or 10-Digit Mobile Number</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" class="form-input" id="otpEmail" placeholder="e.g. 9876543210 or name@example.com" required autocomplete="username" style="flex: 1; padding: 12px 14px; border: 1px solid #D9CFBE; border-radius: 4px; font-size: 0.88rem;">
+              <button type="button" class="btn-primary" id="btnSendOtp" onclick="sendLoginOtp()" style="padding: 10px 18px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.05em; white-space: nowrap; background: #6B1D2F; color: #fff; border: none; border-radius: 4px; cursor: pointer;">
+                <span>Send OTP</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- OTP Input -->
+          <div id="otpInputGroup" style="display: none; margin-bottom: 18px; padding: 16px; border-radius: 6px; border: 1px dashed #D9CFBE; background: #FAF8F5;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <label class="form-label" style="font-weight: 700; font-size: 0.82rem; color: #6B1D2F; margin: 0;">Enter 6-Digit OTP Code</label>
+              <span id="otpCountdownText" style="font-size: 0.75rem; color: #777;"></span>
+            </div>
+            <input type="text" class="form-input" id="otpCode" placeholder="••••••" maxlength="6" pattern="\d{6}" style="width: 100%; padding: 10px; font-size: 1.4rem; letter-spacing: 8px; text-align: center; font-weight: 700; color: #6B1D2F; border: 1px solid #D9CFBE; border-radius: 4px; background: #fff;">
+            <p id="simulatedOtpBadge" style="display: none; margin-top: 10px; font-size: 0.78rem; color: #1e824c; background: #eafaf1; padding: 8px 12px; border-radius: 4px; border: 1px solid #a3e4d7;"></p>
+          </div>
+
+          <button type="submit" class="btn-primary" id="btnVerifyOtp" style="width: 100%; padding: 14px; font-size: 0.82rem; letter-spacing: 0.16em; display: none; background: #6B1D2F; color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;">
+            <span>Verify OTP &amp; Sign In</span>
+          </button>
+        </form>
+      </div>
+
+      <p style="text-align: center; margin-top: 24px; font-size: 0.85rem; color: #666;">
+        Don't have an account? <a href="javascript:void(0)" onclick="switchAuthMainTab('register')" style="color: #6B1D2F; font-weight: 700; text-decoration: underline;">Create Account Here</a>
+      </p>
+    </div>
+
+    <!-- ==================== SECTION 2: CREATE ACCOUNT / REGISTER ==================== -->
+    <div id="authSectionRegister" style="display: none;">
+      <div id="regStatusAlert" class="auth-status-alert" style="display:none; margin-bottom: 18px; padding: 12px 14px; border-radius: 4px; font-size: 0.82rem; line-height: 1.4;"></div>
+
+      <form onsubmit="handleRegisterSubmit(event)">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #333; margin-bottom: 6px; display: block;">Full Name</label>
+          <input type="text" class="form-input" id="regName" placeholder="e.g. Priya Sharma" required style="width: 100%; padding: 12px 14px; border: 1px solid #D9CFBE; border-radius: 4px; font-size: 0.88rem;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #333; margin-bottom: 6px; display: block;">Email Address</label>
+          <input type="email" class="form-input" id="regEmail" placeholder="e.g. priya@example.com" required style="width: 100%; padding: 12px 14px; border: 1px solid #D9CFBE; border-radius: 4px; font-size: 0.88rem;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #333; margin-bottom: 6px; display: block;">10-Digit Mobile Number (Optional)</label>
+          <input type="tel" class="form-input" id="regPhone" placeholder="e.g. 9876543210" pattern="[0-9]{10}" maxlength="10" style="width: 100%; padding: 12px 14px; border: 1px solid #D9CFBE; border-radius: 4px; font-size: 0.88rem;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 22px;">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #333; margin-bottom: 6px; display: block;">Password (Minimum 8 Characters)</label>
           <div style="position: relative;">
-            <input type="password" class="form-input" id="authPassword" placeholder="••••••••" required autocomplete="current-password" style="padding-right: 70px;">
-            <button type="button" onclick="togglePasswordVisibility('authPassword', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 10; background: none; border: none; cursor: pointer; color: #8B6914; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; padding: 6px 10px; text-transform: uppercase;" title="Toggle Password Visibility" aria-label="Show Password">SHOW</button>
+            <input type="password" class="form-input" id="regPassword" placeholder="••••••••" required minlength="8" style="width: 100%; padding: 12px 14px; padding-right: 75px; border: 1px solid #D9CFBE; border-radius: 4px; font-size: 0.88rem;">
+            <button type="button" onclick="togglePasswordVisibility('regPassword', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 10; background: none; border: none; cursor: pointer; color: #8B6914; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; padding: 6px 10px; text-transform: uppercase;">SHOW</button>
           </div>
         </div>
 
-        <button type="submit" class="btn-primary" id="btnSubmitPassword" style="width: 100%; padding: 14px; font-size: 0.8rem; letter-spacing: 0.15em; margin-top: 14px;">
-          <span>Sign In with Password</span>
+        <button type="submit" class="btn-primary" id="btnSubmitRegister" style="width: 100%; padding: 14px; font-size: 0.82rem; letter-spacing: 0.16em; background: #6B1D2F; color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; transition: background 0.2s;">
+          <span>Create Customer Account</span>
         </button>
       </form>
+
+      <p style="text-align: center; margin-top: 24px; font-size: 0.85rem; color: #666;">
+        Already have an account? <a href="javascript:void(0)" onclick="switchAuthMainTab('login')" style="color: #6B1D2F; font-weight: 700; text-decoration: underline;">Sign In Here</a>
+      </p>
     </div>
 
-    <!-- MODE 2: EMAIL OTP LOGIN -->
-    <div id="modeOtpLogin" style="display: none;">
-      <form onsubmit="handleOtpSubmit(event)">
+    <!-- ==================== SECTION 3: ACCOUNT HELP ==================== -->
+    <div id="authSectionHelp" style="display: none;">
+      <div class="auth-sub-tabs" style="display: flex; border-bottom: 2px solid #F0EAE1; margin-bottom: 20px; gap: 20px;">
+        <button type="button" id="tabBtnForgotPwd" class="auth-sub-tab active" onclick="switchHelpTab('forgot-password')" style="background: none; border: none; padding: 8px 4px; font-size: 0.82rem; font-weight: 700; color: #6B1D2F; border-bottom: 2px solid #6B1D2F; cursor: pointer;">
+          🔑 Forgot Password
+        </button>
+        <button type="button" id="tabBtnForgotEmail" class="auth-sub-tab" onclick="switchHelpTab('forgot-email')" style="background: none; border: none; padding: 8px 4px; font-size: 0.82rem; font-weight: 500; color: #777; border-bottom: 2px solid transparent; cursor: pointer;">
+          ✉️ Find Email
+        </button>
+      </div>
+
+      <div id="helpStatusAlert" class="auth-status-alert" style="display:none; margin-bottom: 18px; padding: 12px 14px; border-radius: 4px; font-size: 0.82rem; line-height: 1.4;"></div>
+
+      <!-- Forgot Password Submode -->
+      <div id="modeForgotPassword">
+        <p style="font-size: 0.82rem; color: #555; margin-bottom: 16px; line-height: 1.5;">
+          Enter your registered email address or 10-digit mobile number. We will send you an OTP to verify and reset your password.
+        </p>
         <div class="form-group" style="margin-bottom: 16px;">
-          <label class="form-label" style="font-weight: 600; font-size: 0.8rem; color: #333; margin-bottom: 6px; display: block;">Registered Email Address</label>
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #333; margin-bottom: 6px; display: block;">Email Address or 10-Digit Mobile Number</label>
           <div style="display: flex; gap: 8px;">
-            <input type="email" class="form-input" id="otpEmail" placeholder="e.g. patron@durgasjewellery.com" required autocomplete="email" style="flex: 1;">
-            <button type="button" class="btn-primary" id="btnSendOtp" onclick="sendLoginOtp()" style="padding: 10px 16px; font-size: 0.76rem; letter-spacing: 0.05em; white-space: nowrap;">
+            <input type="text" class="form-input" id="resetTarget" placeholder="e.g. name@example.com or 9876543210" required style="flex: 1; padding: 12px 14px; border: 1px solid #D9CFBE; border-radius: 4px; font-size: 0.88rem;">
+            <button type="button" class="btn-primary" id="btnSendResetOtp" onclick="sendResetOtp()" style="padding: 10px 18px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.05em; white-space: nowrap; background: #6B1D2F; color: #fff; border: none; border-radius: 4px; cursor: pointer;">
               <span>Send OTP</span>
             </button>
           </div>
         </div>
 
-        <!-- OTP Input (Initially Hidden or Focused) -->
-        <div id="otpInputGroup" style="display: none; margin-bottom: 18px; padding-top: 6px; border-top: 1px dashed #EAE5D9;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <label class="form-label" style="font-weight: 600; font-size: 0.8rem; color: #333; margin: 0;">Enter 6-Digit OTP Code</label>
-            <span id="otpCountdownText" style="font-size: 0.75rem; color: #777;"></span>
+        <div id="resetPasswordGroup" style="display: none; padding: 16px; background: #FAF8F5; border-radius: 6px; border: 1px dashed #D9CFBE; margin-bottom: 18px;">
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" style="font-weight: 700; font-size: 0.82rem; color: #6B1D2F; margin-bottom: 6px; display: block;">6-Digit OTP Verification Code</label>
+            <input type="text" class="form-input" id="resetOtpCode" placeholder="••••••" maxlength="6" pattern="\d{6}" style="width: 100%; padding: 10px; font-size: 1.4rem; letter-spacing: 8px; text-align: center; font-weight: 700; color: #6B1D2F; background: #ffffff; border: 1px solid #D9CFBE; border-radius: 4px;">
+            <p id="resetOtpBadge" style="display: none; margin-top: 8px; font-size: 0.78rem; color: #1e824c; background: #eafaf1; padding: 8px 12px; border-radius: 4px; border: 1px solid #a3e4d7;"></p>
           </div>
-          <input type="text" class="form-input" id="otpCode" placeholder="Enter 6-digit code (e.g. 123456)" maxlength="6" pattern="\d{6}" style="font-size: 1.25rem; letter-spacing: 6px; text-align: center; font-weight: 700; color: var(--maroon, #6B1D2F);">
-          <p id="simulatedOtpBadge" style="display: none; margin-top: 8px; font-size: 0.78rem; color: #27ae60; background: #eafaf1; padding: 6px 10px; border-radius: 3px; border: 1px solid #a3e4d7;"></p>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #333; margin-bottom: 6px; display: block;">New Password (Minimum 8 Characters)</label>
+            <div style="position: relative;">
+              <input type="password" class="form-input" id="resetNewPassword" placeholder="••••••••" minlength="8" style="width: 100%; padding: 12px 14px; padding-right: 75px; background: #ffffff; border: 1px solid #D9CFBE; border-radius: 4px; font-size: 0.88rem;">
+              <button type="button" onclick="togglePasswordVisibility('resetNewPassword', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 10; background: none; border: none; cursor: pointer; color: #8B6914; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; padding: 6px 10px; text-transform: uppercase;">SHOW</button>
+            </div>
+          </div>
         </div>
 
-        <button type="submit" class="btn-primary" id="btnVerifyOtp" style="width: 100%; padding: 14px; font-size: 0.8rem; letter-spacing: 0.15em; display: none;">
-          <span>Verify OTP &amp; Sign In</span>
+        <button type="button" class="btn-primary" id="btnSubmitReset" onclick="handleResetPasswordSubmit(event)" style="width: 100%; padding: 14px; font-size: 0.82rem; letter-spacing: 0.16em; display: none; background: #6B1D2F; color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;">
+          <span>Update Password &amp; Sign In</span>
         </button>
-      </form>
+      </div>
+
+      <!-- Forgot Email Submode -->
+      <div id="modeForgotEmail" style="display: none;">
+        <p style="font-size: 0.82rem; color: #555; margin-bottom: 16px; line-height: 1.5;">
+          Forgot which email is registered? Enter your 10-digit mobile number to look up your registered account.
+        </p>
+        <form onsubmit="handleLookupEmail(event)">
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #333; margin-bottom: 6px; display: block;">Registered 10-Digit Mobile Number</label>
+            <input type="tel" class="form-input" id="lookupPhone" placeholder="e.g. 9876543210" pattern="[0-9]{10}" maxlength="10" required style="width: 100%; padding: 12px 14px; border: 1px solid #D9CFBE; border-radius: 4px; font-size: 0.88rem;">
+          </div>
+          <button type="submit" class="btn-primary" id="btnLookupEmail" style="width: 100%; padding: 14px; font-size: 0.82rem; letter-spacing: 0.16em; background: #6B1D2F; color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;">
+            <span>Find Registered Email</span>
+          </button>
+        </form>
+
+        <div id="lookupResultCard" style="display: none; margin-top: 18px; padding: 16px; background: #FAF8F5; border-radius: 6px; border: 1px solid #DCD5C8; border-left: 4px solid #6B1D2F;">
+          <div style="font-size: 0.74rem; color: #777; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Account Located:</div>
+          <div id="lookupResultName" style="font-weight: 700; color: #6B1D2F; font-size: 1rem; margin-top: 4px;"></div>
+          <div style="font-size: 0.84rem; color: #333; margin-top: 4px;">Registered Email: <code id="lookupResultEmail" style="font-weight: 700; color: #8B6914;"></code></div>
+          <button type="button" class="btn-primary" onclick="useFoundEmailToLogin()" style="margin-top: 14px; width: 100%; padding: 11px; font-size: 0.78rem; background: #6B1D2F; color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;">
+            <span>Sign In with this Account →</span>
+          </button>
+        </div>
+      </div>
+
+      <p style="text-align: center; margin-top: 24px; font-size: 0.85rem; color: #666;">
+        Remembered your password? <a href="javascript:void(0)" onclick="switchAuthMainTab('login')" style="color: #6B1D2F; font-weight: 700; text-decoration: underline;">Back to Sign In</a>
+      </p>
     </div>
 
-    <!-- Error message fallback -->
-    <p class="auth-error" id="authError" style="margin-top: 14px; text-align: center; font-size: 0.8rem;"></p>
-
-    <!-- Friendly Chatbot / Test Credentials Card -->
-    <div style="margin-top: 26px; padding: 16px; background: #FAF6EF; border: 1px solid #DFD7C7; border-left: 3px solid var(--gold); border-radius: 4px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-        <span style="font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #8B6914;">✦ Friendly Login Credentials</span>
-        <button type="button" onclick="copyChatbotLoginFormat()" style="background: none; border: 1px solid #C4A45A; font-size: 0.68rem; padding: 2px 8px; cursor: pointer; border-radius: 2px; color: #6B1D2F;">📋 Copy for Chat</button>
-      </div>
-      <div style="font-size: 0.76rem; color: #444; line-height: 1.5;" id="chatbotFormatText">
-        <div><strong>Admin Email:</strong> <code>admin@durgas.com</code></div>
-        <div><strong>Admin Password:</strong> <code>admin123456</code></div>
-        <div style="margin-top: 4px;"><strong>Instant OTP Mode:</strong> Enter any email &amp; click <em>Send OTP</em>. The 6-digit code auto-fills immediately so you can sign in with 1 click!</div>
-      </div>
-      <p id="copyToast" style="display: none; font-size: 0.72rem; color: #27ae60; margin: 4px 0 0; font-weight: 600;">✓ Formatted details copied to clipboard!</p>
-    </div>
-
-    <p style="text-align: center; margin-top: 22px; font-size: 0.82rem; color: var(--gray);">
-      Don't have an account? <a href="/register" style="color: var(--gold); text-decoration: none; font-weight: 600;">Register Here</a>
-    </p>
   </div>
 </div>
 
@@ -156,51 +287,38 @@
 <footer>
   <div class="footer-grid">
     <div class="footer-brand">
-      <a href="/" class="nav-logo" style="font-size:1.6rem">DURGAS<span style="color:var(--gold)">✦</span></a>
-      <p class="footer-desc">Fine jewellery handcrafted in Mumbai since 2008. Every piece is a labour of love, designed to be passed down through generations.</p>
-      <div class="footer-social">
-        <a href="#" class="social-link">IG</a>
-        <a href="#" class="social-link">FB</a>
-        <a href="#" class="social-link">PT</a>
-        <a href="#" class="social-link">YT</a>
-      </div>
+      <a href="/" class="nav-logo" style="font-size:1.6rem">DURGAS<span style="color:var(--gold, #C9A84C)">✦</span></a>
+      <p class="footer-desc">Authentic Five-Metal Panchaloha Jewellery handcrafted with sacred metallurgy traditions. Designed to last generations.</p>
     </div>
     <div class="footer-col">
       <h4>Collections</h4>
       <ul>
-        <li><a href="/products">New Arrivals</a></li>
-        <li><a href="/products">Best Sellers</a></li>
-        <li><a href="/products">Necklaces</a></li>
-        <li><a href="/products">Earrings</a></li>
-        <li><a href="/products">Rings</a></li>
-        <li><a href="/products">Bracelets</a></li>
+        <li><a href="/products">Five-Metal Jewellery</a></li>
+        <li><a href="/products">Traditional Jewellery</a></li>
+        <li><a href="/products">Gold Style Collection</a></li>
+        <li><a href="/products">Silver Style Collection</a></li>
       </ul>
     </div>
     <div class="footer-col">
       <h4>Company</h4>
       <ul>
         <li><a href="/about">Our Story</a></li>
-        <li><a href="/about">Craftsmanship</a></li>
         <li><a href="/contact">Contact Us</a></li>
-        <li><a href="#">Press</a></li>
-        <li><a href="#">Careers</a></li>
-        <li><a href="#">Sustainability</a></li>
+        <li><a href="/privacy-policy">Privacy Policy</a></li>
+        <li><a href="/terms-and-conditions">Terms &amp; Conditions</a></li>
       </ul>
     </div>
     <div class="footer-col">
-      <h4>Support</h4>
+      <h4>Customer Care</h4>
       <ul>
-        <li><a href="#">Shipping Policy</a></li>
-        <li><a href="#">Returns & Exchange</a></li>
-        <li><a href="#">Size Guide</a></li>
-        <li><a href="#">Jewellery Care</a></li>
-        <li><a href="#">Certificate Verification</a></li>
-        <li><a href="#">Custom Orders</a></li>
+        <li><a href="/shipping-policy">Shipping Policy</a></li>
+        <li><a href="/refund-policy">Refund &amp; Return</a></li>
+        <li><a href="/profile">My Account &amp; Orders</a></li>
       </ul>
     </div>
   </div>
   <div class="footer-bottom">
-    <p class="footer-copy">© 2025 DURGAS FIVE METAL JEWELLERY. All rights reserved. · Privacy Policy · Terms of Use</p>
+    <p class="footer-copy">© 2026 DURGAS FIVE METAL JEWELLERY. All rights reserved.</p>
     <div class="footer-pay">
       <span class="pay-badge">Visa</span>
       <span class="pay-badge">Mastercard</span>

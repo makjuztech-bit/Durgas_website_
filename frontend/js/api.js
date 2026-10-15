@@ -2,8 +2,13 @@ const API = (
   window.location.protocol === 'file:' ||
   ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '5000')
 ) ? 'http://localhost:5000/api' : '/api';
-let userToken = null;
+let userToken = localStorage.getItem('userToken') || null;
 let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+if (currentUser && (currentUser.email === 'patron@durgas.com' || currentUser.full_name === 'Valued Patron' || (!currentUser.id && !currentUser.user_id && !currentUser.email))) {
+  currentUser = null;
+  userToken = null;
+  try { localStorage.removeItem('currentUser'); localStorage.removeItem('userToken'); } catch (e) {}
+}
 
 function getCookie(name) {
   return document.cookie.split('; ').find((part) => part.startsWith(name + '='))?.split('=').slice(1).join('=') || '';

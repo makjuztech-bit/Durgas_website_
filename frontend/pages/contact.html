@@ -27,7 +27,7 @@
 
 <!-- Offer Banner -->
 <div class="offer-banner">
-  ✦ Free Insured Shipping Across India on Orders Above ₹5,000 &nbsp;·&nbsp; Direct WhatsApp: 9344572003 ✦
+  ✦ Free Insured Shipping Across India on Orders Above ₹5,000 &nbsp;·&nbsp; Direct WhatsApp: 7448882444 ✦
 </div>
 
 <!-- Navigation -->
@@ -43,7 +43,22 @@
   </ul>
   <div class="nav-icons">
     <button class="nav-icon-btn" title="Wishlist" onclick="openWishlist()">♡</button>
-    <button class="nav-icon-btn" title="Account" onclick="openAuthModal()" id="accountBtn">◎</button>
+    <div class="patron-menu-wrap" id="accountMenuWrap">
+      <a href="/login" class="nav-auth-btn" id="accountBtn" title="Sign In to DURGAS">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Sign In</span>
+      </a>
+      <div class="patron-dropdown" id="patronDropdown" style="display:none;">
+        <div class="patron-dropdown-header">
+          <div class="patron-dropdown-name" id="patronDropdownName">My Account</div>
+          <div class="patron-dropdown-email" id="patronDropdownEmail"></div>
+        </div>
+        <a href="/profile" class="patron-dropdown-link">🛍️ My Orders &amp; Profile</a>
+        <a href="javascript:void(0)" onclick="openWishlist()" class="patron-dropdown-link">♡ My Wishlist</a>
+        <a href="/cart" class="patron-dropdown-link">🛒 Shopping Bag</a>
+        <button type="button" onclick="logoutUser()" class="patron-dropdown-link" style="color:#c0392b; border-top:1px solid #F0EAE1;">🚪 Sign Out</button>
+      </div>
+    </div>
     <button class="nav-icon-btn" title="Cart" onclick="window.location.href='/cart'">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;display:inline-block"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="cart-count" id="cartCountBadge">0</span>
     </button>
@@ -91,7 +106,7 @@
         </div>
         <div class="contact-item">
           <div class="contact-item-icon">✆</div>
-          <div><h5>Phone &amp; WhatsApp</h5><p><a href="https://wa.me/919344572003" target="_blank" style="color:#D4AF37;text-decoration:none">+91 9344572003</a><br>Mon–Sat, 10am–8pm</p></div>
+          <div><h5>Phone &amp; WhatsApp</h5><p><a href="https://wa.me/917448882444" target="_blank" style="color:#D4AF37;text-decoration:none">+91 7448882444</a><br>Mon–Sat, 10am–8pm</p></div>
         </div>
         <div class="contact-item">
           <div class="contact-item-icon">✉</div>

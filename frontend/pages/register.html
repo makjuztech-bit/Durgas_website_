@@ -41,10 +41,24 @@
     <li><a href="/contact">Contact</a></li>
   </ul>
   <div class="nav-icons">
-    <button class="nav-icon-btn" title="Search">⌕</button>
     <button class="nav-icon-btn" title="Wishlist" onclick="openWishlist()">♡</button>
-    <button class="nav-icon-btn" title="Account" onclick="openAuthModal()" id="accountBtn">◎</button>
-    <button class="nav-icon-btn" title="Cart" onclick="openCart()">
+    <div class="patron-menu-wrap" id="accountMenuWrap">
+      <a href="/login" class="nav-auth-btn" id="accountBtn" title="Sign In to DURGAS">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Sign In</span>
+      </a>
+      <div class="patron-dropdown" id="patronDropdown" style="display:none;">
+        <div class="patron-dropdown-header">
+          <div class="patron-dropdown-name" id="patronDropdownName">My Account</div>
+          <div class="patron-dropdown-email" id="patronDropdownEmail"></div>
+        </div>
+        <a href="/profile" class="patron-dropdown-link">🛍️ My Orders &amp; Profile</a>
+        <a href="javascript:void(0)" onclick="openWishlist()" class="patron-dropdown-link">♡ My Wishlist</a>
+        <a href="/cart" class="patron-dropdown-link">🛒 Shopping Bag</a>
+        <button type="button" onclick="logoutUser()" class="patron-dropdown-link" style="color:#c0392b; border-top:1px solid #F0EAE1;">🚪 Sign Out</button>
+      </div>
+    </div>
+    <button class="nav-icon-btn" title="Cart" onclick="window.location.href='/cart'">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;display:inline-block"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="cart-count" id="cartCountBadge">0</span>
     </button>
     <button class="hamburger" onclick="openMobileNav()">
@@ -54,39 +68,46 @@
 </nav>
 
 <!-- ==================== REGISTER PAGE ==================== -->
-<div class="page active" id="page-register" style="padding: 80px 5vw; display: flex; align-items: center; justify-content: center; min-height: 70vh; background: var(--white);">
-  <div style="background: var(--white); border: 1px solid var(--beige-dark); padding: 50px 40px; width: 440px; max-width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.03);">
-    <h2 class="modal-title" style="text-align: center; margin-bottom: 8px;">Create Account</h2>
-    <p class="modal-sub" style="text-align: center; margin-bottom: 36px;">Join the DURGAS family</p>
+<div class="page active" id="page-register" style="padding: 60px 5vw; display: flex; align-items: center; justify-content: center; min-height: 75vh; background: #FAF7F2;">
+  <div style="background: #ffffff; border: 1px solid #E6DEC8; border-radius: 8px; padding: 44px 38px; width: 480px; max-width: 100%; box-shadow: 0 14px 40px rgba(107, 29, 47, 0.08);">
+    <div style="text-align: center; margin-bottom: 24px;">
+      <span style="font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: #8B6914; font-weight: 700;">✦ DURGAS JEWELLERY ✦</span>
+      <h1 class="modal-title" style="margin: 8px 0 6px; font-family: var(--font-serif, 'Cormorant Garamond', serif); font-size: 2.1rem; color: #6B1D2F;">Create Account</h1>
+      <p class="modal-sub" style="font-size: 0.85rem; color: #666; margin: 0;">Join DURGAS for order tracking, insured deliveries and bespoke pieces.</p>
+    </div>
+
+    <div id="regStatusAlert" class="auth-status-alert" style="display:none; margin-bottom: 18px; padding: 12px 14px; border-radius: 4px; font-size: 0.82rem; line-height: 1.4;"></div>
     
-    <div class="form-group" style="margin-bottom: 20px;">
-      <label class="form-label">Full Name</label>
-      <input type="text" class="form-input" id="regName" placeholder="Priya Sharma">
-    </div>
-    <div class="form-group" style="margin-bottom: 20px;">
-      <label class="form-label">Email</label>
-      <input type="email" class="form-input" id="regEmail" placeholder="hello@email.com">
-    </div>
-    <div class="form-group" style="margin-bottom: 20px;">
-      <label class="form-label">Phone</label>
-      <input type="tel" class="form-input" id="regPhone" placeholder="+91 98765 43210">
-    </div>
-    <div class="form-group" style="margin-bottom: 28px;">
-      <label class="form-label">Password (min 8 characters)</label>
-      <div style="position: relative;">
-        <input type="password" class="form-input" id="regPassword" placeholder="••••••••" style="padding-right: 70px;">
-        <button type="button" onclick="togglePasswordVisibility('regPassword', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 10; background: none; border: none; cursor: pointer; color: #8B6914; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; padding: 6px 10px; text-transform: uppercase;" title="Toggle Password Visibility" aria-label="Show Password">SHOW</button>
+    <form onsubmit="handleRegisterSubmit(event)">
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #333; margin-bottom: 6px; display: block;">Full Name</label>
+        <input type="text" class="form-input" id="regName" placeholder="e.g. Priya Sharma" required autocomplete="name" style="width: 100%; padding: 12px 14px; border: 1px solid #D9CFBE; border-radius: 4px; font-size: 0.88rem;">
       </div>
-    </div>
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #333; margin-bottom: 6px; display: block;">Email Address</label>
+        <input type="email" class="form-input" id="regEmail" placeholder="e.g. priya@example.com" required autocomplete="email" style="width: 100%; padding: 12px 14px; border: 1px solid #D9CFBE; border-radius: 4px; font-size: 0.88rem;">
+      </div>
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #333; margin-bottom: 6px; display: block;">10-Digit Mobile Number (Optional)</label>
+        <input type="tel" class="form-input" id="regPhone" placeholder="e.g. 9876543210" pattern="[0-9]{10}" maxlength="10" autocomplete="tel" style="width: 100%; padding: 12px 14px; border: 1px solid #D9CFBE; border-radius: 4px; font-size: 0.88rem;">
+      </div>
+      <div class="form-group" style="margin-bottom: 24px;">
+        <label class="form-label" style="font-weight: 600; font-size: 0.82rem; color: #333; margin-bottom: 6px; display: block;">Password (Minimum 8 Characters)</label>
+        <div style="position: relative;">
+          <input type="password" class="form-input" id="regPassword" placeholder="••••••••" required minlength="8" autocomplete="new-password" style="width: 100%; padding: 12px 14px; padding-right: 75px; border: 1px solid #D9CFBE; border-radius: 4px; font-size: 0.88rem;">
+          <button type="button" onclick="togglePasswordVisibility('regPassword', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 10; background: none; border: none; cursor: pointer; color: #8B6914; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; padding: 6px 10px; text-transform: uppercase;" title="Toggle Password Visibility" aria-label="Show Password">SHOW</button>
+        </div>
+      </div>
+      
+      <button type="submit" class="btn-primary" id="btnSubmitRegister" style="width: 100%; padding: 14px; font-size: 0.82rem; letter-spacing: 0.16em; background: #6B1D2F; color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;">
+        <span>Create Customer Account</span>
+      </button>
+    </form>
     
-    <button class="btn-primary" style="width: 100%; padding: 16px; font-size: 0.75rem; letter-spacing: 0.22em;" onclick="registerUser()">
-      <span>Register</span>
-    </button>
-    
-    <p style="text-align: center; margin-top: 24px; font-size: 0.82rem; color: var(--gray);">
-      Already have an account? <a href="/login" style="color: var(--gold); text-decoration: none;">Sign In</a>
+    <p style="text-align: center; margin-top: 24px; font-size: 0.85rem; color: #666;">
+      Already have an account? <a href="/login" style="color: #6B1D2F; font-weight: 700; text-decoration: underline;">Sign In</a>
     </p>
-    <p class="auth-error" id="regError" style="margin-top: 16px; text-align: center;"></p>
+    <p class="auth-error" id="regError" style="margin-top: 14px; text-align: center;"></p>
   </div>
 </div>
 

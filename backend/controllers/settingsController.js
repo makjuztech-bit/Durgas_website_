@@ -4,10 +4,10 @@ exports.getSettings = async (req, res) => {
   try {
     const rows = await db.query('SELECT key, value FROM app_settings').catch(() => []);
     const settings = {
-      whatsapp_number: process.env.WHATSAPP_NUMBER || '919344572003',
+      whatsapp_number: process.env.WHATSAPP_NUMBER || '917448882444',
       store_name: 'Durgas Jewellery',
       delivery_charge: 0,
-      upi_id: process.env.UPI_ID || '9344572003@upi',
+      upi_id: process.env.UPI_ID || '7448882444@upi',
     };
 
     if (Array.isArray(rows)) {
@@ -23,10 +23,10 @@ exports.getSettings = async (req, res) => {
     res.json(settings);
   } catch (err) {
     res.json({
-      whatsapp_number: process.env.WHATSAPP_NUMBER || '919344572003',
+      whatsapp_number: process.env.WHATSAPP_NUMBER || '917448882444',
       store_name: 'Durgas Jewellery',
       delivery_charge: 0,
-      upi_id: process.env.UPI_ID || '9344572003@upi',
+      upi_id: process.env.UPI_ID || '7448882444@upi',
     });
   }
 };

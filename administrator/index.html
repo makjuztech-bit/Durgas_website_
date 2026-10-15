@@ -279,12 +279,12 @@
         <div class="form-grid">
           <div class="form-group full">
             <label class="form-label">WhatsApp Business Number (Country Code + Number, no + or spaces) *</label>
-            <input type="text" class="form-input" id="cfgWhatsappNumber" required placeholder="919344572003">
-            <small style="color:var(--gray);font-size:0.75rem;margin-top:4px;display:block;">Configured shop number: Durgas Jewellery <strong>9344572003</strong> (919344572003). Used for all customer WhatsApp orders &amp; inquiries.</small>
+            <input type="text" class="form-input" id="cfgWhatsappNumber" required placeholder="917448882444">
+            <small style="color:var(--gray);font-size:0.75rem;margin-top:4px;display:block;">Configured shop number: Durgas Jewellery <strong>7448882444</strong> (917448882444). Used for all customer WhatsApp orders &amp; inquiries.</small>
           </div>
           <div class="form-group full">
             <label class="form-label">Shop Official UPI ID (for Google Pay, PhonePe, Paytm, BHIM) *</label>
-            <input type="text" class="form-input" id="cfgUpiId" placeholder="9344572003@upi or durgasjewellery20@okaxis">
+            <input type="text" class="form-input" id="cfgUpiId" placeholder="7448882444@upi">
             <small style="color:var(--gray);font-size:0.75rem;margin-top:4px;display:block;">This UPI ID is displayed on customer checkout for instant QR code scanning and direct UPI mobile app payment.</small>
           </div>
           <div class="form-group full">
@@ -689,8 +689,8 @@ async function loadSettings() {
   try {
     const res = await apiFetch('/admin/settings');
     const data = await res.json();
-    document.getElementById('cfgWhatsappNumber').value = data.whatsapp_number || '919344572003';
-    document.getElementById('cfgUpiId').value = data.upi_id || '9344572003@upi';
+    document.getElementById('cfgWhatsappNumber').value = data.whatsapp_number || '917448882444';
+    document.getElementById('cfgUpiId').value = data.upi_id || '7448882444@upi';
     document.getElementById('cfgStoreName').value = data.store_name || 'Durgas Jewellery';
     document.getElementById('cfgDeliveryCharge').value = data.delivery_charge !== undefined ? data.delivery_charge : 0;
   } catch (e) {

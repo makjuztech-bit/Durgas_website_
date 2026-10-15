@@ -86,7 +86,11 @@ CREATE TABLE IF NOT EXISTS wishlist (
 
 CREATE TABLE IF NOT EXISTS orders (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
+  user_id INTEGER,
+  customer_name TEXT,
+  customer_email TEXT,
+  customer_notes TEXT,
+  order_source TEXT DEFAULT 'website',
   order_number TEXT UNIQUE,
   subtotal_amount REAL NOT NULL DEFAULT 0.0,
   tax_amount REAL NOT NULL DEFAULT 0.0,
@@ -105,6 +109,13 @@ CREATE TABLE IF NOT EXISTS orders (
   razorpay_payment_id TEXT UNIQUE,
   tracking_number TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS app_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  description TEXT,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS order_items (
@@ -159,27 +170,74 @@ CREATE TABLE IF NOT EXISTS newsletter_subscribers (
 );
 `);
 
+// Dynamically sync missing columns and ensure user_id is nullable for guest/COD checkouts
+try {
+  const existingOrderCols = sqlite.prepare("PRAGMA table_info(orders)").all();
+  const colNames = existingOrderCols.map((c) => c.name);
+  if (!colNames.includes('customer_name')) sqlite.exec("ALTER TABLE orders ADD COLUMN customer_name TEXT;");
+  if (!colNames.includes('customer_email')) sqlite.exec("ALTER TABLE orders ADD COLUMN customer_email TEXT;");
+  if (!colNames.includes('customer_notes')) sqlite.exec("ALTER TABLE orders ADD COLUMN customer_notes TEXT;");
+  if (!colNames.includes('order_source')) sqlite.exec("ALTER TABLE orders ADD COLUMN order_source TEXT DEFAULT 'website';");
+
+  const userIdCol = existingOrderCols.find((c) => c.name === 'user_id');
+  if (userIdCol && userIdCol.notnull === 1) {
+    sqlite.exec(`
+      CREATE TABLE orders_v2 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        customer_name TEXT,
+        customer_email TEXT,
+        customer_notes TEXT,
+        order_source TEXT DEFAULT 'website',
+        order_number TEXT UNIQUE,
+        subtotal_amount REAL NOT NULL DEFAULT 0.0,
+        tax_amount REAL NOT NULL DEFAULT 0.0,
+        total_amount REAL NOT NULL,
+        invoice_number TEXT UNIQUE,
+        invoice_url TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        shipping_address TEXT,
+        shipping_city TEXT,
+        shipping_state TEXT,
+        shipping_pincode TEXT,
+        shipping_phone TEXT,
+        payment_method TEXT NOT NULL DEFAULT 'cod',
+        payment_status TEXT NOT NULL DEFAULT 'pending',
+        razorpay_order_id TEXT,
+        razorpay_payment_id TEXT UNIQUE,
+        tracking_number TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT INTO orders_v2 SELECT id, user_id, customer_name, customer_email, customer_notes, order_source, order_number, subtotal_amount, tax_amount, total_amount, invoice_number, invoice_url, status, shipping_address, shipping_city, shipping_state, shipping_pincode, shipping_phone, payment_method, payment_status, razorpay_order_id, razorpay_payment_id, tracking_number, created_at FROM orders;
+      DROP TABLE orders;
+      ALTER TABLE orders_v2 RENAME TO orders;
+    `);
+  }
+} catch (e) {
+  console.warn('Orders column sync warning:', e.message);
+}
+
 // Pre-seed admin and test accounts
 const seedUsers = [
   {
     name: 'DURGAS Administrator',
     email: 'admin@durgas.com',
     passwordHash: '$2b$10$dhCkykanfA6p4v9hLSce7.4jEd1AUlUdrlsgnHbDYeMF1W3kQV3XG', // admin123456
-    phone: '+91 9344572003',
+    phone: '+91 7448882444',
     role: 'admin',
   },
   {
     name: 'DURGAS Jewellery Admin',
     email: 'admin@durgasjewellery.com',
     passwordHash: '$2b$10$dhCkykanfA6p4v9hLSce7.4jEd1AUlUdrlsgnHbDYeMF1W3kQV3XG', // admin123456
-    phone: '+91 9344572003',
+    phone: '+91 7448882444',
     role: 'admin',
   },
   {
     name: 'Super Admin',
     email: 'durgasjewellery20@gmail.com',
     passwordHash: '$2b$10$Wul4FvGB7YgwrTY5nInRTuKCVY7Mn2HWXaoTtF5xJ0VOXrOvbI3.C', // Durgas@Admin2024
-    phone: '+91 9344572003',
+    phone: '+91 7448882444',
     role: 'superadmin',
   },
   {

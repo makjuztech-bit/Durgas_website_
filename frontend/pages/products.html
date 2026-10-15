@@ -66,7 +66,22 @@
   </ul>
   <div class="nav-icons">
     <button class="nav-icon-btn" title="Wishlist" onclick="openWishlist()">♡</button>
-    <button class="nav-icon-btn" title="Account" onclick="openAuthModal()" id="accountBtn">◎</button>
+    <div class="patron-menu-wrap" id="accountMenuWrap">
+      <a href="/login" class="nav-auth-btn" id="accountBtn" title="Sign In to DURGAS">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Sign In</span>
+      </a>
+      <div class="patron-dropdown" id="patronDropdown" style="display:none;">
+        <div class="patron-dropdown-header">
+          <div class="patron-dropdown-name" id="patronDropdownName">My Account</div>
+          <div class="patron-dropdown-email" id="patronDropdownEmail"></div>
+        </div>
+        <a href="/profile" class="patron-dropdown-link">🛍️ My Orders &amp; Profile</a>
+        <a href="javascript:void(0)" onclick="openWishlist()" class="patron-dropdown-link">♡ My Wishlist</a>
+        <a href="/cart" class="patron-dropdown-link">🛒 Shopping Bag</a>
+        <button type="button" onclick="logoutUser()" class="patron-dropdown-link" style="color:#c0392b; border-top:1px solid #F0EAE1;">🚪 Sign Out</button>
+      </div>
+    </div>
     <button class="nav-icon-btn" title="Cart" onclick="window.location.href='/cart'">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;display:inline-block"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="cart-count" id="cartCountBadge">0</span>
     </button>
@@ -185,8 +200,8 @@
         <div style="background:#FAF6EF;border-left:3px solid var(--wa-green,#25D366);padding:14px;border-radius:4px;font-size:0.8rem;line-height:1.4">
           <p style="font-weight:600;color:var(--maroon,#6B1724);margin-bottom:4px">Durgas Jewellery Direct Support</p>
           <p style="color:#555;margin-bottom:10px">Need assistance with size selection or custom designs? Connect directly on WhatsApp.</p>
-          <a href="https://wa.me/919344572003?text=Hello%20Durgas%20Jewellery!%20I%20would%20like%20assistance%20with%20ordering." target="_blank" class="btn-whatsapp-order" style="padding:9px 14px;font-size:0.75rem">
-            Chat on WhatsApp (9344572003)
+          <a href="https://wa.me/917448882444?text=Hello%20Durgas%20Jewellery!%20I%20would%20like%20assistance%20with%20ordering." target="_blank" class="btn-whatsapp-order" style="padding:9px 14px;font-size:0.75rem">
+            Chat on WhatsApp (7448882444)
           </a>
         </div>
       </div>

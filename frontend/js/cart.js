@@ -91,8 +91,9 @@ function loadLocalCart() {
 }
 
 async function syncCartFromServer() {
+  const localItems = loadLocalCart();
   if (!currentUser) {
-    cartItems = loadLocalCart();
+    cartItems = localItems;
     updateCartBadge(cartItems.reduce((s, i) => s + (i.quantity || 1), 0));
     renderCart();
     return;
@@ -100,12 +101,29 @@ async function syncCartFromServer() {
   try {
     const res = await apiFetch('/cart');
     if (res.ok) {
-      cartItems = await res.json();
+      const serverItems = await res.json();
+      if (Array.isArray(serverItems) && serverItems.length > 0) {
+        cartItems = serverItems;
+      } else if (localItems.length > 0) {
+        cartItems = localItems;
+        // Sync local items to server in background
+        for (const it of localItems) {
+          const pid = it.product_id || it.id;
+          apiFetch('/cart/add', {
+            method: 'POST',
+            body: JSON.stringify({ product_id: pid, quantity: it.quantity || 1 }),
+          }).catch(() => {});
+        }
+      } else {
+        cartItems = [];
+      }
       updateCartBadge(cartItems.reduce((s, i) => s + (i.quantity || 1), 0));
       renderCart();
     }
   } catch (err) {
-    console.error('Cart sync failed:', err);
+    console.error('Cart sync notice:', err.message);
+    cartItems = localItems;
+    renderCart();
   }
 }
 
@@ -324,13 +342,13 @@ async function addSampleItemAndCheckout() {
   }
   // Fallback default five-metal item
   cartItems = [{
-    id: 9,
-    product_id: 9,
-    name: 'Five-Metal Sacred Navaratna Ring',
-    price: 2850,
+    id: 12,
+    product_id: 12,
+    name: 'Five-Metal Heavy Suriya Kappu Kada',
+    price: 3450,
     quantity: 1,
     image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&q=80',
-    sku: 'DJ-9',
+    sku: 'DJ-12',
     metal_composition: 'Authentic Five Metals (Panchaloha)'
   }];
   saveLocalCart();
@@ -354,24 +372,51 @@ function getOrderFormData() {
 
 function validateOrderFormData(data) {
   const errEl = document.getElementById('orderFormError');
+  const fields = ['orderCustName', 'orderCustPhone', 'orderCustAddress', 'orderCustCity', 'orderCustState', 'orderCustPincode'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.borderColor = '';
+  });
+
+  const showError = (msg, inputId) => {
+    if (errEl) {
+      errEl.textContent = '⚠️ ' + msg;
+      errEl.style.display = 'block';
+      errEl.style.padding = '8px 12px';
+      errEl.style.background = '#FDF2F2';
+      errEl.style.border = '1px solid #F5C6CB';
+      errEl.style.borderRadius = '4px';
+    }
+    const inputEl = document.getElementById(inputId);
+    if (inputEl) {
+      inputEl.style.borderColor = '#c0392b';
+      inputEl.focus();
+      inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
   if (!data.customer_name) {
-    if (errEl) { errEl.textContent = 'Please enter your Full Name.'; errEl.style.display = 'block'; }
+    showError('Please enter your Full Name for delivery.', 'orderCustName');
     return false;
   }
   if (!/^[0-9+ ()-]{10,16}$/.test(data.customer_phone)) {
-    if (errEl) { errEl.textContent = 'Please enter a valid 10-digit mobile phone number.'; errEl.style.display = 'block'; }
+    showError('Please enter a valid 10-digit mobile phone number.', 'orderCustPhone');
     return false;
   }
   if (!data.shipping_address) {
-    if (errEl) { errEl.textContent = 'Please enter your complete delivery street address.'; errEl.style.display = 'block'; }
+    showError('Please enter your complete doorstep street address.', 'orderCustAddress');
     return false;
   }
-  if (!data.shipping_city || !data.shipping_state) {
-    if (errEl) { errEl.textContent = 'Please enter city and state.'; errEl.style.display = 'block'; }
+  if (!data.shipping_city) {
+    showError('Please enter your City.', 'orderCustCity');
+    return false;
+  }
+  if (!data.shipping_state) {
+    showError('Please enter your State.', 'orderCustState');
     return false;
   }
   if (!/^\d{6}$/.test(data.shipping_pincode)) {
-    if (errEl) { errEl.textContent = 'Please enter a valid 6-digit postal pincode.'; errEl.style.display = 'block'; }
+    showError('Please enter a valid 6-digit postal pincode.', 'orderCustPincode');
     return false;
   }
   if (errEl) errEl.style.display = 'none';
@@ -422,14 +467,13 @@ function submitOrderViaWhatsApp() {
 
   const data = getOrderFormData();
   if (!validateOrderFormData(data)) {
-    document.getElementById('orderCustName')?.focus();
     return;
   }
 
   saveCustomerDetailsLocally(data);
 
   const totalAmount = cartItems.reduce((s, i) => s + Number(i.price) * (i.quantity || 1), 0);
-  const waNumber = '919344572003';
+  const waNumber = '917448882444';
 
   let msg = `*NEW ORDER INQUIRY — DURGAS JEWELLERY*\n\n`;
   msg += `*Selected Jewellery Items:*\n`;
@@ -491,7 +535,6 @@ async function submitDirectOrder(method = 'cod') {
 
   const data = getOrderFormData();
   if (!validateOrderFormData(data)) {
-    document.getElementById('orderCustName')?.focus();
     return;
   }
 
@@ -549,7 +592,6 @@ async function placeRazorpayOrder() {
 
   const data = getOrderFormData();
   if (!validateOrderFormData(data)) {
-    document.getElementById('orderCustName')?.focus();
     return;
   }
 
@@ -677,7 +719,7 @@ async function placeRazorpayOrder() {
   }
 }
 
-let shopUpiId = '9344572003@upi';
+let shopUpiId = '7448882444@upi';
 
 async function fetchShopSettings() {
   try {

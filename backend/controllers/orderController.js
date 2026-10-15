@@ -192,8 +192,8 @@ const placeDirectOrderItems = async (userId, customerData, shippingData, payment
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
       userId || null, custName, custEmail, customerData.customer_notes || null,
       orderNumber, subtotal, taxAmount, total, invoiceNumber,
-      shippingData.shipping_address.trim(), shippingData.shipping_city.trim(),
-      shippingData.shipping_state.trim(), shippingData.shipping_pincode.trim(), shippingData.shipping_phone.trim(),
+      (shippingData.shipping_address || '').trim(), (shippingData.shipping_city || '').trim(),
+      (shippingData.shipping_state || '').trim(), (shippingData.shipping_pincode || '').trim(), (shippingData.shipping_phone || customerData.customer_phone || '').trim(),
       paymentMethod, paymentStatus, paymentMeta.razorpay_order_id || null, paymentMeta.razorpay_payment_id || null,
     ]);
 
@@ -438,7 +438,8 @@ exports.verifyRazorpayOrder = (req, res) => {
     return res.status(400).json({ message: 'Missing Razorpay payment details.' });
   }
 
-  if (!validShipping({ shipping_address, shipping_city, shipping_state, shipping_pincode, shipping_phone })) {
+  const effectivePhone = String(shipping_phone || customer_phone || '').trim();
+  if (!validShipping({ shipping_address, shipping_city, shipping_state, shipping_pincode, shipping_phone: effectivePhone })) {
     return res.status(400).json({ message: 'Complete shipping details are required.' });
   }
 
@@ -457,14 +458,14 @@ exports.verifyRazorpayOrder = (req, res) => {
     shipping_city,
     shipping_state,
     shipping_pincode,
-    shipping_phone,
+    shipping_phone: effectivePhone,
   };
 
   const userId = req.user ? req.user.id : null;
   const customerData = {
     customer_name: customer_name || (req.user ? req.user.full_name : 'Guest Customer'),
     customer_email: customer_email || (req.user ? req.user.email : null),
-    customer_phone: customer_phone || shipping_phone,
+    customer_phone: customer_phone || effectivePhone,
   };
 
   const attemptSql = userId
@@ -481,14 +482,22 @@ exports.verifyRazorpayOrder = (req, res) => {
     }
     const expectedAmount = Number(attempt.amount_paise);
 
-    razorpay.payments.fetch(razorpay_payment_id).then((payment) => {
+    razorpay.payments.fetch(razorpay_payment_id).then(async (payment) => {
       if (
         payment.order_id !== razorpay_order_id
         || Number(payment.amount) !== expectedAmount
         || payment.currency !== 'INR'
-        || payment.status !== 'captured'
+        || !['captured', 'authorized'].includes(payment.status)
       ) {
         return res.status(400).json({ message: 'Payment is not captured or does not match the order.' });
+      }
+
+      if (payment.status === 'authorized') {
+        try {
+          await razorpay.payments.capture(razorpay_payment_id, expectedAmount, 'INR');
+        } catch (capErr) {
+          console.warn('[Razorpay] Auto-capture note:', capErr.message);
+        }
       }
 
       if (Array.isArray(items) && items.length > 0) {

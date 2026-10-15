@@ -761,7 +761,7 @@ function orderCurrentProductWhatsApp() {
   if (window.DURGAS_WHATSAPP) {
     window.DURGAS_WHATSAPP.openProductOrder(currentProduct, selectedDetailQty);
   } else {
-    const waNumber = '919344572003';
+    const waNumber = '917448882444';
     const subtotal = Number(currentProduct.price) * selectedDetailQty;
     const msg = `*NEW ORDER INQUIRY — DURGAS JEWELLERY*\n\n` +
       `Product: ${currentProduct.name}\n` +

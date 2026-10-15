@@ -91,7 +91,7 @@
 
 <!-- Offer Banner -->
 <div class="offer-banner">
-  ✦ Free Insured Shipping Across India on Orders Above ₹5,000 &nbsp;·&nbsp; Direct WhatsApp Assistance: 9344572003 ✦
+  ✦ Free Insured Shipping Across India on Orders Above ₹5,000 &nbsp;·&nbsp; Direct WhatsApp Assistance: 7448882444 ✦
 </div>
 
 <!-- Navigation -->
@@ -109,7 +109,22 @@
   <div class="nav-icons">
     <button class="nav-icon-btn" title="Search" onclick="window.location.href='/products'">⌕</button>
     <button class="nav-icon-btn" title="Wishlist" onclick="openWishlist()">♡</button>
-    <button class="nav-icon-btn" title="Account" onclick="openAuthModal()" id="accountBtn">◎</button>
+    <div class="patron-menu-wrap" id="accountMenuWrap">
+      <a href="/login" class="nav-auth-btn" id="accountBtn" title="Sign In to DURGAS">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Sign In</span>
+      </a>
+      <div class="patron-dropdown" id="patronDropdown" style="display:none;">
+        <div class="patron-dropdown-header">
+          <div class="patron-dropdown-name" id="patronDropdownName">My Account</div>
+          <div class="patron-dropdown-email" id="patronDropdownEmail"></div>
+        </div>
+        <a href="/profile" class="patron-dropdown-link">🛍️ My Orders &amp; Profile</a>
+        <a href="javascript:void(0)" onclick="openWishlist()" class="patron-dropdown-link">♡ My Wishlist</a>
+        <a href="/cart" class="patron-dropdown-link">🛒 Shopping Bag</a>
+        <button type="button" onclick="logoutUser()" class="patron-dropdown-link" style="color:#c0392b; border-top:1px solid #F0EAE1;">🚪 Sign Out</button>
+      </div>
+    </div>
     <button class="nav-icon-btn" title="Cart" onclick="window.location.href='/cart'">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;display:inline-block"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="cart-count" id="cartCountBadge">0</span>
     </button>
@@ -271,7 +286,7 @@
 
             <button class="btn-whatsapp-order" id="btnOrderWhatsApp" onclick="submitOrderViaWhatsApp()" style="width: 100%; padding: 14px; font-size: 0.85rem;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.885-9.888 9.885m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              Continue on WhatsApp (9344572003)
+              Continue on WhatsApp (7448882444)
             </button>
           </div>
 
@@ -279,7 +294,7 @@
           <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #F0ECE1; font-size: 0.78rem; color: #666; line-height: 1.5;">
             <p style="margin: 4px 0;">🛡️ 100% Quality &amp; Purity Guarantee</p>
             <p style="margin: 4px 0;">📦 Tamper-proof Insured Courier Packaging</p>
-            <p style="margin: 4px 0;">📞 Direct WhatsApp Support: 919344572003</p>
+            <p style="margin: 4px 0;">📞 Direct WhatsApp Support: 917448882444</p>
           </div>
         </div>
       </div>
@@ -306,7 +321,7 @@
   <div style="display: flex; align-items: center; justify-content: space-between; background: #fff; border: 1.5px dashed #D4AF37; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px;">
     <div style="text-align: left;">
       <small style="color: #888; font-size: 0.72rem; display: block;">Official Shop UPI ID</small>
-      <strong id="upiIdDisplay" style="font-size: 0.95rem; color: #222; font-family: monospace;">9344572003@upi</strong>
+      <strong id="upiIdDisplay" style="font-size: 0.95rem; color: #222; font-family: monospace;">7448882444@upi</strong>
     </div>
     <button type="button" class="btn-sm btn-outline" id="btnCopyUpi" onclick="copyUpiId()" style="padding: 6px 12px; font-size: 0.75rem; border-color: #D4AF37; color: #8B6914;">
       📋 Copy UPI ID
@@ -350,7 +365,7 @@
   <h2 class="modal-title" style="color:var(--gold, #D4AF37)">Order Recorded!</h2>
   <p class="modal-sub" id="confirmMessage" style="font-size:0.95rem;line-height:1.5">Thank you for ordering with DURGAS FIVE METAL JEWELLERY.</p>
   <div style="margin: 20px 0; padding: 14px; background: #FAF6EF; border: 1px solid #DFD7C7; border-radius: 4px; font-size: 0.85rem;">
-    <p style="margin:0;color:#555">Our jewellery concierge is preparing your pieces and will contact you via WhatsApp (9344572003) with shipping tracking details.</p>
+    <p style="margin:0;color:#555">Our jewellery concierge is preparing your pieces and will contact you via WhatsApp (7448882444) with shipping tracking details.</p>
   </div>
   <button class="btn-primary" style="width:100%" onclick="closeConfirm()"><span>Continue Browsing Jewellery</span></button>
 </div>
@@ -404,7 +419,7 @@
       <ul>
         <li><a href="/about">About Durgas</a></li>
         <li><a href="/contact">Showroom Contact</a></li>
-        <li><a href="https://wa.me/919344572003">WhatsApp Concierge (9344572003)</a></li>
+        <li><a href="https://wa.me/917448882444">WhatsApp Concierge (7448882444)</a></li>
         <li><a href="/shipping-policy">Shipping &amp; Delivery</a></li>
         <li><a href="/administrator" target="_blank" style="color:var(--gold, #D4AF37); font-weight: 600;">🔐 Admin Panel Portal ↗</a></li>
       </ul>

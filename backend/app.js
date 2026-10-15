@@ -102,9 +102,22 @@ app.use('/api/settings', require('./routes/settingsRoutes'));
 
 // Serve static assets from frontend folder only (never project root)
 app.use(express.static(path.join(__dirname, '..', 'frontend'), {
-  maxAge: '1d',
+  maxAge: process.env.NODE_ENV === 'production' ? '1d' : 0,
   dotfiles: 'deny',
+  setHeaders: (res) => {
+    if (process.env.NODE_ENV !== 'production') {
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  }
 }));
+
+// In development, ensure all pages are delivered fresh without browser caching
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV !== 'production') {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+  next();
+});
 
 // Route mappings for clean URLs pointing to frontend pages
 app.get('/products', (req, res) => {
