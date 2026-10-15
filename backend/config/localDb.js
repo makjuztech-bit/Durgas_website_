@@ -1,19 +1,28 @@
 const fs = require('fs');
 const path = require('path');
-const { DatabaseSync } = require('node:sqlite');
+const os = require('os');
 
-const dataDir = path.join(__dirname, '..', 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+let sqlite = null;
+try {
+  const { DatabaseSync } = require('node:sqlite');
+  const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+  const dataDir = isVercel
+    ? path.join(os.tmpdir(), 'durgas_data')
+    : path.join(__dirname, '..', 'data');
+
+  if (!fs.existsSync(dataDir)) {
+    try { fs.mkdirSync(dataDir, { recursive: true }); } catch (e) {}
+  }
+
+  const dbPath = path.join(dataDir, 'durgas_local.db');
+  sqlite = new DatabaseSync(dbPath);
+  sqlite.exec('PRAGMA journal_mode = WAL;');
+  sqlite.exec('PRAGMA foreign_keys = ON;');
+} catch (e) {
+  sqlite = null;
 }
 
-const dbPath = path.join(dataDir, 'durgas_local.db');
-const sqlite = new DatabaseSync(dbPath);
-
-// Enable WAL mode and foreign keys for high performance and integrity
-sqlite.exec('PRAGMA journal_mode = WAL;');
-sqlite.exec('PRAGMA foreign_keys = ON;');
-
+if (sqlite) {
 // Initialize schema
 sqlite.exec(`
 CREATE TABLE IF NOT EXISTS users (
@@ -353,6 +362,7 @@ if (checkProdCount.count === 0) {
     insertImgStmt.run(prodId, p.image, 1);
   }
 }
+}
 
 // Helper to adapt PostgreSQL queries to SQLite
 function adaptSqlForSqlite(sql, params = []) {
@@ -391,6 +401,12 @@ function executeLocalQuery(sql, params = [], callback) {
   if (typeof params === 'function') {
     callback = params;
     params = [];
+  }
+
+  if (!sqlite) {
+    const err = new Error('Database connection failed. Please ensure DATABASE_URL is configured in your Vercel Environment Variables.');
+    if (callback) return callback(err, null);
+    return Promise.reject(err);
   }
 
   const { sql: adaptedSql, params: cleanParams } = adaptSqlForSqlite(sql, params);
