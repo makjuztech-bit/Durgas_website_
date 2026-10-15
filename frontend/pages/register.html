@@ -72,8 +72,11 @@
       <input type="tel" class="form-input" id="regPhone" placeholder="+91 98765 43210">
     </div>
     <div class="form-group" style="margin-bottom: 28px;">
-      <label class="form-label">Password</label>
-      <input type="password" class="form-input" id="regPassword" placeholder="••••••••">
+      <label class="form-label">Password (min 8 characters)</label>
+      <div style="position: relative;">
+        <input type="password" class="form-input" id="regPassword" placeholder="••••••••" style="padding-right: 70px;">
+        <button type="button" onclick="togglePasswordVisibility('regPassword', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 10; background: none; border: none; cursor: pointer; color: #8B6914; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; padding: 6px 10px; text-transform: uppercase;" title="Toggle Password Visibility" aria-label="Show Password">SHOW</button>
+      </div>
     </div>
     
     <button class="btn-primary" style="width: 100%; padding: 16px; font-size: 0.75rem; letter-spacing: 0.22em;" onclick="registerUser()">
@@ -135,7 +138,7 @@
     </div>
   </div>
   <div class="footer-bottom">
-    <p class="footer-copy">© 2025 DURGAS Fine Jewellery. All rights reserved. · Privacy Policy · Terms of Use</p>
+    <p class="footer-copy">© 2025 DURGAS FIVE METAL JEWELLERY. All rights reserved. · Privacy Policy · Terms of Use</p>
     <div class="footer-pay">
       <span class="pay-badge">Visa</span>
       <span class="pay-badge">Mastercard</span>

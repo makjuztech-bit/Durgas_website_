@@ -1,0 +1,15 @@
+{
+  "name": "durgas-website",
+  "version": "1.0.0",
+  "description": "Durgas Five Metal Jewellery E-Commerce Platform",
+  "scripts": {
+    "test": "npm --prefix backend test",
+    "start": "npm --prefix backend start",
+    "dev": "npm --prefix backend run dev",
+    "seed": "npm --prefix backend run seed",
+    "migrate": "npm --prefix backend run migrate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

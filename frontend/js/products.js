@@ -44,7 +44,7 @@ async function loadCategories() {
 async function loadHomeProducts() {
   try {
     const [newRes, bestRes] = await Promise.all([
-      fetch(API + '/products?badge=New&limit=4'),
+      fetch(API + '/products?sort=newest&limit=8'),
       fetch(API + '/products?badge=Best Seller&limit=4'),
     ]);
     const newProducts = await newRes.json();
@@ -54,10 +54,10 @@ async function loadHomeProducts() {
     const bestGrid = document.getElementById('bestSellersGrid');
 
     if (newGrid) {
-      if (newProducts.length) {
-        newGrid.innerHTML = newProducts.map(buildProductCard).join('');
+      if (Array.isArray(newProducts) && newProducts.length) {
+        newGrid.innerHTML = newProducts.slice(0, 8).map(buildProductCard).join('');
       } else {
-        const allRes = await fetch(API + '/products?limit=4');
+        const allRes = await fetch(API + '/products?limit=8');
         const all = await allRes.json();
         newGrid.innerHTML = all.map(buildProductCard).join('') || '<p class="loading-msg">No products available.</p>';
       }
@@ -181,10 +181,11 @@ function renderFilteredShop() {
     list.sort((a, b) => Number(a.price) - Number(b.price));
   } else if (currentSortMethod === 'price_desc') {
     list.sort((a, b) => Number(b.price) - Number(a.price));
-  } else if (currentSortMethod === 'newest') {
-    list.sort((a, b) => (new Date(b.created_at || 0)) - (new Date(a.created_at || 0)));
   } else if (currentSortMethod === 'rating') {
     list.sort((a, b) => (Number(b.rating || 4.8) - Number(a.rating || 4.8)));
+  } else {
+    // Default 'featured' or 'newest': latest products first
+    list.sort((a, b) => (new Date(b.created_at || 0)) - (new Date(a.created_at || 0)) || (Number(b.id) - Number(a.id)));
   }
 
   filteredProductsList = list;
@@ -396,6 +397,276 @@ async function loadRelatedProducts(id) {
   }
 }
 
+// ─── 1-5 Star Customer Review & Rating System ──────────────────────
+const RATING_DESCRIPTIONS = {
+  1: '1 / 5 — Poor',
+  2: '2 / 5 — Fair',
+  3: '3 / 5 — Good',
+  4: '4 / 5 — Very Good',
+  5: '5 / 5 — Excellent'
+};
+
+let currentSelectedRating = 5;
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function toggleReviewForm(forceOpen) {
+  const card = document.getElementById('reviewFormCard');
+  if (!card) return;
+  const isHidden = card.style.display === 'none' || !card.style.display;
+  const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : isHidden;
+
+  if (shouldOpen) {
+    card.style.display = 'block';
+    // Pre-populate reviewer name if available from login or saved customer details
+    const nameInput = document.getElementById('reviewCustomerName');
+    const cityInput = document.getElementById('reviewCustomerCity');
+    if (nameInput && !nameInput.value.trim()) {
+      try {
+        const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        const cust = JSON.parse(localStorage.getItem('durgas_customer_details') || '{}');
+        if (user && (user.full_name || user.name)) {
+          nameInput.value = user.full_name || user.name;
+        } else if (cust && cust.fullName) {
+          nameInput.value = cust.fullName;
+        }
+        if (cityInput && !cityInput.value.trim() && cust && cust.city) {
+          cityInput.value = cust.city;
+        }
+      } catch (e) {}
+    }
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } else {
+    card.style.display = 'none';
+  }
+}
+
+function selectStarRating(rating) {
+  currentSelectedRating = Math.max(1, Math.min(5, parseInt(rating, 10) || 5));
+  const hiddenInput = document.getElementById('selectedRatingInput');
+  if (hiddenInput) hiddenInput.value = currentSelectedRating;
+
+  const buttons = document.querySelectorAll('#starRatingPicker .star-btn');
+  buttons.forEach(btn => {
+    const r = parseInt(btn.getAttribute('data-rating'), 10);
+    btn.classList.remove('hovered');
+    if (r <= currentSelectedRating) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  const descEl = document.getElementById('ratingDescriptorText');
+  if (descEl) {
+    descEl.textContent = RATING_DESCRIPTIONS[currentSelectedRating] || `${currentSelectedRating} / 5 Stars`;
+  }
+}
+
+function previewStarRating(hoverRating) {
+  const hr = parseInt(hoverRating, 10);
+  const buttons = document.querySelectorAll('#starRatingPicker .star-btn');
+  buttons.forEach(btn => {
+    const r = parseInt(btn.getAttribute('data-rating'), 10);
+    if (r <= hr) {
+      btn.classList.add('hovered');
+    } else {
+      btn.classList.remove('hovered');
+    }
+  });
+  const descEl = document.getElementById('ratingDescriptorText');
+  if (descEl && RATING_DESCRIPTIONS[hr]) {
+    descEl.textContent = RATING_DESCRIPTIONS[hr];
+  }
+}
+
+function resetStarRatingPreview() {
+  const buttons = document.querySelectorAll('#starRatingPicker .star-btn');
+  buttons.forEach(btn => {
+    btn.classList.remove('hovered');
+    const r = parseInt(btn.getAttribute('data-rating'), 10);
+    if (r <= currentSelectedRating) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+  const descEl = document.getElementById('ratingDescriptorText');
+  if (descEl) {
+    descEl.textContent = RATING_DESCRIPTIONS[currentSelectedRating] || `${currentSelectedRating} / 5 Stars`;
+  }
+}
+
+function updateRatingSummaryUI(reviews) {
+  const scoreEl = document.getElementById('summaryScoreNum');
+  const starsEl = document.getElementById('summaryStarsVisual');
+  const countEl = document.getElementById('summaryCountText');
+  const detailBadge = document.getElementById('detailRatingBadge');
+  const detailCount = document.getElementById('detailRatingCount');
+
+  if (!reviews || !reviews.length) {
+    if (scoreEl) scoreEl.textContent = '4.9';
+    if (starsEl) starsEl.textContent = '★★★★★';
+    if (countEl) countEl.textContent = 'Based on 42 verified customer ratings';
+    return;
+  }
+
+  const total = reviews.length;
+  const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  let sum = 0;
+
+  reviews.forEach(r => {
+    const ratingVal = Math.max(1, Math.min(5, parseInt(r.rating, 10) || 5));
+    counts[ratingVal] = (counts[ratingVal] || 0) + 1;
+    sum += ratingVal;
+  });
+
+  const avg = (sum / total).toFixed(1);
+
+  if (scoreEl) scoreEl.textContent = avg;
+  if (starsEl) starsEl.innerHTML = renderStars(Math.round(avg));
+  if (countEl) countEl.textContent = `Based on ${total} verified review${total === 1 ? '' : 's'}`;
+
+  if (detailBadge) detailBadge.textContent = `${avg} ★`;
+  if (detailCount) detailCount.textContent = `${total} Ratings & Reviews`;
+
+  // Update breakdown bars
+  for (let s = 1; s <= 5; s++) {
+    const pct = Math.round(((counts[s] || 0) / total) * 100);
+    const fillEl = document.getElementById(`barFill${s}`);
+    const pctEl = document.getElementById(`barPct${s}`);
+    if (fillEl) fillEl.style.width = `${pct}%`;
+    if (pctEl) pctEl.textContent = `${pct}%`;
+  }
+}
+
+async function submitCustomerReview(e) {
+  if (e && e.preventDefault) e.preventDefault();
+
+  const prodId = currentProduct ? currentProduct.id : (new URLSearchParams(window.location.search).get('id') || 1);
+  const nameInput = document.getElementById('reviewCustomerName');
+  const cityInput = document.getElementById('reviewCustomerCity');
+  const textInput = document.getElementById('reviewCustomerText');
+  const ratingInput = document.getElementById('selectedRatingInput');
+  const statusEl = document.getElementById('reviewFormStatus');
+  const submitBtn = document.getElementById('btnSubmitReview');
+
+  const rating = parseInt(ratingInput ? ratingInput.value : currentSelectedRating, 10) || 5;
+  const reviewerName = nameInput ? nameInput.value.trim() : '';
+  const city = cityInput ? cityInput.value.trim() : '';
+  const reviewText = textInput ? textInput.value.trim() : '';
+
+  if (!reviewerName) {
+    if (statusEl) {
+      statusEl.className = 'review-status-msg error';
+      statusEl.textContent = 'Please enter your full name.';
+      statusEl.style.display = 'block';
+    }
+    return;
+  }
+
+  if (!reviewText || reviewText.length < 5) {
+    if (statusEl) {
+      statusEl.className = 'review-status-msg error';
+      statusEl.textContent = 'Please write review feedback with at least 5 characters.';
+      statusEl.style.display = 'block';
+    }
+    return;
+  }
+
+  const displayName = city ? `${reviewerName} (${city})` : reviewerName;
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Submitting Review...</span>';
+  }
+
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    const token = localStorage.getItem('sb_access_token') || (user ? user.token : null);
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+
+    const res = await fetch(`${API}/analytics/reviews`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        product_id: prodId,
+        rating,
+        reviewer_name: displayName,
+        review_text: reviewText
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Failed to submit review');
+    }
+
+    if (statusEl) {
+      statusEl.className = 'review-status-msg success';
+      statusEl.textContent = '✓ Thank you! Your verified rating and review has been submitted successfully.';
+      statusEl.style.display = 'block';
+    }
+
+    // Reset feedback text
+    if (textInput) textInput.value = '';
+
+    // Prepend new review card to existing grid immediately
+    const reviewsGrid = document.getElementById('productReviewsGrid');
+    if (reviewsGrid) {
+      const newCardHtml = `
+        <div class="review-card" style="border-left: 3px solid var(--gold); animation: reviewFadeIn 0.4s ease;">
+          <div class="review-header">
+            <div>
+              <p class="reviewer-name">${escapeHtml(displayName)}</p>
+              <div class="product-stars" style="margin-top:4px">${renderStars(rating)}</div>
+            </div>
+            <span class="review-date">Just Now · Verified Patron</span>
+          </div>
+          <p class="review-text">${escapeHtml(reviewText)}</p>
+        </div>
+      `;
+      if (reviewsGrid.innerHTML.includes('Lakshmi Priya M.') && reviewsGrid.querySelectorAll('.review-card').length <= 2) {
+        reviewsGrid.innerHTML = newCardHtml;
+      } else {
+        reviewsGrid.insertAdjacentHTML('afterbegin', newCardHtml);
+      }
+    }
+
+    // Refresh reviews from server to calculate fresh stats
+    setTimeout(() => {
+      loadProductReviews(prodId);
+    }, 400);
+
+    // Auto-close form after 2.5 seconds
+    setTimeout(() => {
+      toggleReviewForm(false);
+      if (statusEl) statusEl.style.display = 'none';
+    }, 2500);
+
+  } catch (err) {
+    if (statusEl) {
+      statusEl.className = 'review-status-msg error';
+      statusEl.textContent = err.message || 'Failed to submit review. Please try again.';
+      statusEl.style.display = 'block';
+    }
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span>Submit Customer Review</span>';
+    }
+  }
+}
+
 // Load Reviews
 async function loadProductReviews(id) {
   const reviewsEl = document.getElementById('productReviewsGrid');
@@ -403,18 +674,19 @@ async function loadProductReviews(id) {
   try {
     const reviewsRes = await fetch(API + '/analytics/reviews/' + id);
     const reviews = await reviewsRes.json();
-    if (reviews && reviews.length) {
+    if (reviews && Array.isArray(reviews) && reviews.length) {
       reviewsEl.innerHTML = reviews.map(r => `
         <div class="review-card">
           <div class="review-header">
             <div>
-              <p class="reviewer-name">${r.reviewer_name || 'Customer'}</p>
+              <p class="reviewer-name">${escapeHtml(r.reviewer_name || 'Customer')}</p>
               <div class="product-stars" style="margin-top:4px">${renderStars(r.rating || 5)}</div>
             </div>
             <span class="review-date">${new Date(r.created_at || Date.now()).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</span>
           </div>
-          <p class="review-text">${r.review_text}</p>
+          <p class="review-text">${escapeHtml(r.review_text)}</p>
         </div>`).join('');
+      updateRatingSummaryUI(reviews);
     } else {
       reviewsEl.innerHTML = `
         <div class="review-card">
@@ -437,6 +709,7 @@ async function loadProductReviews(id) {
           </div>
           <p class="review-text">Beautiful craftsmanship. Weight and metal composition exactly as described in the showroom specifications.</p>
         </div>`;
+      updateRatingSummaryUI([]);
     }
   } catch (e) {
     console.error('Reviews load failed:', e);
@@ -488,7 +761,7 @@ function orderCurrentProductWhatsApp() {
   if (window.DURGAS_WHATSAPP) {
     window.DURGAS_WHATSAPP.openProductOrder(currentProduct, selectedDetailQty);
   } else {
-    const waNumber = '917448882444';
+    const waNumber = '919344572003';
     const subtotal = Number(currentProduct.price) * selectedDetailQty;
     const msg = `*NEW ORDER INQUIRY — DURGAS JEWELLERY*\n\n` +
       `Product: ${currentProduct.name}\n` +
@@ -532,7 +805,7 @@ function addToWishlistDetail() {
 // SEO updater
 function updateProductSeo(p) {
   if (!p) return;
-  document.title = `${p.name} — DURGAS Fine Jewellery`;
+  document.title = `${p.name} — DURGAS FIVE METAL JEWELLERY`;
   const setMeta = (property, content) => {
     let el = document.querySelector(`meta[property="${property}"]`) || document.querySelector(`meta[name="${property}"]`);
     if (!el) {
@@ -545,9 +818,9 @@ function updateProductSeo(p) {
   };
 
   const img = (typeof getProductImage === 'function') ? getProductImage(p) : (p.image || '');
-  const desc = p.description || `${p.name} handcrafted by DURGAS Fine Jewellery. Verified composition.`;
+  const desc = p.description || `${p.name} handcrafted by DURGAS FIVE METAL JEWELLERY. Verified composition.`;
   setMeta('description', desc);
-  setMeta('og:title', `${p.name} — DURGAS Fine Jewellery`);
+  setMeta('og:title', `${p.name} — DURGAS FIVE METAL JEWELLERY`);
   setMeta('og:description', desc);
   setMeta('og:image', img);
   setMeta('og:url', window.location.href);

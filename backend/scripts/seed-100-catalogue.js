@@ -278,7 +278,7 @@ async function seed100Catalogue() {
       "INSERT INTO app_settings (key, value, updated_at) VALUES ('store_name', 'Durgas Jewellery', NOW()) ON CONFLICT (key) DO UPDATE SET value = 'Durgas Jewellery', updated_at = NOW()"
     );
     await db.pool.query(
-      "INSERT INTO app_settings (key, value, updated_at) VALUES ('whatsapp_number', '917448882444', NOW()) ON CONFLICT (key) DO UPDATE SET value = '917448882444', updated_at = NOW()"
+      "INSERT INTO app_settings (key, value, updated_at) VALUES ('whatsapp_number', '919344572003', NOW()) ON CONFLICT (key) DO UPDATE SET value = '919344572003', updated_at = NOW()"
     );
     await db.pool.query(
       "INSERT INTO app_settings (key, value, updated_at) VALUES ('delivery_charge', '0', NOW()) ON CONFLICT (key) DO UPDATE SET value = '0', updated_at = NOW()"
@@ -286,7 +286,7 @@ async function seed100Catalogue() {
 
     console.log(`✓ Successfully seeded ${finalProducts.length} authentic jewellery products across 14 English categories!`);
     console.log('✓ All legacy unwanted text removed.');
-    console.log('✓ WhatsApp configuration locked to 917448882444.');
+    console.log('✓ WhatsApp configuration locked to 919344572003.');
 
     db.close();
     process.exit(0);

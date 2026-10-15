@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DURGAS — Fine Jewellery</title>
   <meta name="description"
-    content="DURGAS Fine Jewellery — Handcrafted luxury pieces for the modern woman. Discover necklaces, rings, earrings and bracelets.">
+    content="DURGAS FIVE METAL JEWELLERY — Handcrafted luxury pieces for the modern woman. Discover necklaces, rings, earrings and bracelets.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap"
@@ -3100,7 +3100,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <p class="footer-copy">© 2025 DURGAS Fine Jewellery. All rights reserved. · Privacy Policy · Terms of Use</p>
+      <p class="footer-copy">© 2025 DURGAS FIVE METAL JEWELLERY. All rights reserved. · Privacy Policy · Terms of Use</p>
       <div class="footer-pay">
         <span class="pay-badge">Visa</span>
         <span class="pay-badge">Mastercard</span>
@@ -3197,7 +3197,7 @@
     async function loadHomeProducts() {
       try {
         const [newRes, bestRes] = await Promise.all([
-          fetch(API + '/products?badge=New&limit=4'),
+          fetch(API + '/products?sort=newest&limit=8'),
           fetch(API + '/products?badge=Best Seller&limit=4'),
         ]);
         const newProducts = await newRes.json();
@@ -3206,12 +3206,14 @@
         const newGrid = document.getElementById('newArrivalsGrid');
         const bestGrid = document.getElementById('bestSellersGrid');
 
-        if (newProducts.length) {
-          newGrid.innerHTML = newProducts.map(buildProductCard).join('');
-        } else {
-          const allRes = await fetch(API + '/products?limit=4');
-          const all = await allRes.json();
-          newGrid.innerHTML = all.map(buildProductCard).join('') || '<p class="loading-msg">No products yet. Add products from the admin panel.</p>';
+        if (newGrid) {
+          if (Array.isArray(newProducts) && newProducts.length) {
+            newGrid.innerHTML = newProducts.slice(0, 8).map(buildProductCard).join('');
+          } else {
+            const allRes = await fetch(API + '/products?limit=8');
+            const all = await allRes.json();
+            newGrid.innerHTML = all.map(buildProductCard).join('') || '<p class="loading-msg">No products yet. Add products from the admin panel.</p>';
+          }
         }
 
         if (bestProducts.length) {

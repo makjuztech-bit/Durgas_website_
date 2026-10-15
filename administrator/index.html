@@ -122,7 +122,7 @@
     <p>Super Admin Login</p>
     <div class="form-group">
       <label class="form-label">Email</label>
-      <input type="email" class="form-input" id="loginEmail" value="admin@durgas.com">
+      <input type="email" class="form-input" id="loginEmail" value="durgasjewellery20@gmail.com">
     </div>
     <div class="form-group">
       <label class="form-label">Password</label>
@@ -143,8 +143,9 @@
   <a class="nav-item" data-section="orders" onclick="showSection('orders')">Orders</a>
   <a class="nav-item" data-section="customers" onclick="showSection('customers')">Customers</a>
   <a class="nav-item" data-section="reviews" onclick="showSection('reviews')">Reviews</a>
-  <a class="nav-item" data-section="settings" onclick="showSection('settings')">WhatsApp & Settings</a>
-  <a class="nav-item" style="margin-top:40px;color:#c0392b" onclick="adminLogout()">Logout</a>
+  <a class="nav-item" data-section="settings" onclick="showSection('settings')">UPI & Store Settings</a>
+  <a class="nav-item" href="/" target="_blank" style="color:var(--gold);margin-top:14px;border:1px dashed var(--gold);text-align:center;">🏪 View Store Website ↗</a>
+  <a class="nav-item" style="margin-top:20px;color:#c0392b" onclick="adminLogout()">Logout</a>
 </aside>
 
 <main class="main hidden" id="mainContent">
@@ -210,9 +211,10 @@
               <option value="Best Seller">Best Seller</option>
             </select>
           </div>
-          <div class="form-group full"><label class="form-label">Product Images</label><input type="file" class="form-input" id="pImages" multiple accept="image/*"></div>
+          <div class="form-group full"><label class="form-label">Product Image URL (Direct image link or upload files below)</label><input type="url" class="form-input" id="pImageUrl" placeholder="https://res.cloudinary.com/... or paste image URL"></div>
+          <div class="form-group full"><label class="form-label">Upload Product Images (from computer)</label><input type="file" class="form-input" id="pImages" multiple accept="image/*"></div>
         </div>
-        <button type="submit" class="btn btn-primary" style="margin-top:16px">Save Product</button>
+        <button type="submit" class="btn btn-primary" id="btnSaveProduct" style="margin-top:16px">Save Product</button>
         <button type="button" class="btn" style="margin-top:16px;margin-left:8px;background:var(--beige)" onclick="showSection('products')">Cancel</button>
       </form>
     </div>
@@ -277,8 +279,13 @@
         <div class="form-grid">
           <div class="form-group full">
             <label class="form-label">WhatsApp Business Number (Country Code + Number, no + or spaces) *</label>
-            <input type="text" class="form-input" id="cfgWhatsappNumber" required placeholder="917448882444">
-            <small style="color:var(--gray);font-size:0.75rem;margin-top:4px;display:block;">Configured shop number: Durgas Jewellery <strong>7448882444</strong> (917448882444). Used for all customer WhatsApp orders &amp; inquiries.</small>
+            <input type="text" class="form-input" id="cfgWhatsappNumber" required placeholder="919344572003">
+            <small style="color:var(--gray);font-size:0.75rem;margin-top:4px;display:block;">Configured shop number: Durgas Jewellery <strong>9344572003</strong> (919344572003). Used for all customer WhatsApp orders &amp; inquiries.</small>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Shop Official UPI ID (for Google Pay, PhonePe, Paytm, BHIM) *</label>
+            <input type="text" class="form-input" id="cfgUpiId" placeholder="9344572003@upi or durgasjewellery20@okaxis">
+            <small style="color:var(--gray);font-size:0.75rem;margin-top:4px;display:block;">This UPI ID is displayed on customer checkout for instant QR code scanning and direct UPI mobile app payment.</small>
           </div>
           <div class="form-group full">
             <label class="form-label">Store Name *</label>
@@ -305,7 +312,8 @@ let categories = [];
 
 function apiFetch(url, options = {}) {
   const headers = { ...options.headers };
-  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const activeToken = token || localStorage.getItem('adminToken');
+  if (activeToken) headers['Authorization'] = 'Bearer ' + activeToken;
   const csrfToken = document.cookie.split('; ').find((part) => part.startsWith('csrf_token='))?.split('=').slice(1).join('=');
   if (!['GET', 'HEAD', 'OPTIONS'].includes(options.method || 'GET') && csrfToken) headers['X-CSRF-Token'] = decodeURIComponent(csrfToken);
   if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
@@ -342,7 +350,8 @@ async function adminLogin() {
     if (!res.ok) { errEl.textContent = data.message; return; }
     if (data.user.role !== 'superadmin' && data.user.role !== 'admin') { errEl.textContent = 'Admin access only.'; return; }
 
-    token = null;
+    token = data.token || null;
+    if (token) localStorage.setItem('adminToken', token);
     document.getElementById('adminName').textContent = data.user.full_name;
     showDashboard();
   } catch (e) {
@@ -353,6 +362,7 @@ async function adminLogin() {
 function adminLogout() {
   apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
   token = null;
+  localStorage.removeItem('adminToken');
   document.getElementById('loginScreen').classList.remove('hidden');
   document.getElementById('sidebar').classList.add('hidden');
   document.getElementById('mainContent').classList.add('hidden');
@@ -365,7 +375,7 @@ function showDashboard() {
   loadDashboard();
 }
 
-function showSection(name) {
+function showSection(name, keepForm = false) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('section-' + name).classList.add('active');
@@ -373,7 +383,10 @@ function showSection(name) {
 
   if (name === 'dashboard') loadDashboard();
   else if (name === 'products') loadProducts();
-  else if (name === 'add-product') { loadCategorySelect(); resetProductForm(); }
+  else if (name === 'add-product') {
+    loadCategorySelect();
+    if (!keepForm) resetProductForm();
+  }
   else if (name === 'categories') loadCategories();
   else if (name === 'orders') loadOrders();
   else if (name === 'customers') loadCustomers();
@@ -420,11 +433,11 @@ async function loadProducts() {
     </tr>`).join('') || '<tr><td colspan="7">No products yet. Add your first product!</td></tr>';
 }
 
-async function loadCategorySelect() {
+async function loadCategorySelect(selectedId) {
   const res = await apiFetch('/categories');
   categories = await res.json();
   document.getElementById('pCategory').innerHTML = categories.map(c =>
-    `<option value="${c.id}">${c.name}</option>`
+    `<option value="${c.id}" ${selectedId && String(selectedId) === String(c.id) ? 'selected' : ''}>${c.name}</option>`
   ).join('');
 }
 
@@ -436,11 +449,21 @@ function resetProductForm() {
   document.getElementById('pTamilName').value = '';
   document.getElementById('pMetalComposition').value = '';
   document.getElementById('pAvailableSizes').value = '';
+  document.getElementById('pImageUrl').value = '';
+  const submitBtn = document.getElementById('btnSaveProduct');
+  if (submitBtn) submitBtn.textContent = 'Save Product';
 }
 
 async function saveProduct(e) {
   e.preventDefault();
   const editId = document.getElementById('editProductId').value;
+  const submitBtn = document.getElementById('btnSaveProduct');
+  const origText = submitBtn ? submitBtn.textContent : '';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = editId ? 'Updating Product...' : 'Saving Product...';
+  }
+
   const formData = new FormData();
   formData.append('name', document.getElementById('pName').value);
   formData.append('tamil_name', document.getElementById('pTamilName').value);
@@ -456,6 +479,7 @@ async function saveProduct(e) {
   formData.append('old_price', document.getElementById('pOldPrice').value || '');
   formData.append('stock', document.getElementById('pStock').value);
   formData.append('badge', document.getElementById('pBadge').value);
+  formData.append('image_url', document.getElementById('pImageUrl')?.value?.trim() || '');
 
   const files = document.getElementById('pImages').files;
   for (const f of files) formData.append('images', f);
@@ -463,43 +487,86 @@ async function saveProduct(e) {
   const url = editId ? `/products/${editId}` : '/products';
   const method = editId ? 'PUT' : 'POST';
 
-  const res = await apiFetch(url, { method, body: formData });
-  const data = await res.json();
-  if (!res.ok) { alert(data.message); return; }
+  try {
+    const res = await apiFetch(url, { method, body: formData });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.message || 'Operation failed');
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origText; }
+      return;
+    }
 
-  alert(editId ? 'Product updated!' : 'Product created!');
-  showSection('products');
+    alert(editId ? 'Product updated successfully!' : 'Product created successfully and published to website!');
+    resetProductForm();
+    showSection('products');
+    loadProducts();
+  } catch (err) {
+    console.error('saveProduct error:', err);
+    alert('An unexpected error occurred: ' + err.message);
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origText; }
+  }
 }
 
 async function editProduct(id) {
-  const res = await apiFetch(`/products/${id}`);
-  const p = await res.json();
-  await loadCategorySelect();
+  try {
+    // Switch to section first while keeping form intact
+    showSection('add-product', true);
+    const titleEl = document.getElementById('productFormTitle');
+    if (titleEl) titleEl.textContent = 'Loading Product Details...';
+    const submitBtn = document.getElementById('btnSaveProduct');
+    if (submitBtn) submitBtn.textContent = 'Update Product (Save Changes)';
 
-  document.getElementById('editProductId').value = p.id;
-  document.getElementById('productFormTitle').textContent = 'Edit Product';
-  document.getElementById('pName').value = p.name;
-  document.getElementById('pTamilName').value = p.tamil_name || '';
-  document.getElementById('pDescription').value = p.description || '';
-  document.getElementById('pCategory').value = p.category_id;
-  document.getElementById('pMetalComposition').value = p.metal_composition || '';
-  document.getElementById('pAvailableSizes').value = p.available_sizes || '';
-  document.getElementById('pMaterial').value = p.material || '';
-  document.getElementById('pPurity').value = p.purity || '';
-  document.getElementById('pWeight').value = p.weight || '';
-  document.getElementById('pSku').value = p.sku || '';
-  document.getElementById('pPrice').value = p.price;
-  document.getElementById('pOldPrice').value = p.old_price || '';
-  document.getElementById('pStock').value = p.stock;
-  document.getElementById('pBadge').value = p.badge || '';
+    const res = await apiFetch(`/products/${id}`);
+    if (!res.ok) {
+      alert('Could not load product details.');
+      showSection('products');
+      return;
+    }
+    const p = await res.json();
 
-  showSection('add-product');
+    await loadCategorySelect(p.category_id);
+
+    document.getElementById('editProductId').value = p.id;
+    if (titleEl) titleEl.textContent = `Edit Product: ${p.name} (ID: ${p.id})`;
+    document.getElementById('pName').value = p.name || '';
+    document.getElementById('pTamilName').value = p.tamil_name || '';
+    document.getElementById('pDescription').value = p.description || '';
+    if (p.category_id) document.getElementById('pCategory').value = p.category_id;
+    document.getElementById('pMetalComposition').value = p.metal_composition || '';
+    document.getElementById('pAvailableSizes').value = p.available_sizes || '';
+    document.getElementById('pMaterial').value = p.material || '';
+    document.getElementById('pPurity').value = p.purity || '';
+    document.getElementById('pWeight').value = p.weight || '';
+    document.getElementById('pSku').value = p.sku || '';
+    document.getElementById('pPrice').value = p.price || '';
+    document.getElementById('pOldPrice').value = p.old_price || '';
+    document.getElementById('pStock').value = (p.stock !== undefined && p.stock !== null) ? p.stock : 10;
+    document.getElementById('pBadge').value = p.badge || '';
+    document.getElementById('pImageUrl').value = p.image || (p.images && p.images[0]?.image_path) || '';
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    console.error('Failed to load product for editing:', err);
+    alert('Failed to load product: ' + err.message);
+    showSection('products');
+  }
 }
 
 async function deleteProduct(id) {
-  if (!confirm('Delete this product?')) return;
-  await apiFetch(`/products/${id}`, { method: 'DELETE' });
-  loadProducts();
+  if (!confirm('Are you sure you want to delete this product? It will be removed from your store catalogue immediately.')) return;
+  try {
+    const res = await apiFetch(`/products/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.message || 'Failed to delete product.');
+      return;
+    }
+    alert(data.message || 'Product removed successfully!');
+    await loadProducts();
+  } catch (err) {
+    console.error('Delete error:', err);
+    alert('Failed to delete product: ' + err.message);
+  }
 }
 
 async function loadCategories() {
@@ -543,23 +610,46 @@ function editCategory(id) {
 
 async function saveCategory() {
   const editId = document.getElementById('editCategoryId').value;
+  const name = document.getElementById('catName').value.trim();
+  if (!name) { alert('Please enter a Category Name.'); return; }
   const body = {
-    name: document.getElementById('catName').value,
-    tamil_name: document.getElementById('catTamilName').value,
-    image: document.getElementById('catImage').value,
-    description: document.getElementById('catDescription').value,
+    name,
+    tamil_name: document.getElementById('catTamilName').value.trim() || undefined,
+    image: document.getElementById('catImage').value.trim() || undefined,
+    description: document.getElementById('catDescription').value.trim() || undefined,
   };
   const url = editId ? `/categories/${editId}` : '/categories';
   const method = editId ? 'PUT' : 'POST';
-  await apiFetch(url, { method, body: JSON.stringify(body) });
-  hideAddCategory();
-  loadCategories();
+  try {
+    const res = await apiFetch(url, { method, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.message || 'Failed to save category.');
+      return;
+    }
+    alert(editId ? 'Category updated successfully!' : 'Category created successfully!');
+    hideAddCategory();
+    await loadCategories();
+  } catch (err) {
+    alert('Failed to save category: ' + err.message);
+  }
 }
 
 async function deleteCategory(id) {
-  if (!confirm('Delete this category?')) return;
-  await apiFetch(`/categories/${id}`, { method: 'DELETE' });
-  loadCategories();
+  if (!confirm('Are you sure you want to delete this category?')) return;
+  try {
+    const res = await apiFetch(`/categories/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.message || 'Failed to delete category.');
+      return;
+    }
+    alert('Category deleted successfully!');
+    await loadCategories();
+  } catch (err) {
+    console.error('Delete category error:', err);
+    alert('Failed to delete category: ' + err.message);
+  }
 }
 
 async function loadOrders() {
@@ -599,7 +689,8 @@ async function loadSettings() {
   try {
     const res = await apiFetch('/admin/settings');
     const data = await res.json();
-    document.getElementById('cfgWhatsappNumber').value = data.whatsapp_number || '917448882444';
+    document.getElementById('cfgWhatsappNumber').value = data.whatsapp_number || '919344572003';
+    document.getElementById('cfgUpiId').value = data.upi_id || '9344572003@upi';
     document.getElementById('cfgStoreName').value = data.store_name || 'Durgas Jewellery';
     document.getElementById('cfgDeliveryCharge').value = data.delivery_charge !== undefined ? data.delivery_charge : 0;
   } catch (e) {
@@ -614,6 +705,7 @@ async function saveSettings(e) {
   try {
     const body = {
       whatsapp_number: document.getElementById('cfgWhatsappNumber').value,
+      upi_id: document.getElementById('cfgUpiId').value.trim(),
       store_name: document.getElementById('cfgStoreName').value,
       delivery_charge: parseFloat(document.getElementById('cfgDeliveryCharge').value) || 0
     };
@@ -666,18 +758,26 @@ async function loadReviews() {
     </tr>`).join('') || '<tr><td colspan="5">No reviews yet</td></tr>';
 }
 
-// Auto-login if token exists
-if (token) {
+// Auto-login if session exists
+(function initAdminSession() {
+  const storedToken = localStorage.getItem('adminToken');
+  if (storedToken) token = storedToken;
   apiFetch('/auth/profile').then(res => {
     if (res.ok) return res.json();
-    throw new Error();
+    throw new Error('Not authenticated');
   }).then(user => {
-    if (user.role === 'superadmin') {
+    if (user && (user.role === 'superadmin' || user.role === 'admin')) {
       document.getElementById('adminName').textContent = user.full_name;
       showDashboard();
-    } else adminLogout();
-  }).catch(() => adminLogout());
-}
+    } else {
+      adminLogout();
+    }
+  }).catch(() => {
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('sidebar').classList.add('hidden');
+    document.getElementById('mainContent').classList.add('hidden');
+  });
+})();
 </script>
 </body>
 </html>

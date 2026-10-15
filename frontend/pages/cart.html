@@ -91,7 +91,7 @@
 
 <!-- Offer Banner -->
 <div class="offer-banner">
-  ✦ Free Insured Shipping Across India on Orders Above ₹5,000 &nbsp;·&nbsp; Direct WhatsApp Assistance: 7448882444 ✦
+  ✦ Free Insured Shipping Across India on Orders Above ₹5,000 &nbsp;·&nbsp; Direct WhatsApp Assistance: 9344572003 ✦
 </div>
 
 <!-- Navigation -->
@@ -104,6 +104,7 @@
     <li><a href="/products">Shop Catalogue</a></li>
     <li><a href="/about">About Us</a></li>
     <li><a href="/contact">Contact</a></li>
+    <li><a href="/administrator" target="_blank" style="color:var(--gold, #D4AF37); font-weight: 600;">Admin Panel ⚙</a></li>
   </ul>
   <div class="nav-icons">
     <button class="nav-icon-btn" title="Search" onclick="window.location.href='/products'">⌕</button>
@@ -131,11 +132,39 @@
     </div>
 
     <!-- Empty Bag State -->
-    <div id="cartEmptyState" style="display: none; text-align: center; padding: 80px 20px; background: #fff; border-radius: 6px; border: 1px solid #EAE5D9;">
-      <div style="font-size: 3.5rem; color: #D4AF37; margin-bottom: 12px;">♡</div>
-      <h2 style="font-family: var(--font-serif); font-size: 1.6rem; color: #222;">Your Shopping Bag is Empty</h2>
-      <p style="color: #777; max-width: 440px; margin: 8px auto 24px; font-size: 0.9rem;">Explore our collection of over 100+ fine jewellery pieces, five-metal creations, rings, bangles, and chains.</p>
-      <a href="/products" class="btn-primary" style="display: inline-block;"><span>Browse Jewellery Catalogue</span></a>
+    <div id="cartEmptyState" style="display: none; padding: 40px 24px; background: #fff; border-radius: 8px; border: 1px solid #EAE5D9; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
+      <div style="text-align: center; max-width: 600px; margin: 0 auto;">
+        <div style="width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 50%; background: #FAF6EF; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: #D4AF37; border: 1px solid #DFD7C7;">
+          🛍️
+        </div>
+        <div style="display: inline-block; padding: 4px 14px; background: #FAF6EF; color: #8B6914; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;">
+          Cart Status: 0 Items Selected
+        </div>
+        <h2 style="font-family: var(--font-serif); font-size: 1.7rem; color: #222; margin: 0 0 10px;">Your Shopping Bag is Currently Empty</h2>
+        <p style="color: #666; font-size: 0.92rem; line-height: 1.6; margin: 0 auto 20px;">
+          To proceed to <strong>UPI QR Code</strong>, <strong>Cash on Delivery (COD)</strong>, or <strong>Online Payment (Razorpay)</strong>, please select at least one authentic five-metal jewellery piece from our collection.
+        </p>
+
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 30px;">
+          <button type="button" class="btn-primary" onclick="addSampleItemAndCheckout()" style="padding: 12px 24px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+            <span>⚡ Add Featured Five-Metal Jewellery &amp; Checkout</span>
+          </button>
+          <a href="/products" class="btn-secondary" style="display: inline-flex; align-items: center; padding: 12px 20px; border: 1px solid #6B1724; color: #6B1724; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 0.85rem; background: transparent;">
+            <span>Browse Full Catalogue ↗</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Quick Add Showcase Grid directly inside Cart Page -->
+      <div style="border-top: 1px solid #EAE5D9; padding-top: 30px; margin-top: 10px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h3 style="font-family: var(--font-serif); font-size: 1.25rem; color: var(--maroon, #6B1724); margin: 0 0 6px;">✦ Quick Pick: Popular Five-Metal Creations</h3>
+          <p style="color: #777; font-size: 0.82rem; margin: 0;">Click any item below to add it directly and proceed to the Payment / Delivery form:</p>
+        </div>
+        <div id="cartEmptyRecommendations" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px;">
+          <div style="grid-column: 1/-1; text-align: center; color: #888; font-size: 0.85rem; padding: 20px;">Loading jewellery collection...</div>
+        </div>
+      </div>
     </div>
 
     <!-- Active Order Content Grid -->
@@ -170,6 +199,10 @@
             <div class="form-group" style="margin: 0;">
               <label class="form-label" style="font-size:0.75rem">Contact Phone / WhatsApp *</label>
               <input type="tel" class="form-input" id="orderCustPhone" placeholder="10-digit mobile number" maxlength="15" required>
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1; margin: 0;">
+              <label class="form-label" style="font-size:0.75rem">Email Address (Optional — for Tax Invoice &amp; Receipt)</label>
+              <input type="email" class="form-input" id="orderCustEmail" placeholder="e.g. priya.sharma@example.com">
             </div>
             <div class="form-group" style="grid-column: 1 / -1; margin: 0;">
               <label class="form-label" style="font-size:0.75rem">Street Address / House No / Landmark *</label>
@@ -228,13 +261,17 @@
               ⚡ Place Order (Cash on Delivery)
             </button>
 
-            <button class="btn-whatsapp-order" id="btnOrderWhatsApp" onclick="submitOrderViaWhatsApp()" style="width: 100%; padding: 14px; font-size: 0.85rem;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.885-9.888 9.885m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              Continue on WhatsApp (7448882444)
+            <button class="btn-buy-now" id="btnPayUpiModal" onclick="openUpiModal()" style="width: 100%; padding: 14px; font-size: 0.85rem; background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%); border-color: #27ae60;">
+              📱 Pay via UPI / QR Code (GPay, PhonePe, Paytm)
             </button>
 
             <button class="btn-outline" id="btnPayOnlineRazorpay" onclick="submitDirectOrder('online')" style="width: 100%; padding: 12px; font-size: 0.8rem; border-color: #D4AF37; color: #8B6914;">
-              💳 Pay Online (Card / UPI / Netbanking)
+              💳 Pay Online with Cards / Netbanking (Razorpay)
+            </button>
+
+            <button class="btn-whatsapp-order" id="btnOrderWhatsApp" onclick="submitOrderViaWhatsApp()" style="width: 100%; padding: 14px; font-size: 0.85rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.885-9.888 9.885m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Continue on WhatsApp (9344572003)
             </button>
           </div>
 
@@ -242,7 +279,7 @@
           <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #F0ECE1; font-size: 0.78rem; color: #666; line-height: 1.5;">
             <p style="margin: 4px 0;">🛡️ 100% Quality &amp; Purity Guarantee</p>
             <p style="margin: 4px 0;">📦 Tamper-proof Insured Courier Packaging</p>
-            <p style="margin: 4px 0;">📞 Direct WhatsApp Support: 917448882444</p>
+            <p style="margin: 4px 0;">📞 Direct WhatsApp Support: 919344572003</p>
           </div>
         </div>
       </div>
@@ -251,13 +288,69 @@
   </div>
 </div>
 
+<!-- UPI Payment Modal -->
+<div class="modal-overlay" id="upiOverlay" onclick="closeUpiModal()"></div>
+<div class="modal-box" id="upiModal" style="max-width: 480px; text-align: center;">
+  <button class="modal-close" onclick="closeUpiModal()">✕</button>
+  <div style="font-size: 2.2rem; margin-bottom: 6px;">📱</div>
+  <h2 class="modal-title" style="color:var(--maroon, #6B1724); font-size: 1.4rem; margin-bottom: 4px;">Pay with Any UPI App</h2>
+  <p class="modal-sub" style="margin-bottom: 16px;">Google Pay &bull; PhonePe &bull; Paytm &bull; BHIM &bull; Cred</p>
+
+  <!-- Payable Amount Card -->
+  <div style="background: #FAF8F5; border: 1px solid #EAE5D9; border-radius: 6px; padding: 12px; margin-bottom: 16px;">
+    <span style="font-size: 0.8rem; color: #777;">Payable Total Amount:</span>
+    <div id="upiPayableAmount" style="font-size: 1.6rem; font-weight: bold; color: var(--maroon, #6B1724); margin-top: 2px;">₹0</div>
+  </div>
+
+  <!-- UPI ID Box with Copy Button -->
+  <div style="display: flex; align-items: center; justify-content: space-between; background: #fff; border: 1.5px dashed #D4AF37; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px;">
+    <div style="text-align: left;">
+      <small style="color: #888; font-size: 0.72rem; display: block;">Official Shop UPI ID</small>
+      <strong id="upiIdDisplay" style="font-size: 0.95rem; color: #222; font-family: monospace;">9344572003@upi</strong>
+    </div>
+    <button type="button" class="btn-sm btn-outline" id="btnCopyUpi" onclick="copyUpiId()" style="padding: 6px 12px; font-size: 0.75rem; border-color: #D4AF37; color: #8B6914;">
+      📋 Copy UPI ID
+    </button>
+  </div>
+
+  <!-- Dynamic QR Code -->
+  <div style="margin: 10px auto; padding: 10px; background: #fff; display: inline-block; border-radius: 8px; border: 1px solid #EAE5D9; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+    <img id="upiQrCodeImg" src="" alt="Scan UPI QR Code" style="width: 170px; height: 170px; display: block; margin: 0 auto;">
+    <small style="display:block;margin-top:6px;color:#777;font-size:0.72rem;">Scan with PhonePe, GPay, Paytm, or BHIM</small>
+  </div>
+
+  <!-- Mobile Intent Pay Button -->
+  <div style="margin: 12px 0 16px;">
+    <a id="upiIntentBtn" href="#" class="btn-buy-now" style="display: inline-block; width: 100%; text-decoration: none; padding: 12px; font-size: 0.85rem; box-sizing: border-box; background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%);">
+      📲 Open Supported UPI App on Mobile
+    </a>
+  </div>
+
+  <!-- Error Message Container inside Modal -->
+  <div id="upiModalError" style="display:none; color:#c0392b; background:#fde8e8; border:1px solid #f8b4b4; border-radius:4px; padding:10px; margin-bottom:12px; font-size:0.82rem; text-align:left;"></div>
+
+  <!-- Delivery Destination Notice -->
+  <div id="upiModalAddressSummary" style="font-size:0.75rem; color:#555; background:#fff; border:1px solid #EAE5D9; border-radius:4px; padding:8px 12px; margin-bottom:12px; text-align:left;"></div>
+
+  <!-- UTR / Reference ID Form -->
+  <div style="text-align: left; background: #FAF8F5; border-radius: 6px; padding: 14px; border: 1px solid #EAE5D9; margin-bottom: 16px;">
+    <label class="form-label" style="font-size: 0.75rem;">12-Digit UPI Transaction / UTR Ref No. (Optional / From App Receipt)</label>
+    <input type="text" class="form-input" id="upiUtrNumber" placeholder="e.g. 4289XXXXXXXX (Optional)" maxlength="24">
+    <small style="color: #777; font-size: 0.72rem; margin-top: 4px; display: block;">Helps immediate order confirmation and courier dispatch.</small>
+  </div>
+
+  <button class="btn-primary" id="btnConfirmUpiOrder" onclick="submitUpiOrder()" style="width: 100%; padding: 14px;">
+    <span>✓ I Have Paid — Submit My Order</span>
+  </button>
+</div>
+
 <!-- Order Confirmation Modal -->
 <div class="modal-overlay" id="confirmOverlay" onclick="closeConfirm()"></div>
 <div class="modal-box" id="confirmModal">
   <h2 class="modal-title" style="color:var(--gold, #D4AF37)">Order Recorded!</h2>
-  <p class="modal-sub" id="confirmMessage" style="font-size:0.95rem;line-height:1.5">Thank you for ordering with Durgas Fine Jewellery.</p>
+  <p class="modal-sub" id="confirmMessage" style="font-size:0.95rem;line-height:1.5">Thank you for ordering with DURGAS FIVE METAL JEWELLERY.</p>
   <div style="margin: 20px 0; padding: 14px; background: #FAF6EF; border: 1px solid #DFD7C7; border-radius: 4px; font-size: 0.85rem;">
-    <p style="margin:0;color:#555">Our jewellery concierge is preparing your pieces and will contact you via WhatsApp (7448882444) with shipping tracking details.</p>
+    <p style="margin:0;color:#555">Our jewellery concierge is preparing your pieces and will contact you via WhatsApp (9344572003) with shipping tracking details.</p>
   </div>
   <button class="btn-primary" style="width:100%" onclick="closeConfirm()"><span>Continue Browsing Jewellery</span></button>
 </div>
@@ -311,8 +404,9 @@
       <ul>
         <li><a href="/about">About Durgas</a></li>
         <li><a href="/contact">Showroom Contact</a></li>
-        <li><a href="https://wa.me/917448882444">WhatsApp Concierge (7448882444)</a></li>
+        <li><a href="https://wa.me/919344572003">WhatsApp Concierge (9344572003)</a></li>
         <li><a href="/shipping-policy">Shipping &amp; Delivery</a></li>
+        <li><a href="/administrator" target="_blank" style="color:var(--gold, #D4AF37); font-weight: 600;">🔐 Admin Panel Portal ↗</a></li>
       </ul>
     </div>
   </div>
@@ -321,6 +415,7 @@
   </div>
 </footer>
 
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="/js/whatsapp.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/auth.js"></script>

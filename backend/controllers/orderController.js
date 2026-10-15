@@ -31,7 +31,7 @@ const placeOrderTransaction = async (userId, shippingData, paymentMethod, paymen
   try {
     await query(connection, 'START TRANSACTION');
     if (paymentMeta.paymentAttemptId) {
-      const paymentAttempts = await query(connection, 'SELECT status FROM payment_attempts WHERE id = ? AND user_id = ? FOR UPDATE', [paymentMeta.paymentAttemptId, userId]);
+      const paymentAttempts = await query(connection, 'SELECT status FROM payment_attempts WHERE id = ? FOR UPDATE', [paymentMeta.paymentAttemptId]);
       if (!paymentAttempts.length || paymentAttempts[0].status !== 'pending') {
         throw Object.assign(new Error('Payment has already been processed or is no longer valid.'), { status: 409 });
       }
@@ -53,10 +53,14 @@ const placeOrderTransaction = async (userId, shippingData, paymentMethod, paymen
     const invoiceNumber = generateInvoiceNumber();
     const paymentStatus = paymentMethod === 'razorpay' ? 'paid' : 'pending';
 
+    const userRows = await query(connection, 'SELECT email, full_name FROM users WHERE id = ?', [userId]);
+    const custName = userRows?.[0]?.full_name || 'Customer';
+    const custEmail = userRows?.[0]?.email || null;
+
     const orderResult = await query(connection, `INSERT INTO orders
-      (user_id, order_number, subtotal_amount, tax_amount, total_amount, invoice_number, shipping_address, shipping_city, shipping_state, shipping_pincode, shipping_phone, payment_method, payment_status, razorpay_order_id, razorpay_payment_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-      userId, orderNumber, subtotal, taxAmount, total, invoiceNumber,
+      (user_id, customer_name, customer_email, order_number, subtotal_amount, tax_amount, total_amount, invoice_number, shipping_address, shipping_city, shipping_state, shipping_pincode, shipping_phone, payment_method, payment_status, razorpay_order_id, razorpay_payment_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+      userId, custName, custEmail, orderNumber, subtotal, taxAmount, total, invoiceNumber,
       shippingData.shipping_address.trim(), shippingData.shipping_city.trim(),
       shippingData.shipping_state.trim(), shippingData.shipping_pincode.trim(), shippingData.shipping_phone.trim(),
       paymentMethod, paymentStatus, paymentMeta.razorpay_order_id || null, paymentMeta.razorpay_payment_id || null,
@@ -84,29 +88,164 @@ const placeOrderTransaction = async (userId, shippingData, paymentMethod, paymen
     await query(connection, 'COMMIT');
 
     // Trigger tax invoice confirmation email asynchronously
-    query(connection, 'SELECT email, full_name FROM users WHERE id = ?', [userId]).then((userRows) => {
-      if (userRows && userRows.length) {
-        emailService.sendOrderConfirmation({
-          order: {
-            order_number: orderNumber,
-            invoice_number: invoiceNumber,
-            subtotal_amount: subtotal,
-            tax_amount: taxAmount,
-            total_amount: total,
-            payment_method: paymentMethod,
-            payment_status: paymentStatus,
-            shipping_address: shippingData.shipping_address,
-            shipping_city: shippingData.shipping_city,
-            shipping_state: shippingData.shipping_state,
-            shipping_pincode: shippingData.shipping_pincode,
-            shipping_phone: shippingData.shipping_phone,
-          },
-          items: cartItems,
-          customerEmail: userRows[0].email,
-          customerName: userRows[0].full_name,
-        }).catch((e) => console.error('[email dispatch error]', e.message));
+    if (custEmail) {
+      emailService.sendOrderConfirmation({
+        order: {
+          order_number: orderNumber,
+          invoice_number: invoiceNumber,
+          subtotal_amount: subtotal,
+          tax_amount: taxAmount,
+          total_amount: total,
+          payment_method: paymentMethod,
+          payment_status: paymentStatus,
+          shipping_address: shippingData.shipping_address,
+          shipping_city: shippingData.shipping_city,
+          shipping_state: shippingData.shipping_state,
+          shipping_pincode: shippingData.shipping_pincode,
+          shipping_phone: shippingData.shipping_phone,
+        },
+        items: cartItems,
+        customerEmail: custEmail,
+        customerName: custName,
+      }).catch((e) => console.error('[email dispatch error]', e.message));
+    }
+
+    return {
+      order_id: orderResult.insertId,
+      order_number: orderNumber,
+      invoice_number: invoiceNumber,
+      subtotal_amount: subtotal,
+      tax_amount: taxAmount,
+      total_amount: total,
+      payment_method: paymentMethod,
+      payment_status: paymentStatus,
+      razorpay_order_id: paymentMeta.razorpay_order_id || null,
+      razorpay_payment_id: paymentMeta.razorpay_payment_id || null
+    };
+  } catch (err) {
+    await query(connection, 'ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    connection.release();
+  }
+};
+
+const placeDirectOrderItems = async (userId, customerData, shippingData, paymentMethod, items, paymentMeta = {}) => {
+  const connection = await new Promise((resolve, reject) => db.getConnection((err, conn) => err ? reject(err) : resolve(conn)));
+  try {
+    await query(connection, 'START TRANSACTION');
+    if (paymentMeta.paymentAttemptId) {
+      const paymentAttempts = await query(connection, 'SELECT status FROM payment_attempts WHERE id = ? FOR UPDATE', [paymentMeta.paymentAttemptId]);
+      if (!paymentAttempts.length || paymentAttempts[0].status !== 'pending') {
+        throw Object.assign(new Error('Payment has already been processed or is no longer valid.'), { status: 409 });
       }
-    }).catch(() => {});
+    }
+
+    if (!items || !items.length) {
+      throw Object.assign(new Error('Cart is empty.'), { status: 400 });
+    }
+
+    const productIds = items.map((i) => i.product_id || i.id).filter(Boolean);
+    if (!productIds.length) {
+      throw Object.assign(new Error('No valid products in order.'), { status: 400 });
+    }
+
+    const dbProducts = await query(connection, `
+      SELECT id, name, price, stock, is_active
+      FROM products
+      WHERE id IN (${productIds.map(() => '?').join(',')}) FOR UPDATE
+    `, productIds);
+
+    const validatedItems = [];
+    for (const item of items) {
+      const pid = item.product_id || item.id;
+      const p = dbProducts.find((row) => Number(row.id) === Number(pid));
+      if (!p || !p.is_active) {
+        throw Object.assign(new Error(`Product ${item.name || pid} is no longer available.`), { status: 400 });
+      }
+      const qty = parseInt(item.quantity, 10) || 1;
+      if (qty < 1 || qty > p.stock) {
+        throw Object.assign(new Error(`Insufficient stock for ${p.name}. Only ${p.stock} available.`), { status: 409 });
+      }
+      validatedItems.push({
+        product_id: p.id,
+        name: p.name,
+        price: Number(p.price),
+        quantity: qty,
+        stock: p.stock
+      });
+    }
+
+    const gstRate = parseFloat(process.env.JEWELLERY_GST_RATE || '3.0');
+    const total = validatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = Math.round((total / (1 + (gstRate / 100))) * 100) / 100;
+    const taxAmount = Math.round((total - subtotal) * 100) / 100;
+    const orderNumber = generateOrderNumber();
+    const invoiceNumber = generateInvoiceNumber();
+    const paymentStatus = paymentMethod === 'razorpay' ? 'paid' : 'pending';
+
+    const custName = customerData.customer_name || 'Guest Customer';
+    const custEmail = customerData.customer_email || null;
+
+    const orderResult = await query(connection, `INSERT INTO orders
+      (user_id, customer_name, customer_email, customer_notes, order_number, subtotal_amount, tax_amount, total_amount, invoice_number, shipping_address, shipping_city, shipping_state, shipping_pincode, shipping_phone, payment_method, payment_status, razorpay_order_id, razorpay_payment_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+      userId || null, custName, custEmail, customerData.customer_notes || null,
+      orderNumber, subtotal, taxAmount, total, invoiceNumber,
+      shippingData.shipping_address.trim(), shippingData.shipping_city.trim(),
+      shippingData.shipping_state.trim(), shippingData.shipping_pincode.trim(), shippingData.shipping_phone.trim(),
+      paymentMethod, paymentStatus, paymentMeta.razorpay_order_id || null, paymentMeta.razorpay_payment_id || null,
+    ]);
+
+    for (const item of validatedItems) {
+      const itemTotal = item.price * item.quantity;
+      const itemSubtotal = Math.round((itemTotal / (1 + (gstRate / 100))) * 100) / 100;
+      const itemTax = Math.round((itemTotal - itemSubtotal) * 100) / 100;
+      await query(connection, `
+        INSERT INTO order_items (order_id, product_id, product_name, quantity, price, tax_rate, tax_amount, hallmark_details)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `, [orderResult.insertId, item.product_id, item.name, item.quantity, item.price, gstRate, itemTax, 'BIS 916/750 Certified']);
+    }
+
+    for (const item of validatedItems) {
+      const update = await query(connection, 'UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?', [item.quantity, item.product_id, item.quantity]);
+      if (!update.affectedRows) throw Object.assign(new Error(`Insufficient stock for ${item.name}.`), { status: 409 });
+    }
+
+    if (userId) {
+      await query(connection, 'DELETE FROM cart WHERE user_id = ?', [userId]).catch(() => {});
+    }
+
+    if (paymentMeta.paymentAttemptId) {
+      const paymentUpdate = await query(connection, 'UPDATE payment_attempts SET status = \'paid\', order_id = ?, paid_at = CURRENT_TIMESTAMP WHERE id = ? AND status = \'pending\'', [orderResult.insertId, paymentMeta.paymentAttemptId]);
+      if (!paymentUpdate.affectedRows) throw Object.assign(new Error('Payment has already been processed.'), { status: 409 });
+    }
+
+    await query(connection, 'COMMIT');
+
+    // Trigger tax invoice confirmation email asynchronously
+    const recipientEmail = custEmail || (userId ? (await query(connection, 'SELECT email FROM users WHERE id = ?', [userId]))[0]?.email : null);
+    if (recipientEmail) {
+      emailService.sendOrderConfirmation({
+        order: {
+          order_number: orderNumber,
+          invoice_number: invoiceNumber,
+          subtotal_amount: subtotal,
+          tax_amount: taxAmount,
+          total_amount: total,
+          payment_method: paymentMethod,
+          payment_status: paymentStatus,
+          shipping_address: shippingData.shipping_address,
+          shipping_city: shippingData.shipping_city,
+          shipping_state: shippingData.shipping_state,
+          shipping_pincode: shippingData.shipping_pincode,
+          shipping_phone: shippingData.shipping_phone,
+        },
+        items: validatedItems,
+        customerEmail: recipientEmail,
+        customerName: custName,
+      }).catch((e) => console.error('[email dispatch error]', e.message));
+    }
 
     return {
       order_id: orderResult.insertId,
@@ -132,16 +271,21 @@ exports.createOrder = (req, res) => {
   const {
     shipping_address, shipping_city, shipping_state,
     shipping_pincode, shipping_phone, payment_method,
+    customer_name, customer_email, customer_phone,
+    customer_notes, utr_number,
+    items,
   } = req.body;
 
   if (payment_method === 'razorpay') {
     return res.status(400).json({ message: 'Use Razorpay checkout for online payment.' });
   }
 
-  if (!['cod'].includes(payment_method || 'cod')) {
-    return res.status(400).json({ message: 'Payment method must be COD or Razorpay.' });
+  const effectiveMethod = (payment_method || 'cod').toLowerCase();
+  if (!['cod', 'upi'].includes(effectiveMethod)) {
+    return res.status(400).json({ message: 'Payment method must be COD, UPI, or Razorpay.' });
   }
-  if (!validShipping({ shipping_address, shipping_city, shipping_state, shipping_pincode, shipping_phone })) {
+  const effectivePhone = shipping_phone || customer_phone;
+  if (!validShipping({ shipping_address, shipping_city, shipping_state, shipping_pincode, shipping_phone: effectivePhone })) {
     return res.status(400).json({ message: 'Complete shipping details are required.' });
   }
 
@@ -150,33 +294,46 @@ exports.createOrder = (req, res) => {
     shipping_city,
     shipping_state,
     shipping_pincode,
-    shipping_phone,
+    shipping_phone: effectivePhone,
   };
 
-  placeOrderTransaction(req.user.id, shippingData, payment_method || 'cod').then((orderSummary) => {
-    res.status(201).json({
-      message: 'Order placed successfully',
-      ...orderSummary,
-    });
-  }).catch((err) => res.status(err.status || 500).json({ message: err.message }));
+  const userId = req.user ? req.user.id : null;
+  const customerData = {
+    customer_name: customer_name || (req.user ? req.user.full_name : 'Guest Customer'),
+    customer_email: customer_email || (req.user ? req.user.email : null),
+    customer_phone: customer_phone || shipping_phone,
+    customer_notes: customer_notes || (utr_number ? `UPI Ref / UTR: ${utr_number}` : null),
+  };
+
+  if (Array.isArray(items) && items.length > 0) {
+    placeDirectOrderItems(userId, customerData, shippingData, effectiveMethod, items).then((orderSummary) => {
+      res.status(201).json({
+        message: 'Order placed successfully',
+        ...orderSummary,
+      });
+    }).catch((err) => res.status(err.status || 500).json({ message: err.message }));
+  } else if (userId) {
+    placeOrderTransaction(userId, shippingData, effectiveMethod).then((orderSummary) => {
+      res.status(201).json({
+        message: 'Order placed successfully',
+        ...orderSummary,
+      });
+    }).catch((err) => res.status(err.status || 500).json({ message: err.message }));
+  } else {
+    res.status(400).json({ message: 'Cart is empty. Please add items to place an order.' });
+  }
 };
 
 exports.createRazorpayOrder = (req, res) => {
-  const userId = req.user.id;
-  const cartSql = `
-    SELECT c.quantity, p.price, p.stock, p.name
-    FROM cart c
-    JOIN products p ON c.product_id = p.id
-    WHERE c.user_id = ?
-  `;
+  const userId = req.user ? req.user.id : null;
+  const items = req.body.items;
 
-  db.query(cartSql, [userId], (err, cartItems) => {
-    if (err) return res.status(500).json({ message: err.message });
+  const processWithItems = (cartItems) => {
     if (!cartItems.length) return res.status(400).json({ message: 'Cart is empty.' });
     const unavailable = cartItems.find((item) => item.quantity < 1 || item.quantity > item.stock);
     if (unavailable) return res.status(409).json({ message: `Insufficient stock for ${unavailable.name}.` });
 
-    const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const total = cartItems.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
     if (total <= 0) return res.status(400).json({ message: 'Cart total must be greater than zero.' });
 
     const options = {
@@ -187,25 +344,72 @@ exports.createRazorpayOrder = (req, res) => {
     };
 
     razorpay.orders.create(options, (createErr, order) => {
-      if (createErr) return res.status(502).json({ message: 'Unable to create payment order.' });
+      if (createErr) {
+        console.error('Razorpay order creation error:', createErr);
+        return res.status(502).json({ message: 'Unable to create payment order.' });
+      }
       db.query('INSERT INTO payment_attempts (user_id, razorpay_order_id, amount_paise) VALUES (?, ?, ?)', [userId, order.id, order.amount], (attemptErr) => {
         if (attemptErr) return res.status(500).json({ message: attemptErr.message });
         res.json({
-        key: process.env.RAZORPAY_KEY_ID,
-        id: order.id,
-        amount: order.amount,
-        currency: order.currency,
-        total_amount: total,
+          key: process.env.RAZORPAY_KEY_ID,
+          id: order.id,
+          amount: order.amount,
+          currency: order.currency,
+          total_amount: total,
         });
       });
     });
-  });
+  };
+
+  if (Array.isArray(items) && items.length > 0) {
+    const pids = items.map(i => i.product_id || i.id).filter(Boolean);
+    if (!pids.length) return res.status(400).json({ message: 'Cart items are invalid.' });
+
+    db.query(`SELECT id, name, price, stock, is_active FROM products WHERE id IN (${pids.map(() => '?').join(',')})`, pids, (err, dbProducts) => {
+      if (err) return res.status(500).json({ message: err.message });
+      const validated = [];
+      for (const item of items) {
+        const pid = item.product_id || item.id;
+        const p = dbProducts.find(r => Number(r.id) === Number(pid));
+        if (!p || !p.is_active) {
+          return res.status(400).json({ message: `Product ${item.name || pid} is not available.` });
+        }
+        validated.push({
+          product_id: p.id,
+          name: p.name,
+          price: Number(p.price),
+          stock: p.stock,
+          quantity: parseInt(item.quantity, 10) || 1
+        });
+      }
+      processWithItems(validated);
+    });
+  } else if (userId) {
+    const cartSql = `
+      SELECT c.quantity, p.price, p.stock, p.name, p.id AS product_id
+      FROM cart c
+      JOIN products p ON c.product_id = p.id
+      WHERE c.user_id = ?
+    `;
+    db.query(cartSql, [userId], (err, cartItems) => {
+      if (err) return res.status(500).json({ message: err.message });
+      processWithItems(cartItems);
+    });
+  } else {
+    return res.status(400).json({ message: 'Cart is empty.' });
+  }
 };
 
 exports.paymentFailed = (req, res) => {
   const { razorpay_order_id, razorpay_payment_id } = req.body || {};
   if (!razorpay_order_id) return res.status(400).json({ message: 'Payment order reference is required.' });
-  db.query('UPDATE payment_attempts SET status = \'failed\' WHERE user_id = ? AND razorpay_order_id = ? AND status = \'pending\'', [req.user.id, razorpay_order_id], (err, result) => {
+  const userId = req.user ? req.user.id : null;
+  const sql = userId
+    ? 'UPDATE payment_attempts SET status = \'failed\' WHERE (user_id = ? OR user_id IS NULL) AND razorpay_order_id = ? AND status = \'pending\''
+    : 'UPDATE payment_attempts SET status = \'failed\' WHERE razorpay_order_id = ? AND status = \'pending\'';
+  const params = userId ? [userId, razorpay_order_id] : [razorpay_order_id];
+
+  db.query(sql, params, (err, result) => {
     if (err) return res.status(500).json({ message: err.message });
     if (razorpay_payment_id) {
       return res.json({ message: result.affectedRows ? 'Payment marked as failed.' : 'Payment status already recorded.' });
@@ -224,6 +428,10 @@ exports.verifyRazorpayOrder = (req, res) => {
     shipping_state,
     shipping_pincode,
     shipping_phone,
+    customer_name,
+    customer_email,
+    customer_phone,
+    items,
   } = req.body;
 
   if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
@@ -252,47 +460,69 @@ exports.verifyRazorpayOrder = (req, res) => {
     shipping_phone,
   };
 
-  db.query('SELECT id, amount_paise, status, order_id FROM payment_attempts WHERE user_id = ? AND razorpay_order_id = ?', [req.user.id, razorpay_order_id], (attemptErr, attempts) => {
+  const userId = req.user ? req.user.id : null;
+  const customerData = {
+    customer_name: customer_name || (req.user ? req.user.full_name : 'Guest Customer'),
+    customer_email: customer_email || (req.user ? req.user.email : null),
+    customer_phone: customer_phone || shipping_phone,
+  };
+
+  const attemptSql = userId
+    ? 'SELECT id, amount_paise, status, order_id FROM payment_attempts WHERE razorpay_order_id = ? AND (user_id = ? OR user_id IS NULL)'
+    : 'SELECT id, amount_paise, status, order_id FROM payment_attempts WHERE razorpay_order_id = ?';
+  const attemptParams = userId ? [razorpay_order_id, userId] : [razorpay_order_id];
+
+  db.query(attemptSql, attemptParams, (attemptErr, attempts) => {
     if (attemptErr) return res.status(500).json({ message: attemptErr.message });
     if (!attempts.length) return res.status(400).json({ message: 'Payment session not found.' });
     const attempt = attempts[0];
-    if (attempt.status === 'paid' && attempt.order_id) return exports.getOrderById({ ...req, params: { id: attempt.order_id } }, res);
+    if (attempt.status === 'paid' && attempt.order_id) {
+      return exports.getOrderById({ ...req, params: { id: attempt.order_id } }, res);
+    }
     const expectedAmount = Number(attempt.amount_paise);
-    db.query('SELECT SUM(c.quantity * p.price) AS total FROM cart c JOIN products p ON c.product_id = p.id WHERE c.user_id = ?', [req.user.id], (totalErr, totals) => {
-      if (totalErr) return res.status(500).json({ message: totalErr.message });
-      if (Math.round(Number(totals[0]?.total || 0) * 100) !== expectedAmount) return res.status(409).json({ message: 'Cart changed. Please restart checkout.' });
 
-      razorpay.payments.fetch(razorpay_payment_id).then((payment) => {
-        if (
-          payment.order_id !== razorpay_order_id
-          || Number(payment.amount) !== expectedAmount
-          || payment.currency !== 'INR'
-          || payment.status !== 'captured'
-        ) {
-          return res.status(400).json({ message: 'Payment is not captured or does not match the order.' });
-        }
+    razorpay.payments.fetch(razorpay_payment_id).then((payment) => {
+      if (
+        payment.order_id !== razorpay_order_id
+        || Number(payment.amount) !== expectedAmount
+        || payment.currency !== 'INR'
+        || payment.status !== 'captured'
+      ) {
+        return res.status(400).json({ message: 'Payment is not captured or does not match the order.' });
+      }
 
-        return placeOrderTransaction(req.user.id, shippingData, 'razorpay', {
+      if (Array.isArray(items) && items.length > 0) {
+        return placeDirectOrderItems(userId, customerData, shippingData, 'razorpay', items, {
           razorpay_order_id,
           razorpay_payment_id,
           paymentAttemptId: attempt.id,
         }).then((orderSummary) => {
           res.status(201).json({ message: 'Payment verified and order placed successfully', ...orderSummary });
         });
-      }).catch((err) => {
-        if (res.headersSent) return;
-        res.status(err.status || 502).json({ message: err.status ? err.message : 'Unable to verify payment with Razorpay.' });
-      });
+      } else if (userId) {
+        return placeOrderTransaction(userId, shippingData, 'razorpay', {
+          razorpay_order_id,
+          razorpay_payment_id,
+          paymentAttemptId: attempt.id,
+        }).then((orderSummary) => {
+          res.status(201).json({ message: 'Payment verified and order placed successfully', ...orderSummary });
+        });
+      } else {
+        return res.status(400).json({ message: 'No items provided for order creation.' });
+      }
+    }).catch((err) => {
+      if (res.headersSent) return;
+      res.status(err.status || 502).json({ message: err.status ? err.message : 'Unable to verify payment with Razorpay.' });
     });
   });
 };
 
 exports.getOrders = (req, res) => {
-  const isAdmin = ['superadmin', 'admin'].includes(req.user.role);
+  const isAdmin = req.user && ['superadmin', 'admin'].includes(req.user.role);
   const sql = isAdmin
-    ? `SELECT o.*, COALESCE(o.customer_name, u.full_name, 'Guest Customer') AS full_name, u.email FROM orders o LEFT JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC`
+    ? `SELECT o.*, COALESCE(o.customer_name, u.full_name, 'Guest Customer') AS full_name, COALESCE(o.customer_email, u.email) AS email FROM orders o LEFT JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC`
     : `SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC`;
-  const params = isAdmin ? [] : [req.user.id];
+  const params = isAdmin ? [] : [req.user?.id || -1];
 
   db.query(sql, params, (err, orders) => {
     if (err) return res.status(500).json({ message: err.message });
@@ -317,12 +547,12 @@ exports.getOrders = (req, res) => {
 };
 
 exports.getOrderById = (req, res) => {
-  const isAdmin = ['superadmin', 'admin'].includes(req.user.role);
+  const isAdmin = req.user && ['superadmin', 'admin'].includes(req.user.role);
   let sql = 'SELECT * FROM orders WHERE id = ?';
   const params = [req.params.id];
 
-  if (!isAdmin) {
-    sql += ' AND user_id = ?';
+  if (!isAdmin && req.user?.id) {
+    sql += ' AND (user_id = ? OR user_id IS NULL)';
     params.push(req.user.id);
   }
 

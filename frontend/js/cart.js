@@ -196,6 +196,7 @@ function renderCart() {
     if (!cartItems.length) {
       emptyState.style.display = 'block';
       mainGrid.style.display = 'none';
+      if (typeof loadCartEmptyRecommendations === 'function') loadCartEmptyRecommendations();
       return;
     }
 
@@ -244,11 +245,106 @@ function renderCart() {
   }
 }
 
+// Load recommendations for empty cart page
+async function loadCartEmptyRecommendations() {
+  const container = document.getElementById('cartEmptyRecommendations');
+  if (!container) return;
+  try {
+    const res = await fetch(API + '/products?limit=4');
+    if (!res.ok) return;
+    const prods = await res.json();
+    if (!Array.isArray(prods) || !prods.length) return;
+    container.innerHTML = prods.slice(0, 4).map(p => {
+      const img = getProductImage(p);
+      return `
+        <div style="background:#FAF8F5; border:1px solid #EAE5D9; border-radius:6px; overflow:hidden; display:flex; flex-direction:column; text-align:left; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+          <div style="height:140px; background:#fff; overflow:hidden; position:relative;">
+            <img src="${img}" alt="${p.name}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80'">
+          </div>
+          <div style="padding:12px; flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <p style="font-weight:600; font-size:0.85rem; color:#222; margin:0 0 4px; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${p.name}</p>
+              <p style="color:var(--maroon,#6B1724); font-weight:700; font-size:0.95rem; margin:0 0 10px;">${formatPrice(p.price)}</p>
+            </div>
+            <button type="button" class="btn-primary" onclick="quickAddPieceToCart(${p.id})" style="width:100%; padding:8px 10px; font-size:0.78rem; justify-content:center; cursor:pointer;">
+              <span>+ Add to Bag &amp; Checkout</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    console.error('Failed to load cart recommendations:', e);
+  }
+}
+
+// Quick add a specific jewellery piece and show checkout
+async function quickAddPieceToCart(productId) {
+  try {
+    const res = await fetch(API + '/products/' + productId);
+    if (!res.ok) throw new Error('Product not found');
+    const p = await res.json();
+    const existing = cartItems.find(i => i.id === p.id || i.product_id === p.id);
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      cartItems.push({
+        id: p.id,
+        product_id: p.id,
+        name: p.name,
+        price: Number(p.price),
+        quantity: 1,
+        image: getProductImage(p),
+        sku: p.sku || ('DJ-' + p.id),
+        metal_composition: p.metal_composition || p.material
+      });
+    }
+    saveLocalCart();
+    renderCart();
+    const formEl = document.getElementById('orderMainGrid');
+    if (formEl) formEl.scrollIntoView({ behavior: 'smooth' });
+  } catch (e) {
+    console.error('Quick add failed:', e);
+  }
+}
+
+// 1-Click Sample piece add for immediate checkout test
+async function addSampleItemAndCheckout() {
+  try {
+    const res = await fetch(API + '/products?limit=1');
+    if (res.ok) {
+      const prods = await res.json();
+      if (Array.isArray(prods) && prods.length > 0) {
+        await quickAddPieceToCart(prods[0].id);
+        return;
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  // Fallback default five-metal item
+  cartItems = [{
+    id: 9,
+    product_id: 9,
+    name: 'Five-Metal Sacred Navaratna Ring',
+    price: 2850,
+    quantity: 1,
+    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&q=80',
+    sku: 'DJ-9',
+    metal_composition: 'Authentic Five Metals (Panchaloha)'
+  }];
+  saveLocalCart();
+  renderCart();
+  const formEl = document.getElementById('orderMainGrid');
+  if (formEl) formEl.scrollIntoView({ behavior: 'smooth' });
+}
+
 // Customer Form Data Helpers
 function getOrderFormData() {
   return {
     customer_name: document.getElementById('orderCustName')?.value.trim() || '',
     customer_phone: document.getElementById('orderCustPhone')?.value.trim() || '',
+    customer_email: document.getElementById('orderCustEmail')?.value.trim() || '',
     shipping_address: document.getElementById('orderCustAddress')?.value.trim() || '',
     shipping_city: document.getElementById('orderCustCity')?.value.trim() || '',
     shipping_state: document.getElementById('orderCustState')?.value.trim() || '',
@@ -287,6 +383,7 @@ function saveCustomerDetailsLocally(data) {
     localStorage.setItem('durgas_customer_details', JSON.stringify({
       name: data.customer_name,
       phone: data.customer_phone,
+      email: data.customer_email,
       address: data.shipping_address,
       city: data.shipping_city,
       state: data.shipping_state,
@@ -300,6 +397,7 @@ function autofillCustomerForm() {
     const saved = JSON.parse(localStorage.getItem('durgas_customer_details') || '{}');
     const nameInput = document.getElementById('orderCustName');
     const phoneInput = document.getElementById('orderCustPhone');
+    const emailInput = document.getElementById('orderCustEmail');
     const addrInput = document.getElementById('orderCustAddress');
     const cityInput = document.getElementById('orderCustCity');
     const stateInput = document.getElementById('orderCustState');
@@ -307,6 +405,7 @@ function autofillCustomerForm() {
 
     if (nameInput) nameInput.value = (currentUser?.full_name) || saved.name || '';
     if (phoneInput) phoneInput.value = (currentUser?.phone) || saved.phone || '';
+    if (emailInput) emailInput.value = (currentUser?.email) || saved.email || '';
     if (addrInput) addrInput.value = (currentUser?.address) || saved.address || '';
     if (cityInput) cityInput.value = (currentUser?.city) || saved.city || '';
     if (stateInput) stateInput.value = (currentUser?.state) || saved.state || '';
@@ -330,7 +429,7 @@ function submitOrderViaWhatsApp() {
   saveCustomerDetailsLocally(data);
 
   const totalAmount = cartItems.reduce((s, i) => s + Number(i.price) * (i.quantity || 1), 0);
-  const waNumber = '917448882444';
+  const waNumber = '919344572003';
 
   let msg = `*NEW ORDER INQUIRY — DURGAS JEWELLERY*\n\n`;
   msg += `*Selected Jewellery Items:*\n`;
@@ -351,6 +450,7 @@ function submitOrderViaWhatsApp() {
   msg += `*Customer Delivery Details:*\n`;
   msg += `Name: ${data.customer_name}\n`;
   msg += `Phone: ${data.customer_phone}\n`;
+  if (data.customer_email) msg += `Email: ${data.customer_email}\n`;
   msg += `Address: ${data.shipping_address}, ${data.shipping_city}, ${data.shipping_state} - ${data.shipping_pincode}\n\n`;
   msg += `Please verify availability and send order confirmation.`;
 
@@ -362,6 +462,7 @@ function submitOrderViaWhatsApp() {
       body: JSON.stringify({
         customer_name: data.customer_name,
         customer_phone: data.customer_phone,
+        customer_email: data.customer_email || undefined,
         shipping_address: `${data.shipping_address}, ${data.shipping_city}, ${data.shipping_state} - ${data.shipping_pincode}`,
         items: cartItems.map(i => ({
           name: i.name,
@@ -401,11 +502,18 @@ async function submitDirectOrder(method = 'cod') {
   }
 
   const totalAmount = cartItems.reduce((s, i) => s + Number(i.price) * (i.quantity || 1), 0);
+  const codBtn = document.getElementById('btnPlaceOrderCod');
+  const originalCodText = codBtn ? codBtn.innerHTML : '';
+  if (codBtn) {
+    codBtn.disabled = true;
+    codBtn.innerHTML = '<span>Placing Order...</span>';
+  }
 
   const body = {
     customer_name: data.customer_name,
     customer_phone: data.customer_phone,
-    shipping_address: `${data.shipping_address}, ${data.shipping_city}, ${data.shipping_state} - ${data.shipping_pincode}`,
+    customer_email: data.customer_email || undefined,
+    shipping_address: data.shipping_address,
     shipping_city: data.shipping_city,
     shipping_state: data.shipping_state,
     shipping_pincode: data.shipping_pincode,
@@ -422,13 +530,349 @@ async function submitDirectOrder(method = 'cod') {
     const result = await res.json();
     if (!res.ok) {
       alert(result.message || 'Order could not be recorded.');
+      if (codBtn) { codBtn.disabled = false; codBtn.innerHTML = originalCodText; }
       return;
     }
     showOrderConfirmation(result.order_number || ('DJ-ORD-' + Date.now()), totalAmount, false);
   } catch (err) {
     console.error('Order submission failed:', err);
-    // If guest or offline, record WhatsApp inquiry and show confirmation
-    showOrderConfirmation('DJ-INQ-' + Math.floor(100000 + Math.random() * 900000), totalAmount, false);
+    alert('An unexpected error occurred while placing the order. Please try again or order via WhatsApp.');
+    if (codBtn) { codBtn.disabled = false; codBtn.innerHTML = originalCodText; }
+  }
+}
+
+async function placeRazorpayOrder() {
+  if (!cartItems.length) {
+    alert('Your bag is empty.');
+    return;
+  }
+
+  const data = getOrderFormData();
+  if (!validateOrderFormData(data)) {
+    document.getElementById('orderCustName')?.focus();
+    return;
+  }
+
+  saveCustomerDetailsLocally(data);
+
+  const totalAmount = cartItems.reduce((s, i) => s + Number(i.price) * (i.quantity || 1), 0);
+
+  const onlineBtn = document.getElementById('btnPayOnlineRazorpay');
+  const originalText = onlineBtn ? onlineBtn.innerHTML : '';
+  if (onlineBtn) {
+    onlineBtn.disabled = true;
+    onlineBtn.innerHTML = '<span>Initiating Payment...</span>';
+  }
+
+  try {
+    const res = await apiFetch('/orders/payment', {
+      method: 'POST',
+      body: JSON.stringify({
+        customer_name: data.customer_name,
+        customer_phone: data.customer_phone,
+        customer_email: data.customer_email || undefined,
+        shipping_address: data.shipping_address,
+        shipping_city: data.shipping_city,
+        shipping_state: data.shipping_state,
+        shipping_pincode: data.shipping_pincode,
+        shipping_phone: data.customer_phone,
+        items: cartItems
+      })
+    });
+
+    const paymentOrder = await res.json();
+    if (!res.ok) {
+      alert(paymentOrder.message || 'Unable to initialize online payment gateway.');
+      if (onlineBtn) { onlineBtn.disabled = false; onlineBtn.innerHTML = originalText; }
+      return;
+    }
+
+    if (typeof Razorpay === 'undefined') {
+      alert('Razorpay payment gateway script is still loading. Please check your internet connection and try again.');
+      if (onlineBtn) { onlineBtn.disabled = false; onlineBtn.innerHTML = originalText; }
+      return;
+    }
+
+    const options = {
+      key: paymentOrder.key,
+      amount: paymentOrder.amount,
+      currency: paymentOrder.currency || 'INR',
+      name: 'Durgas Five Metal Jewellery',
+      description: 'Handcrafted Authentic Five-Metal Jewellery',
+      image: '/durgas main logo.jpeg',
+      order_id: paymentOrder.id,
+      handler: async function (response) {
+        try {
+          const verifyRes = await apiFetch('/orders/verify', {
+            method: 'POST',
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              customer_name: data.customer_name,
+              customer_phone: data.customer_phone,
+              customer_email: data.customer_email || undefined,
+              shipping_address: data.shipping_address,
+              shipping_city: data.shipping_city,
+              shipping_state: data.shipping_state,
+              shipping_pincode: data.shipping_pincode,
+              shipping_phone: data.customer_phone,
+              items: cartItems
+            })
+          });
+
+          const verifyData = await verifyRes.json();
+          if (!verifyRes.ok) {
+            alert(verifyData.message || 'Payment verification failed. Please contact customer support.');
+            if (onlineBtn) { onlineBtn.disabled = false; onlineBtn.innerHTML = originalText; }
+            return;
+          }
+
+          showOrderConfirmation(verifyData.order_number || ('DJ-ORD-' + Date.now()), totalAmount, true);
+        } catch (vErr) {
+          console.error('Verification error:', vErr);
+          alert('Payment was recorded but verification network failed. Please contact support with Payment ID: ' + response.razorpay_payment_id);
+          if (onlineBtn) { onlineBtn.disabled = false; onlineBtn.innerHTML = originalText; }
+        }
+      },
+      prefill: {
+        name: data.customer_name,
+        email: data.customer_email || (currentUser?.email || ''),
+        contact: data.customer_phone
+      },
+      theme: {
+        color: '#6B1724'
+      },
+      modal: {
+        ondismiss: function () {
+          if (onlineBtn) {
+            onlineBtn.disabled = false;
+            onlineBtn.innerHTML = originalText;
+          }
+          apiFetch('/orders/payment/failure', {
+            method: 'POST',
+            body: JSON.stringify({ razorpay_order_id: paymentOrder.id })
+          }).catch(() => {});
+        }
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.on('payment.failed', function (resp) {
+      alert('Payment failed: ' + (resp.error?.description || 'Transaction declined'));
+      if (onlineBtn) { onlineBtn.disabled = false; onlineBtn.innerHTML = originalText; }
+      apiFetch('/orders/payment/failure', {
+        method: 'POST',
+        body: JSON.stringify({
+          razorpay_order_id: paymentOrder.id,
+          razorpay_payment_id: resp.error?.metadata?.payment_id
+        })
+      }).catch(() => {});
+    });
+    rzp.open();
+  } catch (err) {
+    console.error('Razorpay initialization failed:', err);
+    alert('Failed to connect to payment gateway. Please try Cash on Delivery or WhatsApp order.');
+    if (onlineBtn) { onlineBtn.disabled = false; onlineBtn.innerHTML = originalText; }
+  }
+}
+
+let shopUpiId = '9344572003@upi';
+
+async function fetchShopSettings() {
+  try {
+    const res = await fetch(API + '/settings');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.upi_id) shopUpiId = data.upi_id;
+    }
+  } catch (e) {}
+}
+
+async function openUpiModal() {
+  if (!cartItems.length) {
+    alert('Your bag is empty. Please select a jewellery piece first.');
+    return;
+  }
+
+  const data = getOrderFormData();
+  saveCustomerDetailsLocally(data);
+  await fetchShopSettings();
+
+  const totalAmount = cartItems.reduce((s, i) => s + Number(i.price) * (i.quantity || 1), 0);
+
+  const amountEl = document.getElementById('upiPayableAmount');
+  if (amountEl) amountEl.textContent = formatPrice(totalAmount);
+
+  const upiDisplayEl = document.getElementById('upiIdDisplay');
+  if (upiDisplayEl) upiDisplayEl.textContent = shopUpiId;
+
+  // Construct standard UPI payment link
+  const orderRef = 'DUR-' + Date.now().toString(36).toUpperCase();
+  const upiIntentUri = `upi://pay?pa=${encodeURIComponent(shopUpiId)}&pn=${encodeURIComponent('DURGAS FIVE METAL JEWELLERY')}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(orderRef)}`;
+
+  // Generate dynamic QR Code
+  const qrImg = document.getElementById('upiQrCodeImg');
+  if (qrImg) {
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiIntentUri)}`;
+  }
+
+  const intentBtn = document.getElementById('upiIntentBtn');
+  if (intentBtn) {
+    intentBtn.href = upiIntentUri;
+    intentBtn.onclick = function(e) {
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (!isMobile) {
+        e.preventDefault();
+        alert('UPI App links open directly on mobile phones with GPay, PhonePe, or Paytm installed.\n\nOn laptop/desktop, please scan the QR Code on screen using your mobile phone camera or UPI app.');
+      }
+    };
+  }
+
+  // Update address preview status
+  const addrSummaryEl = document.getElementById('upiModalAddressSummary');
+  const modalErr = document.getElementById('upiModalError');
+  if (modalErr) modalErr.style.display = 'none';
+
+  if (addrSummaryEl) {
+    if (data.customer_name && data.customer_phone && data.shipping_address) {
+      addrSummaryEl.innerHTML = `📍 <strong>Delivering to:</strong> ${data.customer_name} (${data.customer_phone}), ${data.shipping_address}, ${data.shipping_city || ''} - ${data.shipping_pincode || ''}`;
+      addrSummaryEl.style.color = '#27ae60';
+      addrSummaryEl.style.borderColor = '#b7eb8f';
+    } else {
+      addrSummaryEl.innerHTML = `⚠️ <em>Delivery address is not yet filled. You can scan and pay now, but please ensure your delivery address is filled before final order submission.</em>`;
+      addrSummaryEl.style.color = '#856404';
+      addrSummaryEl.style.borderColor = '#ffe58f';
+    }
+  }
+
+  const overlay = document.getElementById('upiOverlay');
+  const modal = document.getElementById('upiModal');
+  if (overlay && modal) {
+    overlay.classList.add('open');
+    modal.classList.add('open');
+  }
+}
+
+function closeUpiModal() {
+  const overlay = document.getElementById('upiOverlay');
+  const modal = document.getElementById('upiModal');
+  if (overlay && modal) {
+    overlay.classList.remove('open');
+    modal.classList.remove('open');
+  }
+}
+
+function copyUpiId() {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(shopUpiId).then(() => {
+      const btn = document.getElementById('btnCopyUpi');
+      if (btn) {
+        btn.textContent = '✓ Copied!';
+        btn.style.color = '#27ae60';
+        setTimeout(() => {
+          btn.textContent = '📋 Copy UPI ID';
+          btn.style.color = '#8B6914';
+        }, 2000);
+      }
+    }).catch(() => fallbackCopyUpi());
+  } else {
+    fallbackCopyUpi();
+  }
+}
+
+function fallbackCopyUpi() {
+  const temp = document.createElement('textarea');
+  temp.value = shopUpiId;
+  document.body.appendChild(temp);
+  temp.select();
+  document.execCommand('copy');
+  document.body.removeChild(temp);
+  const btn = document.getElementById('btnCopyUpi');
+  if (btn) {
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => { btn.textContent = '📋 Copy UPI ID'; }, 2000);
+  }
+}
+
+async function submitUpiOrder() {
+  if (!cartItems.length) {
+    alert('Your bag is empty.');
+    return;
+  }
+
+  const data = getOrderFormData();
+  const modalErr = document.getElementById('upiModalError');
+
+  if (!validateOrderFormData(data)) {
+    if (modalErr) {
+      const errEl = document.getElementById('orderFormError');
+      modalErr.textContent = '⚠️ ' + (errEl?.textContent || 'Please complete your Name, Phone Number, and Delivery Address on the form below.');
+      modalErr.style.display = 'block';
+    }
+    const nameField = document.getElementById('orderCustName');
+    if (nameField) {
+      setTimeout(() => {
+        closeUpiModal();
+        nameField.focus();
+        nameField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 1200);
+    }
+    return;
+  }
+  if (modalErr) modalErr.style.display = 'none';
+
+  const utr = (document.getElementById('upiUtrNumber')?.value || '').trim();
+  const totalAmount = cartItems.reduce((s, i) => s + Number(i.price) * (i.quantity || 1), 0);
+
+  const confirmBtn = document.getElementById('btnConfirmUpiOrder');
+  const origText = confirmBtn ? confirmBtn.innerHTML : '';
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<span>Recording Order...</span>';
+  }
+
+  const body = {
+    customer_name: data.customer_name,
+    customer_phone: data.customer_phone,
+    customer_email: data.customer_email || undefined,
+    shipping_address: data.shipping_address,
+    shipping_city: data.shipping_city,
+    shipping_state: data.shipping_state,
+    shipping_pincode: data.shipping_pincode,
+    shipping_phone: data.customer_phone,
+    payment_method: 'upi',
+    utr_number: utr,
+    items: cartItems
+  };
+
+  try {
+    const res = await apiFetch('/orders', {
+      method: 'POST',
+      body: JSON.stringify(body)
+    });
+    const result = await res.json();
+    if (!res.ok) {
+      if (modalErr) {
+        modalErr.textContent = result.message || 'Order could not be recorded.';
+        modalErr.style.display = 'block';
+      } else {
+        alert(result.message || 'Order could not be recorded.');
+      }
+      if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerHTML = origText; }
+      return;
+    }
+    closeUpiModal();
+    showOrderConfirmation(result.order_number || ('DJ-ORD-' + Date.now()), totalAmount, false);
+  } catch (err) {
+    console.error('UPI order submission failed:', err);
+    if (modalErr) {
+      modalErr.textContent = 'An unexpected error occurred while placing the order. Please try again or order via WhatsApp.';
+      modalErr.style.display = 'block';
+    } else {
+      alert('An unexpected error occurred while placing the order. Please try again or order via WhatsApp.');
+    }
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerHTML = origText; }
   }
 }
 

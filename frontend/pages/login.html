@@ -54,28 +54,101 @@
 </nav>
 
 <!-- ==================== LOGIN PAGE ==================== -->
-<div class="page active" id="page-login" style="padding: 100px 5vw; display: flex; align-items: center; justify-content: center; min-height: 70vh; background: var(--white);">
-  <div style="background: var(--white); border: 1px solid var(--beige-dark); padding: 50px 40px; width: 440px; max-width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.03);">
-    <h2 class="modal-title" style="text-align: center; margin-bottom: 8px;">Welcome Back</h2>
-    <p class="modal-sub" style="text-align: center; margin-bottom: 36px;">Sign in to your DURGAS account</p>
+<div class="page active" id="page-login" style="padding: 60px 5vw 90px; display: flex; align-items: center; justify-content: center; min-height: 75vh; background: var(--beige, #FAF6EF);">
+  <div style="background: var(--white); border: 1px solid var(--beige-dark); border-radius: 4px; padding: 44px 38px; width: 480px; max-width: 100%; box-shadow: 0 12px 40px rgba(0,0,0,0.05); position: relative;">
     
-    <div class="form-group" style="margin-bottom: 20px;">
-      <label class="form-label">Email</label>
-      <input type="email" class="form-input" id="authEmail" placeholder="hello@email.com">
+    <div style="text-align: center; margin-bottom: 24px;">
+      <span style="font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); font-weight: 600;">Patron Authentication</span>
+      <h2 class="modal-title" style="margin: 6px 0 4px; font-family: var(--font-serif); font-size: 2rem; color: var(--maroon, #6B1D2F);">Welcome Back</h2>
+      <p class="modal-sub" style="font-size: 0.85rem; color: var(--gray); margin: 0;">Sign in to your DURGAS account with Password or Email OTP</p>
     </div>
-    <div class="form-group" style="margin-bottom: 28px;">
-      <label class="form-label">Password</label>
-      <input type="password" class="form-input" id="authPassword" placeholder="••••••••">
+
+    <!-- Dual Login Mode Switcher Tabs -->
+    <div class="auth-tabs" style="display: flex; gap: 8px; margin-bottom: 24px; background: #FAF6EF; padding: 4px; border-radius: 4px; border: 1px solid #EAE5D9;">
+      <button type="button" id="tabBtnPassword" class="auth-tab-btn active" onclick="switchLoginTab('password')" style="flex: 1; padding: 10px; border: none; background: #fff; color: var(--maroon, #6B1D2F); font-weight: 600; font-size: 0.8rem; cursor: pointer; border-radius: 3px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s;">
+        🔒 Password Login
+      </button>
+      <button type="button" id="tabBtnOtp" class="auth-tab-btn" onclick="switchLoginTab('otp')" style="flex: 1; padding: 10px; border: none; background: transparent; color: #666; font-weight: 500; font-size: 0.8rem; cursor: pointer; border-radius: 3px; transition: all 0.2s;">
+        ✉️ Email OTP Login
+      </button>
     </div>
-    
-    <button class="btn-primary" style="width: 100%; padding: 16px; font-size: 0.75rem; letter-spacing: 0.22em;" onclick="loginUser()">
-      <span>Sign In</span>
-    </button>
-    
-    <p style="text-align: center; margin-top: 24px; font-size: 0.82rem; color: var(--gray);">
-      Don't have an account? <a href="/register" style="color: var(--gold); text-decoration: none;">Register</a>
+
+    <!-- Alert / Status Notification -->
+    <div id="loginStatusAlert" style="display: none; padding: 12px 14px; border-radius: 4px; font-size: 0.82rem; margin-bottom: 20px; line-height: 1.5;"></div>
+
+    <!-- MODE 1: PASSWORD LOGIN -->
+    <div id="modePasswordLogin">
+      <form onsubmit="handlePasswordLogin(event)">
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label class="form-label" style="font-weight: 600; font-size: 0.8rem; color: #333; margin-bottom: 6px; display: block;">Email Address</label>
+          <input type="email" class="form-input" id="authEmail" placeholder="e.g. patron@durgasjewellery.com" required autocomplete="email">
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.8rem; color: #333; margin: 0;">Password</label>
+            <a href="javascript:void(0)" onclick="switchLoginTab('otp')" style="font-size: 0.75rem; color: var(--gold); text-decoration: none;">Forgot password? Sign in with OTP →</a>
+          </div>
+          <div style="position: relative;">
+            <input type="password" class="form-input" id="authPassword" placeholder="••••••••" required autocomplete="current-password" style="padding-right: 70px;">
+            <button type="button" onclick="togglePasswordVisibility('authPassword', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 10; background: none; border: none; cursor: pointer; color: #8B6914; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; padding: 6px 10px; text-transform: uppercase;" title="Toggle Password Visibility" aria-label="Show Password">SHOW</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="btnSubmitPassword" style="width: 100%; padding: 14px; font-size: 0.8rem; letter-spacing: 0.15em; margin-top: 14px;">
+          <span>Sign In with Password</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- MODE 2: EMAIL OTP LOGIN -->
+    <div id="modeOtpLogin" style="display: none;">
+      <form onsubmit="handleOtpSubmit(event)">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" style="font-weight: 600; font-size: 0.8rem; color: #333; margin-bottom: 6px; display: block;">Registered Email Address</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="email" class="form-input" id="otpEmail" placeholder="e.g. patron@durgasjewellery.com" required autocomplete="email" style="flex: 1;">
+            <button type="button" class="btn-primary" id="btnSendOtp" onclick="sendLoginOtp()" style="padding: 10px 16px; font-size: 0.76rem; letter-spacing: 0.05em; white-space: nowrap;">
+              <span>Send OTP</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- OTP Input (Initially Hidden or Focused) -->
+        <div id="otpInputGroup" style="display: none; margin-bottom: 18px; padding-top: 6px; border-top: 1px dashed #EAE5D9;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.8rem; color: #333; margin: 0;">Enter 6-Digit OTP Code</label>
+            <span id="otpCountdownText" style="font-size: 0.75rem; color: #777;"></span>
+          </div>
+          <input type="text" class="form-input" id="otpCode" placeholder="Enter 6-digit code (e.g. 123456)" maxlength="6" pattern="\d{6}" style="font-size: 1.25rem; letter-spacing: 6px; text-align: center; font-weight: 700; color: var(--maroon, #6B1D2F);">
+          <p id="simulatedOtpBadge" style="display: none; margin-top: 8px; font-size: 0.78rem; color: #27ae60; background: #eafaf1; padding: 6px 10px; border-radius: 3px; border: 1px solid #a3e4d7;"></p>
+        </div>
+
+        <button type="submit" class="btn-primary" id="btnVerifyOtp" style="width: 100%; padding: 14px; font-size: 0.8rem; letter-spacing: 0.15em; display: none;">
+          <span>Verify OTP &amp; Sign In</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Error message fallback -->
+    <p class="auth-error" id="authError" style="margin-top: 14px; text-align: center; font-size: 0.8rem;"></p>
+
+    <!-- Friendly Chatbot / Test Credentials Card -->
+    <div style="margin-top: 26px; padding: 16px; background: #FAF6EF; border: 1px solid #DFD7C7; border-left: 3px solid var(--gold); border-radius: 4px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <span style="font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #8B6914;">✦ Friendly Login Credentials</span>
+        <button type="button" onclick="copyChatbotLoginFormat()" style="background: none; border: 1px solid #C4A45A; font-size: 0.68rem; padding: 2px 8px; cursor: pointer; border-radius: 2px; color: #6B1D2F;">📋 Copy for Chat</button>
+      </div>
+      <div style="font-size: 0.76rem; color: #444; line-height: 1.5;" id="chatbotFormatText">
+        <div><strong>Admin Email:</strong> <code>admin@durgas.com</code></div>
+        <div><strong>Admin Password:</strong> <code>admin123456</code></div>
+        <div style="margin-top: 4px;"><strong>Instant OTP Mode:</strong> Enter any email &amp; click <em>Send OTP</em>. The 6-digit code auto-fills immediately so you can sign in with 1 click!</div>
+      </div>
+      <p id="copyToast" style="display: none; font-size: 0.72rem; color: #27ae60; margin: 4px 0 0; font-weight: 600;">✓ Formatted details copied to clipboard!</p>
+    </div>
+
+    <p style="text-align: center; margin-top: 22px; font-size: 0.82rem; color: var(--gray);">
+      Don't have an account? <a href="/register" style="color: var(--gold); text-decoration: none; font-weight: 600;">Register Here</a>
     </p>
-    <p class="auth-error" id="authError" style="margin-top: 16px; text-align: center;"></p>
   </div>
 </div>
 
@@ -127,7 +200,7 @@
     </div>
   </div>
   <div class="footer-bottom">
-    <p class="footer-copy">© 2025 DURGAS Fine Jewellery. All rights reserved. · Privacy Policy · Terms of Use</p>
+    <p class="footer-copy">© 2025 DURGAS FIVE METAL JEWELLERY. All rights reserved. · Privacy Policy · Terms of Use</p>
     <div class="footer-pay">
       <span class="pay-badge">Visa</span>
       <span class="pay-badge">Mastercard</span>

@@ -1,16 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
-const { auth, adminOnly } = require('../middleware/auth');
+const { auth, adminOnly, optionalAuth } = require('../middleware/auth');
 
 router.post('/webhook', orderController.razorpayWebhook);
-router.post('/payment', auth, orderController.createRazorpayOrder);
-router.post('/payment/failure', auth, orderController.paymentFailed);
-router.post('/verify', auth, orderController.verifyRazorpayOrder);
+router.post('/payment', optionalAuth, orderController.createRazorpayOrder);
+router.post('/payment/failure', optionalAuth, orderController.paymentFailed);
+router.post('/verify', optionalAuth, orderController.verifyRazorpayOrder);
 router.post('/whatsapp', orderController.recordWhatsAppInquiry);
-router.post('/', auth, orderController.createOrder);
+router.post('/', optionalAuth, orderController.createOrder);
 router.get('/', auth, orderController.getOrders);
-router.get('/:id', auth, orderController.getOrderById);
+router.get('/:id', optionalAuth, orderController.getOrderById);
 router.put('/:id/status', auth, adminOnly, orderController.updateOrderStatus);
 
 module.exports = router;

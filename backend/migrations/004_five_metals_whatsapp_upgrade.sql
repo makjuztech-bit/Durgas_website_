@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
 -- Seed initial WhatsApp business number and store configurations
 INSERT INTO app_settings (key, value, description)
 VALUES 
-  ('whatsapp_number', '917448882444', 'Durgas Jewellery Official WhatsApp Business Number'),
+  ('whatsapp_number', '919344572003', 'Durgas Jewellery Official WhatsApp Business Number'),
   ('store_name', 'Durgas Jewellery', 'Official Shop Name'),
   ('delivery_charge', '0', 'Standard Delivery Charge in INR (0 for Free Delivery)')
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;

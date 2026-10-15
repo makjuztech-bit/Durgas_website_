@@ -37,23 +37,64 @@ pool.on('error', (err) => {
   console.error('[db pool error] Idle client error:', err.message);
 });
 
+const localDb = require('./localDb');
+
+let useLocalFallback = false;
+
+const isNetworkError = (err) => {
+  if (!err) return false;
+  const msg = (err.message || '').toLowerCase();
+  const code = (err.code || '').toLowerCase();
+  return (
+    code === 'enoent' ||
+    code === 'enotfound' ||
+    code === 'econnrefused' ||
+    code === 'etimedout' ||
+    code === 'enetunreach' ||
+    msg.includes('getaddrinfo') ||
+    msg.includes('timeout') ||
+    msg.includes('connection terminated') ||
+    msg.includes('connect econnrefused')
+  );
+};
+
 const executeQuery = (sql, params = [], callback) => {
   if (typeof params === 'function') {
     callback = params;
     params = [];
   }
 
+  if (useLocalFallback) {
+    return localDb.query(sql, params, callback);
+  }
+
   const { text, values } = translateSql(sql, params);
 
   if (callback) {
     pool.query(text, values, (err, result) => {
-      if (err) return callback(err, null);
+      if (err) {
+        if (isNetworkError(err)) {
+          console.warn('[db] PostgreSQL network error, seamlessly switching to local storage:', err.message);
+          useLocalFallback = true;
+          return localDb.query(sql, params, callback);
+        }
+        return callback(err, null);
+      }
       callback(null, formatResult(text, result));
     });
     return;
   }
 
-  return pool.query(text, values).then((result) => formatResult(text, result));
+  return pool.query(text, values)
+    .then((result) => formatResult(text, result))
+    .catch((err) => {
+      if (isNetworkError(err)) {
+        console.warn('[db] PostgreSQL network error, seamlessly switching to local storage:', err.message);
+        useLocalFallback = true;
+        return localDb.query(sql, params);
+      }
+      throw err;
+    });
 };
 
 const db = {
@@ -61,11 +102,26 @@ const db = {
   pool,
   supabase,
   supabaseAdmin,
-  ping: () => pool.query('SELECT 1'),
-  close: () => pool.end(),
+  localDb,
+  ping: () => (useLocalFallback ? localDb.ping() : pool.query('SELECT 1')),
+  close: async () => {
+    try { localDb.close(); } catch (e) {}
+    try { await pool.end(); } catch (e) {}
+  },
   getConnection: (callback) => {
+    if (useLocalFallback) {
+      return localDb.getConnection(callback);
+    }
+
     pool.connect((err, client, release) => {
-      if (err) return callback(err, null);
+      if (err) {
+        if (isNetworkError(err)) {
+          console.warn('[db] PostgreSQL connection failed, switching to local connection:', err.message);
+          useLocalFallback = true;
+          return localDb.getConnection(callback);
+        }
+        return callback(err, null);
+      }
 
       const connection = {
         query: (sql, params, queryCallback) => {
@@ -91,7 +147,8 @@ const db = {
 
 pool.query('SELECT 1', (err) => {
   if (err) {
-    console.error('Database connection failed:', err.message);
+    console.warn('Supabase/Postgres direct connection unavailable (' + err.message + '). Active fallback: local resilient SQLite database.');
+    useLocalFallback = true;
   } else {
     console.log('Supabase/Postgres database connected.');
   }

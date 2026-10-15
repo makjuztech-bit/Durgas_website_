@@ -142,10 +142,12 @@ exports.addProduct = (req, res) => {
   const parsedStock = parseInt(stock, 10);
   if (isNaN(parsedStock) || parsedStock < 0) return res.status(400).json({ message: 'Stock must be a non-negative integer.' });
 
+  const finalSku = (sku && sku.trim()) ? sku.trim() : ('DJ-PRD-' + Date.now().toString().slice(-6));
+
   const sql = `
     INSERT INTO products
-    (name, tamil_name, description, category_id, material, purity, metal_composition, available_sizes, weight, price, old_price, stock, badge, sku)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    (name, tamil_name, description, category_id, material, purity, metal_composition, available_sizes, weight, price, old_price, stock, badge, sku, is_active)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true)
   `;
 
   db.query(
@@ -164,35 +166,45 @@ exports.addProduct = (req, res) => {
       old_price ? parseFloat(old_price) : null,
       parsedStock,
       badge?.trim() || null,
-      sku?.trim() || null,
+      finalSku,
     ],
     (err, result) => {
       if (err) {
         if (err.code === '23505' && err.message.includes('sku')) {
           return res.status(409).json({ message: 'A product with this SKU already exists.' });
         }
-        return res.status(500).json({ message: 'Failed to create product.' });
+        if (err.code === '23503') {
+          return res.status(400).json({ message: 'Selected category does not exist. Please choose a valid category from the list.' });
+        }
+        return res.status(500).json({ message: 'Failed to create product: ' + err.message });
       }
 
       const productId = result.insertId;
       const files = req.files || [];
+      const imageUrl = req.body.image_url?.trim() || req.body.image?.trim();
 
-      if (!files.length) {
-        return res.status(201).json({ message: 'Product created', id: productId });
+      const imageValues = [];
+      if (files.length) {
+        files.forEach((file, i) => {
+          imageValues.push([
+            productId,
+            file.path || ('/uploads/' + file.filename),
+            i === 0,
+          ]);
+        });
+      } else if (imageUrl) {
+        imageValues.push([productId, imageUrl, true]);
       }
 
-      // Build array of [productId, path, isPrimary] rows for bulk insert
-      const imageValues = files.map((file, i) => [
-        productId,
-        file.path || ('/uploads/' + file.filename),
-        i === 0,
-      ]);
+      if (!imageValues.length) {
+        return res.status(201).json({ message: 'Product created', id: productId });
+      }
 
       db.query(
         'INSERT INTO product_images (product_id, image_path, is_primary) VALUES ?',
         [imageValues],
         (imgErr) => {
-          if (imgErr) return res.status(500).json({ message: 'Product created but images failed to save.' });
+          if (imgErr) return res.status(500).json({ message: 'Product created but images failed to save: ' + imgErr.message });
           res.status(201).json({ message: 'Product created with images', id: productId });
         }
       );
@@ -247,30 +259,43 @@ exports.updateProduct = (req, res) => {
         if (err.code === '23505' && err.message.includes('sku')) {
           return res.status(409).json({ message: 'A product with this SKU already exists.' });
         }
-        return res.status(500).json({ message: 'Failed to update product.' });
+        if (err.code === '23503') {
+          return res.status(400).json({ message: 'Selected category does not exist. Please choose a valid category from the list.' });
+        }
+        return res.status(500).json({ message: 'Failed to update product: ' + err.message });
       }
       if (!result.affectedRows) return res.status(404).json({ message: 'Product not found' });
 
       const files = req.files || [];
-      if (!files.length) {
+      const imageUrl = req.body.image_url?.trim() || req.body.image?.trim();
+      const imageValues = [];
+
+      if (files.length) {
+        files.forEach((file, i) => {
+          imageValues.push([
+            req.params.id,
+            file.path || ('/uploads/' + file.filename),
+            i === 0,
+          ]);
+        });
+      } else if (imageUrl) {
+        imageValues.push([req.params.id, imageUrl, true]);
+      }
+
+      if (!imageValues.length) {
         return res.json({ message: 'Product updated' });
       }
 
-      const productId = req.params.id;
-      const imageValues = files.map((file, i) => [
-        productId,
-        file.path || ('/uploads/' + file.filename),
-        i === 0,
-      ]);
-
-      db.query(
-        'INSERT INTO product_images (product_id, image_path, is_primary) VALUES ?',
-        [imageValues],
-        (imgErr) => {
-          if (imgErr) return res.status(500).json({ message: 'Product updated but new images failed to save.' });
-          res.json({ message: 'Product updated with new images' });
-        }
-      );
+      db.query('DELETE FROM product_images WHERE product_id = ?', [req.params.id], () => {
+        db.query(
+          'INSERT INTO product_images (product_id, image_path, is_primary) VALUES ?',
+          [imageValues],
+          (imgErr) => {
+            if (imgErr) return res.status(500).json({ message: 'Product updated but new images failed to save: ' + imgErr.message });
+            res.json({ message: 'Product updated with new images' });
+          }
+        );
+      });
     }
   );
 };
@@ -284,18 +309,33 @@ exports.deleteProduct = (req, res) => {
     'SELECT COUNT(*) AS cnt FROM order_items WHERE product_id = ?',
     [productId],
     (checkErr, checkRows) => {
-      if (checkErr) return res.status(500).json({ message: 'Failed to check product references.' });
-      if (Number(checkRows[0].cnt) > 0) {
-        return res.status(409).json({
-          message: 'This product exists in customer orders and cannot be permanently deleted. Archive it instead to preserve order history.',
-          canArchive: true,
+      if (checkErr) return res.status(500).json({ message: 'Failed to check product references: ' + checkErr.message });
+      const hasOrders = Number(checkRows[0]?.cnt) > 0;
+
+      if (hasOrders) {
+        // Soft delete / archive to preserve customer tax invoices while removing from store
+        db.query('UPDATE products SET is_active = false WHERE id = ?', [productId], (updErr, result) => {
+          if (updErr) return res.status(500).json({ message: 'Failed to archive product: ' + updErr.message });
+          if (!result.affectedRows) return res.status(404).json({ message: 'Product not found.' });
+          db.query('DELETE FROM cart WHERE product_id = ?', [productId], () => {});
+          db.query('DELETE FROM wishlist WHERE product_id = ?', [productId], () => {});
+          res.json({ message: 'Product removed from store successfully (archived to preserve customer order invoices).', archived: true });
         });
+        return;
       }
+
+      // No customer orders: clean up child tables and permanently delete
       db.query('DELETE FROM product_images WHERE product_id = ?', [productId], () => {
-        db.query('DELETE FROM products WHERE id = ?', [productId], (err, result) => {
-          if (err) return res.status(500).json({ message: 'Failed to delete product.' });
-          if (!result.affectedRows) return res.status(404).json({ message: 'Product not found' });
-          res.json({ message: 'Product deleted' });
+        db.query('DELETE FROM cart WHERE product_id = ?', [productId], () => {
+          db.query('DELETE FROM wishlist WHERE product_id = ?', [productId], () => {
+            db.query('DELETE FROM reviews WHERE product_id = ?', [productId], () => {
+              db.query('DELETE FROM products WHERE id = ?', [productId], (err, result) => {
+                if (err) return res.status(500).json({ message: 'Failed to delete product: ' + err.message });
+                if (!result.affectedRows) return res.status(404).json({ message: 'Product not found.' });
+                res.json({ message: 'Product permanently deleted successfully.' });
+              });
+            });
+          });
         });
       });
     }
@@ -303,10 +343,12 @@ exports.deleteProduct = (req, res) => {
 };
 
 exports.getAllProductsAdmin = (req, res) => {
+  const showInactive = req.query.include_inactive === 'true' || req.query.all === '1';
   const sql = `
     SELECT p.*, c.name AS category_name
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
+    ${showInactive ? '' : 'WHERE p.is_active = true'}
     ORDER BY p.created_at DESC
   `;
 

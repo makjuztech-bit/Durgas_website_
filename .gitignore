@@ -33,3 +33,11 @@ Thumbs.db
 !.vscode/settings.json
 .idea/
 .backup_before_upgrade/
+
+# Local SQLite databases
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+backend/data/
+*.bundle

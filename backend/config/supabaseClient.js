@@ -13,9 +13,10 @@ if (!supabaseUrl) {
   console.warn('[Supabase] Warning: SUPABASE_URL / NEXT_PUBLIC_SUPABASE_URL is not set.');
 }
 
-// Server-side admin client with service/secret key for privileged DB & Auth actions
-const supabaseAdmin = (supabaseUrl && supabaseSecretKey)
-  ? createClient(supabaseUrl, supabaseSecretKey, {
+// Server-side admin client with service/secret key for privileged DB & Auth actions (falls back to publishable key if secret key not set)
+const adminKey = supabaseSecretKey || supabasePublishableKey;
+const supabaseAdmin = (supabaseUrl && adminKey)
+  ? createClient(supabaseUrl, adminKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,

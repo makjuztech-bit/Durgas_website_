@@ -1,14 +1,23 @@
 const nodemailer = require('nodemailer');
 
 const createTransporter = () => {
-  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS;
+  const port = parseInt(process.env.SMTP_PORT || '587', 10);
+  const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+
+  if (host && user && pass) {
     return nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587', 10),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+      host,
+      port,
+      secure,
+      auth: { user, pass },
+      connectionTimeout: 3000,
+      greetingTimeout: 3000,
+      socketTimeout: 3000,
+      tls: {
+        rejectUnauthorized: false,
       },
     });
   }
@@ -21,7 +30,7 @@ const generateInvoiceHtml = (order, items = []) => {
   const businessName = process.env.BUSINESS_LEGAL_NAME || '[YOUR_REGISTERED_BUSINESS_NAME]';
   const gstin = process.env.BUSINESS_GSTIN || '[YOUR_GSTIN]';
   const address = process.env.BUSINESS_ADDRESS || '[YOUR_OFFICIAL_ADDRESS]';
-  const contactEmail = process.env.SUPPORT_EMAIL || 'support@durgasjewellers.com';
+  const contactEmail = process.env.SUPPORT_EMAIL || 'durgasjewellery20@gmail.com';
   const contactPhone = process.env.SUPPORT_PHONE || '+91 98765 43210';
 
   const subtotal = Number(order.subtotal_amount || 0);
@@ -58,7 +67,7 @@ const generateInvoiceHtml = (order, items = []) => {
       <table style="width: 100%; border-bottom: 2px solid #eee; padding-bottom: 16px; margin-bottom: 24px;">
         <tr>
           <td>
-            <h1 style="margin: 0; font-family: serif; color: #111; font-size: 24px; letter-spacing: 0.1em;">DURGAS FINE JEWELLERY</h1>
+            <h1 style="margin: 0; font-family: serif; color: #111; font-size: 24px; letter-spacing: 0.1em;">DURGAS FIVE METAL JEWELLERY</h1>
             <p style="margin: 4px 0; font-size: 12px; color: #666;">${businessName}</p>
             <p style="margin: 2px 0; font-size: 12px; color: #666;">GSTIN: <strong>${gstin}</strong></p>
             <p style="margin: 2px 0; font-size: 12px; color: #666;">${address}</p>
@@ -131,7 +140,7 @@ const generateInvoiceHtml = (order, items = []) => {
 
       <!-- Footer Note -->
       <div style="border-top: 1px solid #eee; padding-top: 16px; font-size: 11px; color: #888; text-align: center;">
-        <p style="margin: 0;">Thank you for your patronage with DURGAS Fine Jewellery.</p>
+        <p style="margin: 0;">Thank you for your patronage with DURGAS FIVE METAL JEWELLERY.</p>
         <p style="margin: 4px 0;">This is a computer-generated tax invoice. For returns or inquiries, visit our support portal or email ${contactEmail}.</p>
       </div>
 
@@ -153,7 +162,7 @@ const sendOrderConfirmation = async ({ order, items = [], customerEmail }) => {
   }
 
   const mailOptions = {
-    from: process.env.EMAIL_FROM || `"DURGAS Fine Jewellery" <orders@durgasjewellers.com>`,
+    from: process.env.EMAIL_FROM || `"DURGAS FIVE METAL JEWELLERY" <durgasjewellery20@gmail.com>`,
     to: customerEmail,
     subject: `Order Confirmation & Tax Invoice — #${order.order_number}`,
     html: htmlContent,
@@ -168,7 +177,67 @@ const sendOrderConfirmation = async ({ order, items = [], customerEmail }) => {
   }
 };
 
+const sendOtpEmail = async ({ toEmail, otp, purpose = 'Login' }) => {
+  if (!toEmail) return { success: false, message: 'Recipient email required' };
+
+  const transporter = createTransporter();
+  const htmlContent = `
+  <!DOCTYPE html>
+  <html>
+  <head><meta charset="utf-8"></head>
+  <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #FAF6EF; margin: 0; padding: 24px; color: #1a1a1a;">
+    <div style="max-width: 500px; margin: 0 auto; background: #ffffff; padding: 32px 28px; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border-top: 4px solid #D4AF37;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h2 style="font-family: 'Times New Roman', serif; font-size: 26px; color: #6B1D2F; margin: 0; letter-spacing: 2px;">DURGAS</h2>
+        <p style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #8B6914; margin: 4px 0 0;">Five Metal Jewellery</p>
+      </div>
+      <h3 style="font-size: 18px; color: #222; margin-top: 0;">Your Verification Code (OTP)</h3>
+      <p style="font-size: 14px; line-height: 1.6; color: #555;">Use the one-time code below to complete your ${purpose.toLowerCase()} on DURGAS FIVE METAL JEWELLERY:</p>
+      <div style="background: #FAF6EF; border: 1px dashed #D4AF37; padding: 18px; text-align: center; border-radius: 4px; margin: 24px 0;">
+        <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #6B1D2F;">${otp}</span>
+      </div>
+      <p style="font-size: 12px; color: #777; line-height: 1.5;">This code is valid for <strong>10 minutes</strong>. Never share this code with anyone. If you did not request this, please ignore this email.</p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0 16px;">
+      <p style="font-size: 11px; color: #999; text-align: center; margin: 0;">© 2025 DURGAS FIVE METAL JEWELLERY. Handcrafted Traditional Panchaloha Creations.</p>
+    </div>
+  </body>
+  </html>
+  `;
+
+  const isProd = process.env.NODE_ENV === 'production';
+
+  if (!transporter) {
+    if (!isProd) {
+      console.log(`[Email Service Simulated] OTP for ${toEmail}: ${otp} (valid for 10 min)`);
+    } else {
+      console.warn(`[Email Service Warning] SMTP not configured. OTP not sent to ${toEmail}.`);
+    }
+    return { success: true, simulated: !isProd, otp: isProd ? undefined : otp };
+  }
+
+  const mailOptions = {
+    from: process.env.EMAIL_FROM || `"DURGAS FIVE METAL JEWELLERY" <durgasjewellery20@gmail.com>`,
+    to: toEmail,
+    subject: `Your DURGAS Verification Code: ${otp}`,
+    html: htmlContent,
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[Email Service] OTP email sent to ${toEmail}. Message ID: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (err) {
+    console.error(`[Email Service Error] Failed to send OTP email to ${toEmail}:`, err.message);
+    if (!isProd) {
+      console.log(`[Email Service Fallback OTP] Verification code for ${toEmail} is: ${otp}`);
+      return { success: true, fallback: true, otp };
+    }
+    return { success: false, message: 'Failed to deliver verification email.' };
+  }
+};
+
 module.exports = {
   sendOrderConfirmation,
   generateInvoiceHtml,
+  sendOtpEmail,
 };

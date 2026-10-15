@@ -96,6 +96,7 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/contact', require('./routes/contactRoutes'));
 app.use('/api/newsletter', require('./routes/newsletterRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/reviews', require('./routes/analyticsRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/settings', require('./routes/settingsRoutes'));
 
@@ -109,10 +110,7 @@ app.use(express.static(path.join(__dirname, '..', 'frontend'), {
 app.get('/products', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'products.html'));
 });
-app.get('/product/:id', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'product-details.html'));
-});
-app.get('/product-details', (req, res) => {
+app.get(['/product/:id', '/product-details', '/product-details.html'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'product-details.html'));
 });
 app.get(['/cart', '/checkout', '/order'], (req, res) => {
@@ -149,7 +147,7 @@ app.get('/refund-policy', (req, res) => {
 });
 
 // Admin panel route
-app.get(['/administrator', '/administrator/index.html', '/admin'], (req, res) => {
+app.get(['/administrator', '/administrator/', '/administrator/index.html', '/admin', '/admin/', '/admin/index.html'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'administrator', 'index.html'));
 });
 
