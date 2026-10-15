@@ -26,7 +26,7 @@ app.use(cors({
       .map((value) => value.trim())
       .filter(Boolean);
     const allowedOrigins = [...defaultOrigins, ...configured];
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) return callback(null, true);
     return callback(new Error('Origin is not allowed by CORS policy'));
   },
   credentials: true,
@@ -229,9 +229,12 @@ app.use((err, req, res, next) => {
   res.status(status).json({ message: safeMessage });
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`DURGAS server running on http://localhost:${PORT}`);
-});
+let server;
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
+  server = app.listen(PORT, () => {
+    console.log(`DURGAS server running on http://localhost:${PORT}`);
+  });
+}
 
 // Graceful shutdown handling
 let isShuttingDown = false;
@@ -240,16 +243,20 @@ const handleShutdown = (signal) => {
   isShuttingDown = true;
   console.log(`Received ${signal}. Gracefully stopping DURGAS server...`);
 
-  server.close(() => {
-    console.log('HTTP connections closed. Terminating database pool...');
-    db.close().then(() => {
-      console.log('Database pool terminated safely.');
-      process.exit(0);
-    }).catch((err) => {
-      console.error('Error closing database pool:', err.message);
-      process.exit(1);
+  if (server) {
+    server.close(() => {
+      console.log('HTTP connections closed. Terminating database pool...');
+      db.close().then(() => {
+        console.log('Database pool terminated safely.');
+        process.exit(0);
+      }).catch((err) => {
+        console.error('Error closing database pool:', err.message);
+        process.exit(1);
+      });
     });
-  });
+  } else {
+    process.exit(0);
+  }
 
   setTimeout(() => {
     console.error('Graceful shutdown timeout exceeded (10s). Exiting immediately.');
@@ -259,3 +266,5 @@ const handleShutdown = (signal) => {
 
 process.on('SIGTERM', () => handleShutdown('SIGTERM'));
 process.on('SIGINT', () => handleShutdown('SIGINT'));
+
+module.exports = app;

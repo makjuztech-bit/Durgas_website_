@@ -6,10 +6,28 @@
     "test": "npm --prefix backend test",
     "start": "npm --prefix backend start",
     "dev": "npm --prefix backend run dev",
+    "build": "echo Static assets ready - no build step required",
     "seed": "npm --prefix backend run seed",
     "migrate": "npm --prefix backend run migrate"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.3",
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^1.41.3",
+    "compression": "^1.8.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.2.0",
+    "multer-storage-cloudinary": "^4.0.0",
+    "nodemailer": "^10.1.0",
+    "pg": "^8.14.1",
+    "razorpay": "^2.9.8"
+  }
 }
