@@ -6,17 +6,7 @@
       "framework": "express"
     },
     "frontend": {
-      "root": "frontend",
-      "runtime": "container",
-      "entrypoint": "Dockerfile",
-      "bindings": [
-        {
-          "type": "service",
-          "service": "backend",
-          "format": "url",
-          "env": "BACKEND_URL"
-        }
-      ]
+      "root": "frontend"
     }
   },
   "rewrites": [
@@ -36,6 +26,83 @@
       "source": "/admin(.*)",
       "destination": {
         "service": "backend"
+      }
+    },
+    {
+      "source": "/products",
+      "destination": {
+        "service": "frontend",
+        "path": "/pages/products.html"
+      }
+    },
+    {
+      "source": "/cart",
+      "destination": {
+        "service": "frontend",
+        "path": "/pages/cart.html"
+      }
+    },
+    {
+      "source": "/checkout",
+      "destination": {
+        "service": "frontend",
+        "path": "/pages/cart.html"
+      }
+    },
+    {
+      "source": "/order",
+      "destination": {
+        "service": "frontend",
+        "path": "/pages/cart.html"
+      }
+    },
+    {
+      "source": "/login",
+      "destination": {
+        "service": "frontend",
+        "path": "/pages/login.html"
+      }
+    },
+    {
+      "source": "/register",
+      "destination": {
+        "service": "frontend",
+        "path": "/pages/register.html"
+      }
+    },
+    {
+      "source": "/profile",
+      "destination": {
+        "service": "frontend",
+        "path": "/pages/profile.html"
+      }
+    },
+    {
+      "source": "/about",
+      "destination": {
+        "service": "frontend",
+        "path": "/pages/about.html"
+      }
+    },
+    {
+      "source": "/contact",
+      "destination": {
+        "service": "frontend",
+        "path": "/pages/contact.html"
+      }
+    },
+    {
+      "source": "/product-details",
+      "destination": {
+        "service": "frontend",
+        "path": "/pages/product-details.html"
+      }
+    },
+    {
+      "source": "/product/(.*)",
+      "destination": {
+        "service": "frontend",
+        "path": "/pages/product-details.html"
       }
     },
     {
