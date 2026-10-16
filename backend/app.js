@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 require('dotenv').config();
 const express = require('express');
@@ -120,44 +121,26 @@ app.use((req, res, next) => {
 });
 
 // Route mappings for clean URLs pointing to frontend pages
-app.get('/products', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'products.html'));
-});
-app.get(['/product/:id', '/product-details', '/product-details.html'], (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'product-details.html'));
-});
-app.get(['/cart', '/checkout', '/order'], (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'cart.html'));
-});
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'login.html'));
-});
-app.get('/register', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'register.html'));
-});
-app.get('/profile', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'profile.html'));
-});
-app.get('/contact', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'contact.html'));
-});
-app.get('/about', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'about.html'));
-});
+const sendFrontendPage = (res, pageName) => {
+  const rootPath = path.join(__dirname, '..', 'frontend', pageName);
+  const pagesPath = path.join(__dirname, '..', 'frontend', 'pages', pageName);
+  return res.sendFile(fs.existsSync(rootPath) ? rootPath : pagesPath);
+};
+
+app.get('/products', (req, res) => sendFrontendPage(res, 'products.html'));
+app.get(['/product/:id', '/product-details', '/product-details.html'], (req, res) => sendFrontendPage(res, 'product-details.html'));
+app.get(['/cart', '/checkout', '/order'], (req, res) => sendFrontendPage(res, 'cart.html'));
+app.get('/login', (req, res) => sendFrontendPage(res, 'login.html'));
+app.get('/register', (req, res) => sendFrontendPage(res, 'register.html'));
+app.get('/profile', (req, res) => sendFrontendPage(res, 'profile.html'));
+app.get('/contact', (req, res) => sendFrontendPage(res, 'contact.html'));
+app.get('/about', (req, res) => sendFrontendPage(res, 'about.html'));
 
 // Legal and compliance pages
-app.get('/privacy-policy', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'privacy-policy.html'));
-});
-app.get('/terms-and-conditions', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'terms-and-conditions.html'));
-});
-app.get('/shipping-policy', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'shipping-policy.html'));
-});
-app.get('/refund-policy', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'refund-policy.html'));
-});
+app.get('/privacy-policy', (req, res) => sendFrontendPage(res, 'privacy-policy.html'));
+app.get('/terms-and-conditions', (req, res) => sendFrontendPage(res, 'terms-and-conditions.html'));
+app.get('/shipping-policy', (req, res) => sendFrontendPage(res, 'shipping-policy.html'));
+app.get('/refund-policy', (req, res) => sendFrontendPage(res, 'refund-policy.html'));
 
 // Admin panel route
 app.get(['/administrator', '/administrator/', '/administrator/index.html', '/admin', '/admin/', '/admin/index.html'], (req, res) => {
