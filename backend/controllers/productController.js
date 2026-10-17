@@ -142,7 +142,9 @@ exports.addProduct = (req, res) => {
   const parsedStock = parseInt(stock, 10);
   if (isNaN(parsedStock) || parsedStock < 0) return res.status(400).json({ message: 'Stock must be a non-negative integer.' });
 
-  const finalSku = (sku && sku.trim()) ? sku.trim() : ('DJ-PRD-' + Date.now().toString().slice(-6));
+  const finalSku = (sku && sku.trim()) 
+    ? sku.trim().toUpperCase() 
+    : ('DJ-PRD-' + Math.floor(100000 + Math.random() * 900000));
 
   const sql = `
     INSERT INTO products
@@ -170,8 +172,11 @@ exports.addProduct = (req, res) => {
     ],
     (err, result) => {
       if (err) {
-        if (err.code === '23505' && err.message.includes('sku')) {
-          return res.status(409).json({ message: 'A product with this SKU already exists.' });
+        if (err.code === '23505' && (err.message.includes('sku') || err.detail?.includes('sku') || err.message.includes('products_sku_key'))) {
+          return res.status(409).json({ 
+            message: `A product with SKU "${finalSku}" already exists. Please choose a different SKU or leave it blank to auto-generate a new one.`,
+            existingSku: finalSku
+          });
         }
         if (err.code === '23503') {
           return res.status(400).json({ message: 'Selected category does not exist. Please choose a valid category from the list.' });
@@ -256,8 +261,11 @@ exports.updateProduct = (req, res) => {
     ],
     (err, result) => {
       if (err) {
-        if (err.code === '23505' && err.message.includes('sku')) {
-          return res.status(409).json({ message: 'A product with this SKU already exists.' });
+        if (err.code === '23505' && (err.message.includes('sku') || err.detail?.includes('sku') || err.message.includes('products_sku_key'))) {
+          return res.status(409).json({ 
+            message: `A product with SKU "${sku?.trim()}" already exists. Please enter a different SKU.`,
+            existingSku: sku?.trim()
+          });
         }
         if (err.code === '23503') {
           return res.status(400).json({ message: 'Selected category does not exist. Please choose a valid category from the list.' });

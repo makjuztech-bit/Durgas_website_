@@ -191,7 +191,14 @@
           <div class="form-group"><label class="form-label">Product Name *</label><input type="text" class="form-input" id="pName" required></div>
           <div class="form-group"><label class="form-label">Tamil Name (தமிழ் பெயர்)</label><input type="text" class="form-input" id="pTamilName" placeholder="ஐம்பொன் மோதிரம்"></div>
           <div class="form-group"><label class="form-label">Category *</label><select class="form-select" id="pCategory" required></select></div>
-          <div class="form-group"><label class="form-label">SKU / Product ID</label><input type="text" class="form-input" id="pSku" placeholder="DJ-PN-001"></div>
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label class="form-label" style="margin-bottom:0;">SKU / Product ID</label>
+              <button type="button" onclick="generateRandomSku()" style="background:none; border:none; color:var(--gold); font-size:0.75rem; cursor:pointer; text-decoration:underline; font-weight:600;">+ Auto Generate SKU</button>
+            </div>
+            <input type="text" class="form-input" id="pSku" placeholder="Leave blank to auto-generate (e.g. DJ-PRD-123456)" style="margin-top:6px;">
+            <small style="color:var(--gray); font-size:0.72rem; display:block; margin-top:3px;">Optional. Leave blank to automatically generate a unique SKU code.</small>
+          </div>
           <div class="form-group full"><label class="form-label">Verified Metal Composition (Five Metals / Panchaloha)</label><input type="text" class="form-input" id="pMetalComposition" placeholder="e.g. Copper 80%, Brass 15%, Lead 3%, Silver 1%, Gold 1%"></div>
           <div class="form-group full"><label class="form-label">Available Sizes / Dimensions</label><input type="text" class="form-input" id="pAvailableSizes" placeholder="e.g. 12, 14, 16, 18, 20 or Free Size"></div>
           <div class="form-group full"><label class="form-label">Description</label><textarea class="form-textarea" id="pDescription"></textarea></div>
@@ -441,6 +448,15 @@ async function loadCategorySelect(selectedId) {
   ).join('');
 }
 
+function generateRandomSku() {
+  const rand = Math.floor(100000 + Math.random() * 900000);
+  const skuEl = document.getElementById('pSku');
+  if (skuEl) {
+    skuEl.value = 'DJ-PRD-' + rand;
+    skuEl.style.borderColor = 'var(--gold)';
+  }
+}
+
 function resetProductForm() {
   document.getElementById('productForm').reset();
   document.getElementById('editProductId').value = '';
@@ -450,6 +466,8 @@ function resetProductForm() {
   document.getElementById('pMetalComposition').value = '';
   document.getElementById('pAvailableSizes').value = '';
   document.getElementById('pImageUrl').value = '';
+  const skuEl = document.getElementById('pSku');
+  if (skuEl) skuEl.style.borderColor = '';
   const submitBtn = document.getElementById('btnSaveProduct');
   if (submitBtn) submitBtn.textContent = 'Save Product';
 }
@@ -492,6 +510,13 @@ async function saveProduct(e) {
     const data = await res.json();
     if (!res.ok) {
       alert(data.message || 'Operation failed');
+      if (data.message && (data.message.includes('SKU') || data.message.includes('sku'))) {
+        const skuEl = document.getElementById('pSku');
+        if (skuEl) {
+          skuEl.style.borderColor = '#c0392b';
+          skuEl.focus();
+        }
+      }
       if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origText; }
       return;
     }
