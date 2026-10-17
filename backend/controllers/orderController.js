@@ -3,10 +3,19 @@ const crypto = require('crypto');
 const Razorpay = require('razorpay');
 const emailService = require('../services/emailService');
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+let razorpay = null;
+try {
+  if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+    razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+  } else {
+    console.warn('[Razorpay] Warning: RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET is not set in environment variables. Razorpay features will be disabled until configured.');
+  }
+} catch (err) {
+  console.warn('[Razorpay] Warning: Failed to initialize Razorpay client:', err.message);
+}
 
 const validShipping = (data) => [
   data.shipping_address, data.shipping_city, data.shipping_state,
@@ -325,6 +334,9 @@ exports.createOrder = (req, res) => {
 };
 
 exports.createRazorpayOrder = (req, res) => {
+  if (!razorpay) {
+    return res.status(503).json({ message: 'Razorpay online payment is not configured on this server.' });
+  }
   const userId = req.user ? req.user.id : null;
   const items = req.body.items;
 
@@ -419,6 +431,9 @@ exports.paymentFailed = (req, res) => {
 };
 
 exports.verifyRazorpayOrder = (req, res) => {
+  if (!razorpay) {
+    return res.status(503).json({ message: 'Razorpay online payment is not configured on this server.' });
+  }
   const {
     razorpay_payment_id,
     razorpay_order_id,

@@ -27,7 +27,7 @@ app.use(cors({
       .map((value) => value.trim())
       .filter(Boolean);
     const allowedOrigins = [...defaultOrigins, ...configured];
-    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) return callback(null, true);
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app') || origin.endsWith('.web.app') || origin.endsWith('.firebaseapp.com')) return callback(null, true);
     return callback(new Error('Origin is not allowed by CORS policy'));
   },
   credentials: true,
