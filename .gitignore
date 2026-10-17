@@ -38,6 +38,9 @@ Thumbs.db
 *.db
 *.db-journal
 *.db-wal
+
+# Firebase cache
+.firebase/
 *.db-shm
 backend/data/
 *.bundle
