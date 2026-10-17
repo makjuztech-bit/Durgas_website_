@@ -218,8 +218,47 @@
               <option value="Best Seller">Best Seller</option>
             </select>
           </div>
-          <div class="form-group full"><label class="form-label">Product Image URL (Direct image link or upload files below)</label><input type="url" class="form-input" id="pImageUrl" placeholder="https://res.cloudinary.com/... or paste image URL"></div>
-          <div class="form-group full"><label class="form-label">Upload Product Images (from computer)</label><input type="file" class="form-input" id="pImages" multiple accept="image/*"></div>
+          <div class="form-group full" style="background:#faf8f5; border:1px solid #e0d8cc; padding:16px; border-radius:6px;">
+            <label class="form-label" style="font-size:0.9rem; font-weight:600; color:var(--black); margin-bottom:4px;">
+              📸 Product Images (Add 3–4 Images for Interactive Hover Slideshow)
+            </label>
+            <p style="font-size:0.75rem; color:#666; margin-bottom:12px;">
+              Add multiple angles (Front, Side, Close-up, Back). When customers place their cursor over this product on the website, it will automatically play an interactive slideshow!
+            </p>
+
+            <div style="margin-bottom:14px;">
+              <label class="form-label" style="font-size:0.78rem;">Option 1: Upload Multiple Photos (Select 3-4 files together)</label>
+              <input type="file" class="form-input" id="pImages" multiple accept="image/*" onchange="previewSelectedFiles(this)">
+              <small style="color:var(--gray); font-size:0.7rem; display:block; margin-top:3px;">Tip: Hold Ctrl (or Cmd on Mac) to select multiple files at once.</small>
+            </div>
+
+            <div>
+              <label class="form-label" style="font-size:0.78rem;">Option 2: Or Enter Direct Image URLs (Cloudinary / Web)</label>
+              <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">
+                <div>
+                  <label style="font-size:0.7rem; color:#555; display:block; margin-bottom:2px;">Image 1 (Main Cover Photo) *</label>
+                  <input type="text" class="form-input" id="pImageUrl1" placeholder="https://... cover photo" oninput="updateUrlPreviews()">
+                </div>
+                <div>
+                  <label style="font-size:0.7rem; color:#555; display:block; margin-bottom:2px;">Image 2 (Angle / Side View)</label>
+                  <input type="text" class="form-input" id="pImageUrl2" placeholder="https://... photo 2" oninput="updateUrlPreviews()">
+                </div>
+                <div>
+                  <label style="font-size:0.7rem; color:#555; display:block; margin-bottom:2px;">Image 3 (Hallmark / Close-up)</label>
+                  <input type="text" class="form-input" id="pImageUrl3" placeholder="https://... photo 3" oninput="updateUrlPreviews()">
+                </div>
+                <div>
+                  <label style="font-size:0.7rem; color:#555; display:block; margin-bottom:2px;">Image 4 (Model / In-Hand View)</label>
+                  <input type="text" class="form-input" id="pImageUrl4" placeholder="https://... photo 4" oninput="updateUrlPreviews()">
+                </div>
+              </div>
+            </div>
+
+            <div id="imagePreviewContainer" style="display:none; margin-top:14px; padding-top:12px; border-top:1px dashed #d5ccbe;">
+              <div style="font-size:0.75rem; font-weight:600; color:#555; margin-bottom:8px;">Live Image Previews (Will display in this order on cursor hover):</div>
+              <div id="imagePreviewGrid" style="display:flex; gap:12px; flex-wrap:wrap;"></div>
+            </div>
+          </div>
         </div>
         <button type="submit" class="btn btn-primary" id="btnSaveProduct" style="margin-top:16px">Save Product</button>
         <button type="button" class="btn" style="margin-top:16px;margin-left:8px;background:var(--beige)" onclick="showSection('products')">Cancel</button>
@@ -457,6 +496,42 @@ function generateRandomSku() {
   }
 }
 
+function updateUrlPreviews() {
+  const urls = [
+    document.getElementById('pImageUrl1')?.value?.trim(),
+    document.getElementById('pImageUrl2')?.value?.trim(),
+    document.getElementById('pImageUrl3')?.value?.trim(),
+    document.getElementById('pImageUrl4')?.value?.trim(),
+  ].filter(Boolean);
+  renderPreviewGrid(urls);
+}
+
+function previewSelectedFiles(input) {
+  if (!input.files || !input.files.length) return;
+  const urls = Array.from(input.files).map(file => URL.createObjectURL(file));
+  renderPreviewGrid(urls);
+}
+
+function renderPreviewGrid(urls) {
+  const container = document.getElementById('imagePreviewContainer');
+  const grid = document.getElementById('imagePreviewGrid');
+  if (!container || !grid) return;
+  if (!urls.length) {
+    container.style.display = 'none';
+    grid.innerHTML = '';
+    return;
+  }
+  container.style.display = 'block';
+  grid.innerHTML = urls.map((u, i) => `
+    <div style="position:relative; width:80px; height:80px; border-radius:6px; overflow:hidden; border:2px solid ${i === 0 ? 'var(--gold)' : '#ddd'}; box-shadow:0 2px 6px rgba(0,0,0,0.08); background:#fff;">
+      <img src="${u}" style="width:100%; height:100%; object-fit:cover;">
+      <span style="position:absolute; bottom:0; left:0; right:0; background:${i === 0 ? 'var(--gold)' : 'rgba(0,0,0,0.65)'}; color:#fff; font-size:0.6rem; text-align:center; padding:1px 0; font-weight:600;">
+        ${i === 0 ? 'Cover' : 'Photo ' + (i + 1)}
+      </span>
+    </div>
+  `).join('');
+}
+
 function resetProductForm() {
   document.getElementById('productForm').reset();
   document.getElementById('editProductId').value = '';
@@ -465,7 +540,14 @@ function resetProductForm() {
   document.getElementById('pTamilName').value = '';
   document.getElementById('pMetalComposition').value = '';
   document.getElementById('pAvailableSizes').value = '';
-  document.getElementById('pImageUrl').value = '';
+  if (document.getElementById('pImageUrl1')) document.getElementById('pImageUrl1').value = '';
+  if (document.getElementById('pImageUrl2')) document.getElementById('pImageUrl2').value = '';
+  if (document.getElementById('pImageUrl3')) document.getElementById('pImageUrl3').value = '';
+  if (document.getElementById('pImageUrl4')) document.getElementById('pImageUrl4').value = '';
+  const container = document.getElementById('imagePreviewContainer');
+  if (container) container.style.display = 'none';
+  const grid = document.getElementById('imagePreviewGrid');
+  if (grid) grid.innerHTML = '';
   const skuEl = document.getElementById('pSku');
   if (skuEl) skuEl.style.borderColor = '';
   const submitBtn = document.getElementById('btnSaveProduct');
@@ -497,7 +579,16 @@ async function saveProduct(e) {
   formData.append('old_price', document.getElementById('pOldPrice').value || '');
   formData.append('stock', document.getElementById('pStock').value);
   formData.append('badge', document.getElementById('pBadge').value);
-  formData.append('image_url', document.getElementById('pImageUrl')?.value?.trim() || '');
+
+  const url1 = document.getElementById('pImageUrl1')?.value?.trim() || '';
+  const url2 = document.getElementById('pImageUrl2')?.value?.trim() || '';
+  const url3 = document.getElementById('pImageUrl3')?.value?.trim() || '';
+  const url4 = document.getElementById('pImageUrl4')?.value?.trim() || '';
+  const allUrls = [url1, url2, url3, url4].filter(Boolean);
+  if (allUrls.length > 0) {
+    formData.append('image_urls', JSON.stringify(allUrls));
+    formData.append('image_url', allUrls[0]);
+  }
 
   const files = document.getElementById('pImages').files;
   for (const f of files) formData.append('images', f);
@@ -567,7 +658,16 @@ async function editProduct(id) {
     document.getElementById('pOldPrice').value = p.old_price || '';
     document.getElementById('pStock').value = (p.stock !== undefined && p.stock !== null) ? p.stock : 10;
     document.getElementById('pBadge').value = p.badge || '';
-    document.getElementById('pImageUrl').value = p.image || (p.images && p.images[0]?.image_path) || '';
+
+    const imgs = p.images || [];
+    const imgUrls = imgs.map(i => (typeof i === 'string' ? i : i.image_path)).filter(Boolean);
+    if (!imgUrls.length && p.image) imgUrls.push(p.image);
+    
+    if (document.getElementById('pImageUrl1')) document.getElementById('pImageUrl1').value = imgUrls[0] || '';
+    if (document.getElementById('pImageUrl2')) document.getElementById('pImageUrl2').value = imgUrls[1] || '';
+    if (document.getElementById('pImageUrl3')) document.getElementById('pImageUrl3').value = imgUrls[2] || '';
+    if (document.getElementById('pImageUrl4')) document.getElementById('pImageUrl4').value = imgUrls[3] || '';
+    renderPreviewGrid(imgUrls);
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (err) {

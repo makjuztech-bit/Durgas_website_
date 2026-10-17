@@ -42,8 +42,88 @@ function renderStars(rating = 5) {
   ).join('');
 }
 
+function startProductSlideshow(container) {
+  if (container._slideTimer) return;
+  const raw = container.getAttribute('data-images');
+  if (!raw) return;
+  let imgs = [];
+  try { imgs = JSON.parse(raw); } catch (e) { return; }
+  if (imgs.length <= 1) return;
+
+  const imgEl = container.querySelector('.product-card-img') || container.querySelector('img');
+  const dots = container.querySelectorAll('.slide-dot');
+  let idx = container._currentSlide || 0;
+
+  container._slideTimer = setInterval(() => {
+    idx = (idx + 1) % imgs.length;
+    container._currentSlide = idx;
+    if (imgEl) {
+      imgEl.style.opacity = '0.75';
+      imgEl.src = imgs[idx];
+      setTimeout(() => { if (imgEl) imgEl.style.opacity = '1'; }, 100);
+    }
+    if (dots.length) {
+      dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    }
+  }, 1200);
+}
+
+function stopProductSlideshow(container) {
+  if (container._slideTimer) {
+    clearInterval(container._slideTimer);
+    container._slideTimer = null;
+  }
+  container._currentSlide = 0;
+  const raw = container.getAttribute('data-images');
+  if (!raw) return;
+  try {
+    const imgs = JSON.parse(raw);
+    const imgEl = container.querySelector('.product-card-img') || container.querySelector('img');
+    const dots = container.querySelectorAll('.slide-dot');
+    if (imgEl && imgs[0]) {
+      imgEl.src = imgs[0];
+      imgEl.style.opacity = '1';
+    }
+    if (dots.length) {
+      dots.forEach((d, i) => d.classList.toggle('active', i === 0));
+    }
+  } catch (e) {}
+}
+
+function scrubProductSlideshow(container, event) {
+  const raw = container.getAttribute('data-images');
+  if (!raw) return;
+  let imgs = [];
+  try { imgs = JSON.parse(raw); } catch (e) { return; }
+  if (imgs.length <= 1) return;
+
+  const rect = container.getBoundingClientRect();
+  const mouseX = Math.max(0, Math.min(event.clientX - rect.left, rect.width));
+  const segmentWidth = rect.width / imgs.length;
+  const targetIdx = Math.min(imgs.length - 1, Math.floor(mouseX / segmentWidth));
+
+  if (targetIdx !== container._currentSlide) {
+    container._currentSlide = targetIdx;
+    const imgEl = container.querySelector('.product-card-img') || container.querySelector('img');
+    const dots = container.querySelectorAll('.slide-dot');
+    if (imgEl) imgEl.src = imgs[targetIdx];
+    if (dots.length) {
+      dots.forEach((d, i) => d.classList.toggle('active', i === targetIdx));
+    }
+  }
+}
+
 function buildProductCard(p) {
-  const img = getProductImage(p);
+  const allImages = (p.images && p.images.length > 0)
+    ? p.images.map(imgObj => (typeof imgObj === 'string' ? imgObj : imgObj.image_path)).filter(Boolean)
+    : (p.image ? [p.image] : ['https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500&q=80']);
+
+  const hasMultipleImages = allImages.length > 1;
+  const imagesJson = JSON.stringify(allImages).replace(/"/g, '&quot;');
+  const dotsHtml = hasMultipleImages
+    ? `<div class="product-slideshow-dots">${allImages.map((_, i) => `<span class="slide-dot${i === 0 ? ' active' : ''}"></span>`).join('')}</div>`
+    : '';
+
   const sku = p.sku || ('DJ-' + p.id);
   const badge = p.badge ? `<span class="product-badge gold">${p.badge}</span>` : '';
   const oldPrice = p.old_price ? `<span class="price-old">${formatPrice(p.old_price)}</span>` : '';
@@ -53,8 +133,9 @@ function buildProductCard(p) {
   const reviewsCount = 18 + ((p.id * 7) % 85);
 
   return `<div class="product-card fade-up" onclick="showProductDetail('${p.sku || p.id}')">
-    <div class="product-img">
-      <img src="${img}" alt="${p.name}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500&q=80';">
+    <div class="product-img" ${hasMultipleImages ? `data-images="${imagesJson}" onmouseenter="startProductSlideshow(this)" onmouseleave="stopProductSlideshow(this)" onmousemove="scrubProductSlideshow(this, event)"` : ''}>
+      <img src="${allImages[0]}" alt="${p.name}" class="product-card-img" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500&q=80';">
+      ${dotsHtml}
       ${badge}
       <div class="product-actions">
         <button class="action-btn" onclick="addToWishlist(event, ${p.id})" title="Add to Wishlist">♡</button>

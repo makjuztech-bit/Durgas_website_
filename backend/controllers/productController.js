@@ -186,9 +186,8 @@ exports.addProduct = (req, res) => {
 
       const productId = result.insertId;
       const files = req.files || [];
-      const imageUrl = req.body.image_url?.trim() || req.body.image?.trim();
-
       const imageValues = [];
+
       if (files.length) {
         files.forEach((file, i) => {
           imageValues.push([
@@ -197,9 +196,33 @@ exports.addProduct = (req, res) => {
             i === 0,
           ]);
         });
-      } else if (imageUrl) {
-        imageValues.push([productId, imageUrl, true]);
       }
+
+      const rawUrls = [];
+      ['image_url', 'image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image'].forEach(key => {
+        if (req.body[key] && typeof req.body[key] === 'string') {
+          rawUrls.push(...req.body[key].split(/[\n,]+/).map(s => s.trim()).filter(Boolean));
+        }
+      });
+      if (req.body.image_urls) {
+        try {
+          const parsed = typeof req.body.image_urls === 'string' && req.body.image_urls.startsWith('[')
+            ? JSON.parse(req.body.image_urls)
+            : (Array.isArray(req.body.image_urls) ? req.body.image_urls : req.body.image_urls.split(/[\n,]+/));
+          if (Array.isArray(parsed)) {
+            parsed.forEach(u => { if (typeof u === 'string' && u.trim()) rawUrls.push(u.trim()); });
+          }
+        } catch (e) {
+          if (typeof req.body.image_urls === 'string') {
+            rawUrls.push(...req.body.image_urls.split(/[\n,]+/).map(s => s.trim()).filter(Boolean));
+          }
+        }
+      }
+
+      const uniqueUrls = [...new Set(rawUrls)];
+      uniqueUrls.forEach((u, idx) => {
+        imageValues.push([productId, u, imageValues.length === 0 && idx === 0]);
+      });
 
       if (!imageValues.length) {
         return res.status(201).json({ message: 'Product created', id: productId });
@@ -275,7 +298,6 @@ exports.updateProduct = (req, res) => {
       if (!result.affectedRows) return res.status(404).json({ message: 'Product not found' });
 
       const files = req.files || [];
-      const imageUrl = req.body.image_url?.trim() || req.body.image?.trim();
       const imageValues = [];
 
       if (files.length) {
@@ -286,9 +308,33 @@ exports.updateProduct = (req, res) => {
             i === 0,
           ]);
         });
-      } else if (imageUrl) {
-        imageValues.push([req.params.id, imageUrl, true]);
       }
+
+      const rawUrls = [];
+      ['image_url', 'image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image'].forEach(key => {
+        if (req.body[key] && typeof req.body[key] === 'string') {
+          rawUrls.push(...req.body[key].split(/[\n,]+/).map(s => s.trim()).filter(Boolean));
+        }
+      });
+      if (req.body.image_urls) {
+        try {
+          const parsed = typeof req.body.image_urls === 'string' && req.body.image_urls.startsWith('[')
+            ? JSON.parse(req.body.image_urls)
+            : (Array.isArray(req.body.image_urls) ? req.body.image_urls : req.body.image_urls.split(/[\n,]+/));
+          if (Array.isArray(parsed)) {
+            parsed.forEach(u => { if (typeof u === 'string' && u.trim()) rawUrls.push(u.trim()); });
+          }
+        } catch (e) {
+          if (typeof req.body.image_urls === 'string') {
+            rawUrls.push(...req.body.image_urls.split(/[\n,]+/).map(s => s.trim()).filter(Boolean));
+          }
+        }
+      }
+
+      const uniqueUrls = [...new Set(rawUrls)];
+      uniqueUrls.forEach((u, idx) => {
+        imageValues.push([req.params.id, u, imageValues.length === 0 && idx === 0]);
+      });
 
       if (!imageValues.length) {
         return res.json({ message: 'Product updated' });

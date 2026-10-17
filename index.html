@@ -722,11 +722,50 @@
       opacity: 0;
       transform: translateX(12px);
       transition: var(--transition);
+      z-index: 4;
     }
 
     .product-card:hover .product-actions {
       opacity: 1;
       transform: translateX(0);
+    }
+
+    /* Hover Slideshow Dots */
+    .product-slideshow-dots {
+      position: absolute;
+      bottom: 8px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .product-card:hover .product-slideshow-dots {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .slide-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.65);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+      transition: all 0.25s ease;
+    }
+
+    .slide-dot.active {
+      width: 16px;
+      border-radius: 4px;
+      background: var(--gold, #C9A84C);
+      box-shadow: 0 1px 4px rgba(201, 168, 76, 0.6);
     }
 
     .action-btn {
@@ -3140,16 +3179,97 @@
       ).join('');
     }
 
+    function startProductSlideshow(container) {
+      if (container._slideTimer) return;
+      const raw = container.getAttribute('data-images');
+      if (!raw) return;
+      let imgs = [];
+      try { imgs = JSON.parse(raw); } catch (e) { return; }
+      if (imgs.length <= 1) return;
+
+      const imgEl = container.querySelector('.product-card-img') || container.querySelector('img');
+      const dots = container.querySelectorAll('.slide-dot');
+      let idx = container._currentSlide || 0;
+
+      container._slideTimer = setInterval(() => {
+        idx = (idx + 1) % imgs.length;
+        container._currentSlide = idx;
+        if (imgEl) {
+          imgEl.style.opacity = '0.75';
+          imgEl.src = imgs[idx];
+          setTimeout(() => { if (imgEl) imgEl.style.opacity = '1'; }, 100);
+        }
+        if (dots.length) {
+          dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+        }
+      }, 1200);
+    }
+
+    function stopProductSlideshow(container) {
+      if (container._slideTimer) {
+        clearInterval(container._slideTimer);
+        container._slideTimer = null;
+      }
+      container._currentSlide = 0;
+      const raw = container.getAttribute('data-images');
+      if (!raw) return;
+      try {
+        const imgs = JSON.parse(raw);
+        const imgEl = container.querySelector('.product-card-img') || container.querySelector('img');
+        const dots = container.querySelectorAll('.slide-dot');
+        if (imgEl && imgs[0]) {
+          imgEl.src = imgs[0];
+          imgEl.style.opacity = '1';
+        }
+        if (dots.length) {
+          dots.forEach((d, i) => d.classList.toggle('active', i === 0));
+        }
+      } catch (e) {}
+    }
+
+    function scrubProductSlideshow(container, event) {
+      const raw = container.getAttribute('data-images');
+      if (!raw) return;
+      let imgs = [];
+      try { imgs = JSON.parse(raw); } catch (e) { return; }
+      if (imgs.length <= 1) return;
+
+      const rect = container.getBoundingClientRect();
+      const mouseX = Math.max(0, Math.min(event.clientX - rect.left, rect.width));
+      const segmentWidth = rect.width / imgs.length;
+      const targetIdx = Math.min(imgs.length - 1, Math.floor(mouseX / segmentWidth));
+
+      if (targetIdx !== container._currentSlide) {
+        container._currentSlide = targetIdx;
+        const imgEl = container.querySelector('.product-card-img') || container.querySelector('img');
+        const dots = container.querySelectorAll('.slide-dot');
+        if (imgEl) imgEl.src = imgs[targetIdx];
+        if (dots.length) {
+          dots.forEach((d, i) => d.classList.toggle('active', i === targetIdx));
+        }
+      }
+    }
+
     function buildProductCard(p) {
-      const img = getProductImage(p);
+      const allImages = (p.images && p.images.length > 0)
+        ? p.images.map(imgObj => (typeof imgObj === 'string' ? imgObj : imgObj.image_path)).filter(Boolean)
+        : (p.image ? [p.image] : ['https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500&q=80']);
+
+      const hasMultipleImages = allImages.length > 1;
+      const imagesJson = JSON.stringify(allImages).replace(/"/g, '&quot;');
+      const dotsHtml = hasMultipleImages
+        ? `<div class="product-slideshow-dots">${allImages.map((_, i) => `<span class="slide-dot${i === 0 ? ' active' : ''}"></span>`).join('')}</div>`
+        : '';
+
       const meta = [p.material, p.purity].filter(Boolean).join(' · ');
       const badge = p.badge ? `<span class="product-badge${p.badge === 'New' || p.badge === 'Sale' || p.badge === 'Best Seller' ? ' gold' : ''}">${p.badge}</span>` : '';
       const oldPrice = p.old_price ? `<span class="price-old">${formatPrice(p.old_price)}</span>` : '';
       const savePct = p.old_price ? `<span class="price-save">Save ${Math.round((1 - p.price / p.old_price) * 100)}%</span>` : '';
 
       return `<div class="product-card fade-up" onclick="showProductDetail(${p.id})">
-      <div class="product-img">
-        <img src="${img}" alt="${p.name}">
+      <div class="product-img" ${hasMultipleImages ? `data-images="${imagesJson}" onmouseenter="startProductSlideshow(this)" onmouseleave="stopProductSlideshow(this)" onmousemove="scrubProductSlideshow(this, event)"` : ''}>
+        <img src="${allImages[0]}" class="product-card-img" alt="${p.name}">
+        ${dotsHtml}
         ${badge}
         <div class="product-actions">
           <button class="action-btn" onclick="addToWishlist(event, ${p.id})" title="Wishlist">♡</button>
