@@ -24,6 +24,14 @@
       {
         "source": "/order",
         "destination": "/cart.html"
+      },
+      {
+        "source": "/admin",
+        "destination": "/administrator/index.html"
+      },
+      {
+        "source": "/admin/**",
+        "destination": "/administrator/index.html"
       }
     ]
   }
