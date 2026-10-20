@@ -17,8 +17,9 @@ const cleanImageUrl = (raw) => {
 
 const resolveUploadedFilePath = (file) => {
   if (!file) return null;
-  if (typeof file.path === 'string' && (file.path.startsWith('http://') || file.path.startsWith('https://'))) {
-    return file.path;
+  const directUrl = file.secure_url || file.url || file.path;
+  if (typeof directUrl === 'string' && (directUrl.startsWith('http://') || directUrl.startsWith('https://'))) {
+    return directUrl;
   }
   const filename = file.filename || (typeof file.path === 'string' ? path.basename(file.path) : null);
   if (!filename) return null;

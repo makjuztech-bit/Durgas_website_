@@ -218,44 +218,84 @@
               <option value="Best Seller">Best Seller</option>
             </select>
           </div>
-          <div class="form-group full" style="background:#faf8f5; border:1px solid #e0d8cc; padding:16px; border-radius:6px;">
-            <label class="form-label" style="font-size:0.9rem; font-weight:600; color:var(--black); margin-bottom:4px;">
-              📸 Product Images (Add 3–4 Images for Interactive Hover Slideshow)
-            </label>
-            <p style="font-size:0.75rem; color:#666; margin-bottom:12px;">
-              Add multiple angles (Front, Side, Close-up, Back). When customers place their cursor over this product on the website, it will automatically play an interactive slideshow!
+          <div class="form-group full" style="background:#faf8f5; border:1px solid #e0d8cc; padding:18px; border-radius:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+              <label class="form-label" style="font-size:0.95rem; font-weight:700; color:var(--black); margin-bottom:0;">
+                📸 Product Images (Add 2–3 Photos for Multi-Angle View & Hover Slideshow)
+              </label>
+              <span style="font-size:0.75rem; background:#f4ede2; color:var(--gold); padding:2px 8px; border-radius:12px; font-weight:600; border:1px solid #e2d2ba;">
+                Recommended: 2 to 3 photos
+              </span>
+            </div>
+            <p style="font-size:0.78rem; color:#666; margin-bottom:14px; line-height:1.4;">
+              Select 2 to 3 photos from your device (Front Cover, Side Angle, Close-up / Hallmark). Each photo will be automatically saved and displayed in the store gallery and interactive cursor-hover slideshow!
             </p>
 
-            <div style="margin-bottom:14px;">
-              <label class="form-label" style="font-size:0.78rem;">Option 1: Upload Multiple Photos (Select 3-4 files together)</label>
-              <input type="file" class="form-input" id="pImages" multiple accept="image/*" onchange="previewSelectedFiles(this)">
-              <small style="color:var(--gray); font-size:0.7rem; display:block; margin-top:3px;">Tip: Hold Ctrl (or Cmd on Mac) to select multiple files at once.</small>
+            <!-- 4 Dedicated Photo Upload Slots -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:14px;">
+              
+              <!-- Slot 1 -->
+              <div class="photo-slot" style="background:#fff; border:2px solid #dfc79b; border-radius:8px; padding:12px; text-align:center;">
+                <div style="font-size:0.8rem; font-weight:700; color:#8c6d23; margin-bottom:6px;">🌟 Photo 1 (Main Cover) *</div>
+                <div id="slotPreview1" style="width:100%; height:110px; border-radius:6px; background:#faf7f2; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:8px; border:1px dashed #d9cbba;">
+                  <span style="color:#aaa; font-size:0.75rem;">No photo chosen</span>
+                </div>
+                <label style="display:block; background:var(--gold); color:#fff; padding:5px 10px; border-radius:4px; font-size:0.75rem; font-weight:600; cursor:pointer; margin-bottom:6px;">
+                  📁 Choose Photo 1
+                  <input type="file" id="pFileSlot1" accept="image/*" style="display:none;" onchange="handleSlotFileChange(1, this)">
+                </label>
+                <input type="text" class="form-input" id="pImageUrl1" placeholder="or paste image URL" style="font-size:0.72rem; padding:4px 6px;" oninput="handleSlotUrlChange(1, this)">
+              </div>
+
+              <!-- Slot 2 -->
+              <div class="photo-slot" style="background:#fff; border:1px solid #dcd3c7; border-radius:8px; padding:12px; text-align:center;">
+                <div style="font-size:0.8rem; font-weight:700; color:#444; margin-bottom:6px;">📸 Photo 2 (Side / Angle)</div>
+                <div id="slotPreview2" style="width:100%; height:110px; border-radius:6px; background:#faf7f2; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:8px; border:1px dashed #d9cbba;">
+                  <span style="color:#aaa; font-size:0.75rem;">No photo chosen</span>
+                </div>
+                <label style="display:block; background:#555; color:#fff; padding:5px 10px; border-radius:4px; font-size:0.75rem; font-weight:600; cursor:pointer; margin-bottom:6px;">
+                  📁 Choose Photo 2
+                  <input type="file" id="pFileSlot2" accept="image/*" style="display:none;" onchange="handleSlotFileChange(2, this)">
+                </label>
+                <input type="text" class="form-input" id="pImageUrl2" placeholder="or paste image URL" style="font-size:0.72rem; padding:4px 6px;" oninput="handleSlotUrlChange(2, this)">
+              </div>
+
+              <!-- Slot 3 -->
+              <div class="photo-slot" style="background:#fff; border:1px solid #dcd3c7; border-radius:8px; padding:12px; text-align:center;">
+                <div style="font-size:0.8rem; font-weight:700; color:#444; margin-bottom:6px;">📸 Photo 3 (Close-up / Hallmark)</div>
+                <div id="slotPreview3" style="width:100%; height:110px; border-radius:6px; background:#faf7f2; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:8px; border:1px dashed #d9cbba;">
+                  <span style="color:#aaa; font-size:0.75rem;">No photo chosen</span>
+                </div>
+                <label style="display:block; background:#555; color:#fff; padding:5px 10px; border-radius:4px; font-size:0.75rem; font-weight:600; cursor:pointer; margin-bottom:6px;">
+                  📁 Choose Photo 3
+                  <input type="file" id="pFileSlot3" accept="image/*" style="display:none;" onchange="handleSlotFileChange(3, this)">
+                </label>
+                <input type="text" class="form-input" id="pImageUrl3" placeholder="or paste image URL" style="font-size:0.72rem; padding:4px 6px;" oninput="handleSlotUrlChange(3, this)">
+              </div>
+
+              <!-- Slot 4 -->
+              <div class="photo-slot" style="background:#fff; border:1px solid #dcd3c7; border-radius:8px; padding:12px; text-align:center;">
+                <div style="font-size:0.8rem; font-weight:700; color:#444; margin-bottom:6px;">📸 Photo 4 (In-Hand / Back)</div>
+                <div id="slotPreview4" style="width:100%; height:110px; border-radius:6px; background:#faf7f2; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:8px; border:1px dashed #d9cbba;">
+                  <span style="color:#aaa; font-size:0.75rem;">No photo chosen</span>
+                </div>
+                <label style="display:block; background:#555; color:#fff; padding:5px 10px; border-radius:4px; font-size:0.75rem; font-weight:600; cursor:pointer; margin-bottom:6px;">
+                  📁 Choose Photo 4
+                  <input type="file" id="pFileSlot4" accept="image/*" style="display:none;" onchange="handleSlotFileChange(4, this)">
+                </label>
+                <input type="text" class="form-input" id="pImageUrl4" placeholder="or paste image URL" style="font-size:0.72rem; padding:4px 6px;" oninput="handleSlotUrlChange(4, this)">
+              </div>
+
             </div>
 
-            <div>
-              <label class="form-label" style="font-size:0.78rem;">Option 2: Or Enter Direct Image URLs (Cloudinary / Web)</label>
-              <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">
-                <div>
-                  <label style="font-size:0.7rem; color:#555; display:block; margin-bottom:2px;">Image 1 (Main Cover Photo) *</label>
-                  <input type="text" class="form-input" id="pImageUrl1" placeholder="https://... cover photo" oninput="updateUrlPreviews()">
-                </div>
-                <div>
-                  <label style="font-size:0.7rem; color:#555; display:block; margin-bottom:2px;">Image 2 (Angle / Side View)</label>
-                  <input type="text" class="form-input" id="pImageUrl2" placeholder="https://... photo 2" oninput="updateUrlPreviews()">
-                </div>
-                <div>
-                  <label style="font-size:0.7rem; color:#555; display:block; margin-bottom:2px;">Image 3 (Hallmark / Close-up)</label>
-                  <input type="text" class="form-input" id="pImageUrl3" placeholder="https://... photo 3" oninput="updateUrlPreviews()">
-                </div>
-                <div>
-                  <label style="font-size:0.7rem; color:#555; display:block; margin-bottom:2px;">Image 4 (Model / In-Hand View)</label>
-                  <input type="text" class="form-input" id="pImageUrl4" placeholder="https://... photo 4" oninput="updateUrlPreviews()">
-                </div>
-              </div>
+            <!-- Bulk Multi-Upload alternative -->
+            <div style="background:#fff; border:1px solid #e2dad0; border-radius:6px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+              <span style="font-size:0.78rem; color:#555;">💡 <strong>Or select multiple photos together:</strong></span>
+              <input type="file" class="form-input" id="pImages" multiple accept="image/*" style="max-width:320px; font-size:0.75rem;" onchange="handleBulkFilesChange(this)">
             </div>
 
             <div id="imagePreviewContainer" style="display:none; margin-top:14px; padding-top:12px; border-top:1px dashed #d5ccbe;">
-              <div style="font-size:0.75rem; font-weight:600; color:#555; margin-bottom:8px;">Live Image Previews (Will display in this order on cursor hover):</div>
+              <div style="font-size:0.78rem; font-weight:700; color:var(--gold); margin-bottom:8px;">✨ Live Photo Slideshow Preview:</div>
               <div id="imagePreviewGrid" style="display:flex; gap:12px; flex-wrap:wrap;"></div>
             </div>
           </div>
@@ -526,20 +566,82 @@ function generateRandomSku() {
   }
 }
 
+const slotFiles = { 1: null, 2: null, 3: null, 4: null };
+let bulkUploadedFiles = [];
+
+function handleSlotFileChange(slot, input) {
+  if (input.files && input.files[0]) {
+    slotFiles[slot] = input.files[0];
+    const url = URL.createObjectURL(input.files[0]);
+    updateSlotPreview(slot, url);
+  } else {
+    slotFiles[slot] = null;
+    updateSlotPreview(slot, null);
+  }
+  refreshCombinedPreview();
+}
+
+function handleSlotUrlChange(slot, input) {
+  const val = input.value.trim();
+  if (val) {
+    updateSlotPreview(slot, val);
+  } else if (slotFiles[slot]) {
+    updateSlotPreview(slot, URL.createObjectURL(slotFiles[slot]));
+  } else {
+    updateSlotPreview(slot, null);
+  }
+  refreshCombinedPreview();
+}
+
+function updateSlotPreview(slot, url) {
+  const el = document.getElementById(`slotPreview${slot}`);
+  if (!el) return;
+  if (url) {
+    el.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;">`;
+    el.style.border = '2px solid var(--gold)';
+  } else {
+    el.innerHTML = `<span style="color:#aaa; font-size:0.75rem;">No photo chosen</span>`;
+    el.style.border = '1px dashed #d9cbba';
+  }
+}
+
+function handleBulkFilesChange(input) {
+  if (!input.files || !input.files.length) return;
+  bulkUploadedFiles = Array.from(input.files);
+  bulkUploadedFiles.forEach((f, idx) => {
+    const slot = idx + 1;
+    if (slot <= 4) {
+      slotFiles[slot] = f;
+      updateSlotPreview(slot, URL.createObjectURL(f));
+    }
+  });
+  refreshCombinedPreview();
+}
+
+function refreshCombinedPreview() {
+  const allImages = [];
+  for (let s = 1; s <= 4; s++) {
+    const urlInput = document.getElementById(`pImageUrl${s}`)?.value?.trim();
+    if (slotFiles[s]) {
+      allImages.push({ slot: s, url: URL.createObjectURL(slotFiles[s]) });
+    } else if (urlInput) {
+      allImages.push({ slot: s, url: urlInput });
+    }
+  }
+  if (bulkUploadedFiles.length > 4) {
+    bulkUploadedFiles.slice(4).forEach((f, i) => {
+      allImages.push({ slot: i + 5, url: URL.createObjectURL(f) });
+    });
+  }
+  renderPreviewGrid(allImages.map(item => item.url));
+}
+
 function updateUrlPreviews() {
-  const urls = [
-    document.getElementById('pImageUrl1')?.value?.trim(),
-    document.getElementById('pImageUrl2')?.value?.trim(),
-    document.getElementById('pImageUrl3')?.value?.trim(),
-    document.getElementById('pImageUrl4')?.value?.trim(),
-  ].filter(Boolean);
-  renderPreviewGrid(urls);
+  refreshCombinedPreview();
 }
 
 function previewSelectedFiles(input) {
-  if (!input.files || !input.files.length) return;
-  const urls = Array.from(input.files).map(file => URL.createObjectURL(file));
-  renderPreviewGrid(urls);
+  handleBulkFilesChange(input);
 }
 
 function renderPreviewGrid(urls) {
@@ -553,10 +655,10 @@ function renderPreviewGrid(urls) {
   }
   container.style.display = 'block';
   grid.innerHTML = urls.map((u, i) => `
-    <div style="position:relative; width:80px; height:80px; border-radius:6px; overflow:hidden; border:2px solid ${i === 0 ? 'var(--gold)' : '#ddd'}; box-shadow:0 2px 6px rgba(0,0,0,0.08); background:#fff;">
+    <div style="position:relative; width:88px; height:88px; border-radius:8px; overflow:hidden; border:2px solid ${i === 0 ? 'var(--gold)' : '#ccc'}; box-shadow:0 2px 6px rgba(0,0,0,0.1); background:#fff;">
       <img src="${u}" style="width:100%; height:100%; object-fit:cover;">
-      <span style="position:absolute; bottom:0; left:0; right:0; background:${i === 0 ? 'var(--gold)' : 'rgba(0,0,0,0.65)'}; color:#fff; font-size:0.6rem; text-align:center; padding:1px 0; font-weight:600;">
-        ${i === 0 ? 'Cover' : 'Photo ' + (i + 1)}
+      <span style="position:absolute; bottom:0; left:0; right:0; background:${i === 0 ? 'var(--gold)' : 'rgba(0,0,0,0.7)'}; color:#fff; font-size:0.62rem; text-align:center; padding:2px 0; font-weight:700;">
+        ${i === 0 ? '🌟 Cover' : 'Photo ' + (i + 1)}
       </span>
     </div>
   `).join('');
@@ -570,10 +672,17 @@ function resetProductForm() {
   document.getElementById('pTamilName').value = '';
   document.getElementById('pMetalComposition').value = '';
   document.getElementById('pAvailableSizes').value = '';
-  if (document.getElementById('pImageUrl1')) document.getElementById('pImageUrl1').value = '';
-  if (document.getElementById('pImageUrl2')) document.getElementById('pImageUrl2').value = '';
-  if (document.getElementById('pImageUrl3')) document.getElementById('pImageUrl3').value = '';
-  if (document.getElementById('pImageUrl4')) document.getElementById('pImageUrl4').value = '';
+  for (let s = 1; s <= 4; s++) {
+    slotFiles[s] = null;
+    const fileInput = document.getElementById(`pFileSlot${s}`);
+    if (fileInput) fileInput.value = '';
+    const urlInput = document.getElementById(`pImageUrl${s}`);
+    if (urlInput) urlInput.value = '';
+    updateSlotPreview(s, null);
+  }
+  bulkUploadedFiles = [];
+  const bulkInput = document.getElementById('pImages');
+  if (bulkInput) bulkInput.value = '';
   const container = document.getElementById('imagePreviewContainer');
   if (container) container.style.display = 'none';
   const grid = document.getElementById('imagePreviewGrid');
@@ -591,7 +700,6 @@ async function saveProduct(e) {
   e.preventDefault();
   const editId = document.getElementById('editProductId').value;
   const submitBtn = document.getElementById('btnSaveProduct');
-  const origText = submitBtn ? submitBtn.textContent : '';
   if (submitBtn) {
     submitBtn.disabled = true;
     submitBtn.textContent = editId ? 'Updating Product...' : 'Saving Product...';
@@ -613,6 +721,20 @@ async function saveProduct(e) {
   formData.append('stock', document.getElementById('pStock').value);
   formData.append('badge', document.getElementById('pBadge').value);
 
+  // Collect files from individual photo slots
+  const filesToUpload = [];
+  for (let s = 1; s <= 4; s++) {
+    if (slotFiles[s]) filesToUpload.push(slotFiles[s]);
+  }
+  // If bulk picker used and slots were empty, append bulk files
+  if (bulkUploadedFiles.length > 0 && filesToUpload.length === 0) {
+    bulkUploadedFiles.forEach(f => filesToUpload.push(f));
+  }
+  for (const f of filesToUpload) {
+    formData.append('images', f);
+  }
+
+  // Collect URL inputs
   const url1 = document.getElementById('pImageUrl1')?.value?.trim() || '';
   const url2 = document.getElementById('pImageUrl2')?.value?.trim() || '';
   const url3 = document.getElementById('pImageUrl3')?.value?.trim() || '';
@@ -622,9 +744,6 @@ async function saveProduct(e) {
     formData.append('image_urls', JSON.stringify(allUrls));
     formData.append('image_url', allUrls[0]);
   }
-
-  const files = document.getElementById('pImages').files;
-  for (const f of files) formData.append('images', f);
 
   const url = editId ? `/products/${editId}` : '/products';
   const method = editId ? 'PUT' : 'POST';
@@ -644,7 +763,7 @@ async function saveProduct(e) {
       return;
     }
 
-    alert(editId ? 'Product updated successfully!' : 'Product created successfully and published to website!');
+    alert(editId ? 'Product updated successfully!' : 'Product created successfully with all images!');
     resetProductForm();
     showSection('products');
   } catch (err) {
@@ -660,7 +779,6 @@ async function saveProduct(e) {
 
 async function editProduct(id) {
   try {
-    // Switch to section first while keeping form intact
     showSection('add-product', true);
     const titleEl = document.getElementById('productFormTitle');
     if (titleEl) titleEl.textContent = 'Loading Product Details...';
@@ -698,10 +816,15 @@ async function editProduct(id) {
     const imgUrls = imgs.map(i => (typeof i === 'string' ? i : i.image_path)).filter(Boolean);
     if (!imgUrls.length && p.image) imgUrls.push(p.image);
     
-    if (document.getElementById('pImageUrl1')) document.getElementById('pImageUrl1').value = imgUrls[0] || '';
-    if (document.getElementById('pImageUrl2')) document.getElementById('pImageUrl2').value = imgUrls[1] || '';
-    if (document.getElementById('pImageUrl3')) document.getElementById('pImageUrl3').value = imgUrls[2] || '';
-    if (document.getElementById('pImageUrl4')) document.getElementById('pImageUrl4').value = imgUrls[3] || '';
+    for (let s = 1; s <= 4; s++) {
+      slotFiles[s] = null;
+      const fileInput = document.getElementById(`pFileSlot${s}`);
+      if (fileInput) fileInput.value = '';
+      const urlInput = document.getElementById(`pImageUrl${s}`);
+      const existingUrl = imgUrls[s - 1] || '';
+      if (urlInput) urlInput.value = existingUrl;
+      updateSlotPreview(s, existingUrl || null);
+    }
     renderPreviewGrid(imgUrls);
 
     window.scrollTo({ top: 0, behavior: 'smooth' });

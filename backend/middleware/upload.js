@@ -21,10 +21,14 @@ if (cloudName && apiKey && apiSecret) {
 
   storage = new CloudinaryStorage({
     cloudinary,
-    params: {
-      folder:          'durgas_products',
-      allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
-      public_id:       (req, file) => `durgas_${Date.now()}_${Math.round(Math.random() * 1e9)}`,
+    params: async (req, file) => {
+      const rawExt = path.extname(file.originalname || '').replace('.', '').toLowerCase();
+      const format = ['jpg', 'jpeg', 'png', 'webp'].includes(rawExt) ? rawExt : 'jpg';
+      return {
+        folder: 'durgas_products',
+        format,
+        public_id: `durgas_${Date.now()}_${Math.round(Math.random() * 1e9)}`,
+      };
     },
   });
 } else {
@@ -35,26 +39,29 @@ if (cloudName && apiKey && apiSecret) {
   storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, uploadDir),
     filename:    (req, file, cb) => {
-      const ext  = path.extname(file.originalname).toLowerCase();
+      const ext  = (path.extname(file.originalname) || '.jpg').toLowerCase();
       const name = `durgas_${Date.now()}_${Math.round(Math.random() * 1e9)}${ext}`;
       cb(null, name);
     },
   });
 }
 
-// File type filter — only allow safe image types by MIME type
+// File type filter — allow all common image types and extensions
 const fileFilter = (req, file, cb) => {
-  const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (allowed.includes(file.mimetype)) {
+  const ext = path.extname(file.originalname || '').toLowerCase();
+  const validExts = ['.jpg', '.jpeg', '.png', '.webp', '.jfif', '.bmp', '.gif', '.avif'];
+  const isImageMime = (file.mimetype || '').toLowerCase().startsWith('image/');
+
+  if (isImageMime || validExts.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Only JPEG, PNG, and WebP images are allowed.'), false);
+    cb(new Error('Only image files (JPG, PNG, WebP) are allowed.'), false);
   }
 };
 
 const upload = multer({
   storage,
-  limits:     { fileSize: 5 * 1024 * 1024 }, // 5 MB per file
+  limits:     { fileSize: 10 * 1024 * 1024 }, // 10 MB per file
   fileFilter,
 });
 
