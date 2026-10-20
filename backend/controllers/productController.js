@@ -1,4 +1,29 @@
+const path = require('path');
 const db = require('../config/db');
+
+const getBackendBase = () => {
+  return (process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || 'https://durgas-backend.onrender.com').replace(/\/+$/, '');
+};
+
+const cleanImageUrl = (raw) => {
+  if (!raw || typeof raw !== 'string') return raw || null;
+  const trimmed = raw.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
+    return trimmed;
+  }
+  const filename = trimmed.split(/[\\/]/).pop();
+  return `${getBackendBase()}/uploads/${filename}`;
+};
+
+const resolveUploadedFilePath = (file) => {
+  if (!file) return null;
+  if (typeof file.path === 'string' && (file.path.startsWith('http://') || file.path.startsWith('https://'))) {
+    return file.path;
+  }
+  const filename = file.filename || (typeof file.path === 'string' ? path.basename(file.path) : null);
+  if (!filename) return null;
+  return `${getBackendBase()}/uploads/${filename}`;
+};
 
 // In-memory cache for ultra-fast response times (<10ms)
 const productCache = new Map();
@@ -55,11 +80,22 @@ const getBatchProductImages = (productIds) => {
   });
 };
 
-const formatProduct = (product, images) => ({
-  ...product,
-  images: images || [],
-  image: images?.[0]?.image_path || null,
-});
+const formatProduct = (product, images) => {
+  const formattedImages = (images || []).map(img => {
+    const rawPath = typeof img === 'string' ? img : img.image_path;
+    const cleaned = cleanImageUrl(rawPath);
+    return typeof img === 'string' ? cleaned : { ...img, image_path: cleaned };
+  });
+
+  const primary = formattedImages.find(i => i.is_primary) || formattedImages[0];
+  const mainImage = primary ? (typeof primary === 'string' ? primary : primary.image_path) : cleanImageUrl(product.image);
+
+  return {
+    ...product,
+    images: formattedImages,
+    image: mainImage || null,
+  };
+};
 
 exports.getProducts = (req, res) => {
   const cacheKey = JSON.stringify(req.query || {});
@@ -239,11 +275,14 @@ exports.addProduct = (req, res) => {
 
       if (files.length) {
         files.forEach((file, i) => {
-          imageValues.push([
-            productId,
-            file.path || ('/uploads/' + file.filename),
-            i === 0,
-          ]);
+          const imgUrl = resolveUploadedFilePath(file);
+          if (imgUrl) {
+            imageValues.push([
+              productId,
+              imgUrl,
+              i === 0,
+            ]);
+          }
         });
       }
 
@@ -359,11 +398,14 @@ exports.updateProduct = (req, res) => {
 
       if (files.length) {
         files.forEach((file, i) => {
-          imageValues.push([
-            req.params.id,
-            file.path || ('/uploads/' + file.filename),
-            i === 0,
-          ]);
+          const imgUrl = resolveUploadedFilePath(file);
+          if (imgUrl) {
+            imageValues.push([
+              req.params.id,
+              imgUrl,
+              i === 0,
+            ]);
+          }
         });
       }
 

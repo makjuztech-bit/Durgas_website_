@@ -330,7 +330,14 @@ async function loadProductDetail(idOrSku) {
     if (priceEl) priceEl.innerHTML = priceHtml;
 
     // Gallery Images
-    const images = (p.images && p.images.length) ? p.images : [{ image_path: getProductImage(p) }];
+    const rawImgs = (p.images && p.images.length) ? p.images : [{ image_path: getProductImage(p) }];
+    const images = rawImgs.map(img => {
+      const pathVal = typeof img === 'string' ? img : img.image_path;
+      return {
+        ...(typeof img === 'object' ? img : {}),
+        image_path: typeof resolveProductImageUrl === 'function' ? resolveProductImageUrl(pathVal) : pathVal
+      };
+    });
     const mainImg = document.getElementById('mainGalleryImg');
     if (mainImg) {
       mainImg.src = images[0].image_path;

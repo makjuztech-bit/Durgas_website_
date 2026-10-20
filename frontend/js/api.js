@@ -37,9 +37,8 @@ function formatPrice(n) {
 }
 
 function getProductImage(p) {
-  if (p.image) return p.image;
-  if (p.images?.length) return p.images[0].image_path;
-  return 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500&q=80';
+  const img = p.image || (p.images?.length ? (typeof p.images[0] === 'string' ? p.images[0] : p.images[0].image_path) : null);
+  return resolveProductImageUrl(img);
 }
 
 function renderStars(rating = 5) {
@@ -119,10 +118,20 @@ function scrubProductSlideshow(container, event) {
   }
 }
 
+function resolveProductImageUrl(url) {
+  if (!url || typeof url !== 'string') return 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500&q=80';
+  const trimmed = url.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) return trimmed;
+  const filename = trimmed.split(/[\\/]/).pop();
+  const base = (typeof BACKEND_URL !== 'undefined' && BACKEND_URL) ? BACKEND_URL.replace(/\/+$/, '') : 'https://durgas-backend.onrender.com';
+  return `${base}/uploads/${filename}`;
+}
+
 function buildProductCard(p) {
-  const allImages = (p.images && p.images.length > 0)
+  const rawImages = (p.images && p.images.length > 0)
     ? p.images.map(imgObj => (typeof imgObj === 'string' ? imgObj : imgObj.image_path)).filter(Boolean)
     : (p.image ? [p.image] : ['https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500&q=80']);
+  const allImages = rawImages.map(resolveProductImageUrl);
 
   const hasMultipleImages = allImages.length > 1;
   const imagesJson = JSON.stringify(allImages).replace(/"/g, '&quot;');

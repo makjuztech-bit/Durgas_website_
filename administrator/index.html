@@ -466,12 +466,23 @@ async function loadDashboard() {
     </tr>`).join('') || '<tr><td colspan="6">No orders yet</td></tr>';
 }
 
+function resolveImageUrl(url) {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) return trimmed;
+  const filename = trimmed.split(/[\\/]/).pop();
+  const base = (typeof BACKEND_URL !== 'undefined' && BACKEND_URL) ? BACKEND_URL.replace(/\/+$/, '') : 'https://durgas-backend.onrender.com';
+  return `${base}/uploads/${filename}`;
+}
+
 async function loadProducts() {
   const res = await apiFetch('/products/admin/all');
   const products = await res.json();
-  document.getElementById('productsTable').innerHTML = products.map(p => `
+  document.getElementById('productsTable').innerHTML = products.map(p => {
+    const thumb = resolveImageUrl(p.image);
+    return `
     <tr>
-      <td>${p.image ? `<img src="${p.image}" class="product-thumb">` : '—'}</td>
+      <td>${thumb ? `<img src="${thumb}" class="product-thumb" onerror="this.style.opacity='0.3'">` : '—'}</td>
       <td><strong>${p.name}</strong><br><small style="color:var(--gray)">SKU: ${p.sku || ('DJ-' + p.id)}</small></td>
       <td>${p.category_name || '—'}</td>
       <td>${formatPrice(p.price)}</td>
@@ -481,7 +492,8 @@ async function loadProducts() {
         <button class="btn btn-edit" onclick="editProduct(${p.id})">Edit</button>
         <button class="btn btn-danger" onclick="deleteProduct(${p.id})">Delete</button>
       </td>
-    </tr>`).join('') || '<tr><td colspan="7">No products yet. Add your first product!</td></tr>';
+    </tr>`;
+  }).join('') || '<tr><td colspan="7">No products yet. Add your first product!</td></tr>';
 }
 
 async function loadCategorySelect(selectedId) {
@@ -556,7 +568,10 @@ function resetProductForm() {
   const skuEl = document.getElementById('pSku');
   if (skuEl) skuEl.style.borderColor = '';
   const submitBtn = document.getElementById('btnSaveProduct');
-  if (submitBtn) submitBtn.textContent = 'Save Product';
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Save Product';
+  }
 }
 
 async function saveProduct(e) {
@@ -613,7 +628,6 @@ async function saveProduct(e) {
           skuEl.focus();
         }
       }
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origText; }
       return;
     }
 
@@ -624,7 +638,11 @@ async function saveProduct(e) {
   } catch (err) {
     console.error('saveProduct error:', err);
     alert('An unexpected error occurred: ' + err.message);
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origText; }
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = editId ? 'Update Product (Save Changes)' : 'Save Product';
+    }
   }
 }
 
