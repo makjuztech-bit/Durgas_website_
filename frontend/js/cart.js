@@ -500,7 +500,7 @@ function submitOrderViaWhatsApp() {
 
   // Record order asynchronously in background
   try {
-    fetch('/api/orders/whatsapp', {
+    fetch(API + '/orders/whatsapp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -86,9 +86,11 @@ exports.getDashboard = async (req, res) => {
       // Recent orders (always last 10, unaffected by date filter)
       db.query(`
         SELECT o.id, o.order_number, o.total_amount, o.status, o.payment_method,
-               o.payment_status, o.created_at, u.full_name, u.email
+               o.payment_status, o.created_at,
+               COALESCE(u.full_name, o.customer_name, 'Guest Customer') AS full_name,
+               COALESCE(u.email, o.customer_email) AS email
         FROM orders o
-        JOIN users u ON o.user_id = u.id
+        LEFT JOIN users u ON o.user_id = u.id
         ORDER BY o.created_at DESC
         LIMIT 10
       `),

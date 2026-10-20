@@ -612,7 +612,6 @@ exports.updateOrderStatus = async (req, res) => {
     const orders = await query(connection, 'SELECT status FROM orders WHERE id = ? FOR UPDATE', [orderId]);
     if (!orders.length) {
       await query(connection, 'ROLLBACK');
-      connection.release();
       return res.status(404).json({ message: 'Order not found' });
     }
     

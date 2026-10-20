@@ -7,6 +7,24 @@
       "**/node_modules/**"
     ],
     "cleanUrls": true,
-    "trailingSlash": false
+    "trailingSlash": false,
+    "rewrites": [
+      {
+        "source": "/product/**",
+        "destination": "/product-details.html"
+      },
+      {
+        "source": "/product",
+        "destination": "/product-details.html"
+      },
+      {
+        "source": "/checkout",
+        "destination": "/cart.html"
+      },
+      {
+        "source": "/order",
+        "destination": "/cart.html"
+      }
+    ]
   }
 }

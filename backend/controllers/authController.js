@@ -333,7 +333,6 @@ exports.lookupAccount = (req, res) => {
       message: 'Account found',
       full_name: user.full_name,
       masked_email: maskedEmail,
-      email: user.email,
     });
   });
 };

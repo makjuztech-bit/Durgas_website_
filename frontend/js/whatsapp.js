@@ -8,9 +8,18 @@ const DURGAS_WHATSAPP = {
   shopName: 'Durgas Jewellery',
   deliveryCharge: 0,
   
+  getApiUrl(endpoint) {
+    if (typeof API !== 'undefined' && API) {
+      return API + endpoint;
+    }
+    const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const base = isLocal ? (window.location.port !== '5000' ? 'http://localhost:5000' : '') : 'https://durgas-backend.onrender.com';
+    return (base ? base.replace(/\/+$/, '') : '') + '/api' + endpoint;
+  },
+
   async init() {
     try {
-      const res = await fetch('/api/settings');
+      const res = await fetch(this.getApiUrl('/settings'));
       if (res.ok) {
         const data = await res.json();
         if (data.whatsapp_number) this.number = data.whatsapp_number.replace(/\D/g, '');
@@ -141,7 +150,7 @@ const DURGAS_WHATSAPP = {
    */
   async recordInquiry({ customerName, customerPhone, shippingAddress, items, totalAmount, notes }) {
     try {
-      await fetch('/api/orders/whatsapp', {
+      await fetch(this.getApiUrl('/orders/whatsapp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
