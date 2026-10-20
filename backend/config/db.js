@@ -20,11 +20,12 @@ let useLocalFallback = false;
 
 let connectionString = process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL || process.env.SUPABASE_DB_URL;
 
-// Auto-map direct Supabase host (IPv6 only) to Supabase IPv4 Pooler host for Render / cloud hosts without IPv6
-if (connectionString && connectionString.includes('db.xuoedlqfzlukddpspuls.supabase.co')) {
+// Auto-map direct Supabase host (IPv6 only) or session pooler (5432 limit 15) to Supabase IPv4 Transaction Pooler (6543)
+if (connectionString && (connectionString.includes('xuoedlqfzlukddpspuls.supabase.co') || connectionString.includes('aws-0-ap-southeast-2.pooler.supabase.com:5432'))) {
   connectionString = connectionString
-    .replace('postgres:Sabari%401412@db.xuoedlqfzlukddpspuls.supabase.co:5432', 'postgres.xuoedlqfzlukddpspuls:Sabari%401412@aws-0-ap-southeast-2.pooler.supabase.com:5432')
-    .replace('postgres:Sabari%401412@db.xuoedlqfzlukddpspuls.supabase.co', 'postgres.xuoedlqfzlukddpspuls:Sabari%401412@aws-0-ap-southeast-2.pooler.supabase.com:5432');
+    .replace(/@db\.xuoedlqfzlukddpspuls\.supabase\.co(:5432)?/g, '@aws-0-ap-southeast-2.pooler.supabase.com:6543')
+    .replace(/@aws-0-ap-southeast-2\.pooler\.supabase\.com(:5432)?/g, '@aws-0-ap-southeast-2.pooler.supabase.com:6543')
+    .replace(/\/\/postgres(?!\.xuoedlqfzlukddpspuls):/g, '//postgres.xuoedlqfzlukddpspuls:');
 }
 
 let pool = null;
