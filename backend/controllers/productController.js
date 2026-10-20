@@ -160,18 +160,19 @@ exports.getProducts = (req, res) => {
 };
 
 exports.getProductById = (req, res) => {
-  const param = req.params.id;
+  const param = String(req.params.id || '').trim();
   const isNumeric = /^\d+$/.test(param);
   const sql = `
     SELECT p.*, c.name AS category_name, c.slug AS category_slug
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
-    WHERE ${isNumeric ? '(p.id = ? OR p.sku = ?)' : '(p.sku = ? OR p.id::text = ?)'}
+    WHERE ${isNumeric ? '(p.id = ? OR p.sku = ?)' : 'p.sku = ?'}
   `;
+  const params = isNumeric ? [parseInt(param, 10), param] : [param];
 
-  db.query(sql, [param, param], async (err, rows) => {
+  db.query(sql, params, async (err, rows) => {
     if (err) return res.status(500).json({ message: err.message });
-    if (!rows.length) return res.status(404).json({ message: 'Product not found' });
+    if (!rows || !rows.length) return res.status(404).json({ message: 'Product not found' });
 
     try {
       const images = await getProductImages(rows[0].id);
@@ -183,19 +184,21 @@ exports.getProductById = (req, res) => {
 };
 
 exports.getRelatedProducts = (req, res) => {
-  const param = req.params.id;
+  const param = String(req.params.id || '').trim();
   const isNumeric = /^\d+$/.test(param);
   
-  const findSql = `SELECT id, category_id FROM products WHERE ${isNumeric ? '(id = ? OR sku = ?)' : '(sku = ? OR id::text = ?)'}`;
-  db.query(findSql, [param, param], (err, target) => {
-    if (err || !target.length) return res.json([]);
+  const findSql = `SELECT id, category_id FROM products WHERE ${isNumeric ? '(id = ? OR sku = ?)' : 'sku = ?'}`;
+  const params = isNumeric ? [parseInt(param, 10), param] : [param];
+
+  db.query(findSql, params, (err, target) => {
+    if (err || !target || !target.length) return res.json([]);
     const { id, category_id } = target[0];
 
     const sql = `
       SELECT p.*, c.name AS category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.category_id = ? AND p.id != ? AND p.is_active = TRUE
+      WHERE p.category_id = ? AND p.id != ? AND p.is_active = 1
       ORDER BY p.price ASC
       LIMIT 6
     `;

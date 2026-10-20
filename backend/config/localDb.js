@@ -377,6 +377,7 @@ function adaptSqlForSqlite(sql, params = []) {
     .replace(/\bJSONB\b/gi, 'TEXT')
     .replace(/\bTIMESTAMPTZ\b/gi, 'TEXT')
     .replace(/\bBIGSERIAL\b/gi, 'INTEGER PRIMARY KEY AUTOINCREMENT')
+    .replace(/::[a-z0-9_]+\b/gi, '')
     .trim();
 
   // If placeholders are $1, $2 etc., convert to ?

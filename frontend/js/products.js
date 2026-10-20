@@ -237,7 +237,15 @@ async function loadShopProducts() {
 async function loadProductDetail(idOrSku) {
   if (!idOrSku) return;
   try {
-    const res = await fetch(API + '/products/' + encodeURIComponent(idOrSku));
+    let res = await fetch(API + '/products/' + encodeURIComponent(idOrSku));
+    if (!res.ok && typeof idOrSku === 'string' && idOrSku.includes('-')) {
+      // If SKU lookup returned 404, check if it ends with an ID
+      const digits = idOrSku.match(/\d+$/);
+      if (digits) {
+        const retryRes = await fetch(API + '/products/' + encodeURIComponent(digits[0]));
+        if (retryRes.ok) res = retryRes;
+      }
+    }
     if (!res.ok) {
       const container = document.querySelector('.product-detail');
       if (container) {
@@ -836,13 +844,14 @@ function updateProductSeo(p) {
 
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Resolve product identifier from pathname (/product/DJ-FIV-004) or query parameter (?id=...)
+  // 1. Resolve product identifier from pathname (/product/DJ-FIV-004) or query parameter (?id=... or ?sku=...)
   const params = new URLSearchParams(window.location.search);
-  let productId = params.get('id');
-  if (!productId && window.location.pathname.startsWith('/product/')) {
-    const parts = window.location.pathname.split('/').filter(Boolean);
-    if (parts.length >= 2 && parts[0] === 'product') {
-      productId = decodeURIComponent(parts[1]);
+  let productId = params.get('id') || params.get('sku');
+  if (!productId) {
+    const path = window.location.pathname;
+    const match = path.match(/\/product(?:-details(?:\.html)?)?\/([^/?#]+)/i);
+    if (match && match[1]) {
+      productId = decodeURIComponent(match[1]);
     }
   }
 
