@@ -384,17 +384,35 @@ function adaptSqlForSqlite(sql, params = []) {
     cleanSql = cleanSql.replace(/\$\d+/g, '?');
   }
 
-  // Flatten nested arrays if passed for IN clauses
+  // Handle VALUES ? multi-row insert patterns
+  if (/\bVALUES\s+\?/i.test(cleanSql)) {
+    const nestedArray = params.find(p => Array.isArray(p) && p.length > 0 && Array.isArray(p[0]));
+    if (nestedArray) {
+      const rowPlaceholders = nestedArray.map(r => `(${r.map(() => '?').join(', ')})`).join(', ');
+      cleanSql = cleanSql.replace(/\bVALUES\s+\?/i, `VALUES ${rowPlaceholders}`);
+    }
+  }
+
+  // Flatten nested arrays if passed for IN clauses or batch inserts
   const flatParams = [];
   for (const p of params) {
     if (Array.isArray(p)) {
-      flatParams.push(...p);
+      for (const item of p) {
+        if (Array.isArray(item)) {
+          flatParams.push(...item);
+        } else {
+          flatParams.push(item);
+        }
+      }
     } else {
       flatParams.push(p);
     }
   }
 
-  return { sql: cleanSql, params: flatParams };
+  // Convert booleans to 1 / 0 because node:sqlite rejects JavaScript booleans
+  const cleanParams = flatParams.map(p => (typeof p === 'boolean' ? (p ? 1 : 0) : p));
+
+  return { sql: cleanSql, params: cleanParams };
 }
 
 function executeLocalQuery(sql, params = [], callback) {

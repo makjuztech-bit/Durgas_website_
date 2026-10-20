@@ -278,9 +278,15 @@ exports.addProduct = (req, res) => {
         return res.status(201).json({ message: 'Product created', id: productId });
       }
 
+      const placeholders = imageValues.map(() => '(?, ?, ?)').join(', ');
+      const flatParams = [];
+      imageValues.forEach(row => {
+        flatParams.push(row[0], row[1], Boolean(row[2]));
+      });
+
       db.query(
-        'INSERT INTO product_images (product_id, image_path, is_primary) VALUES ?',
-        [imageValues],
+        `INSERT INTO product_images (product_id, image_path, is_primary) VALUES ${placeholders}`,
+        flatParams,
         (imgErr) => {
           clearProductCache();
           if (imgErr) return res.status(500).json({ message: 'Product created but images failed to save: ' + imgErr.message });
@@ -393,9 +399,15 @@ exports.updateProduct = (req, res) => {
       }
 
       db.query('DELETE FROM product_images WHERE product_id = ?', [req.params.id], () => {
+        const placeholders = imageValues.map(() => '(?, ?, ?)').join(', ');
+        const flatParams = [];
+        imageValues.forEach(row => {
+          flatParams.push(row[0], row[1], Boolean(row[2]));
+        });
+
         db.query(
-          'INSERT INTO product_images (product_id, image_path, is_primary) VALUES ?',
-          [imageValues],
+          `INSERT INTO product_images (product_id, image_path, is_primary) VALUES ${placeholders}`,
+          flatParams,
           (imgErr) => {
             clearProductCache();
             if (imgErr) return res.status(500).json({ message: 'Product updated but new images failed to save: ' + imgErr.message });
