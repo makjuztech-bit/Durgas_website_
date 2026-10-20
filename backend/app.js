@@ -83,6 +83,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   maxAge: '7d',
   dotfiles: 'deny',
 }));
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads'), {
+  maxAge: '7d',
+  dotfiles: 'deny',
+}));
 
 app.use('/api', apiLimiter);
 app.use('/api/auth/login', authLimiter);

@@ -71,8 +71,10 @@ const getBatchProductImages = (productIds) => {
         }
         const map = {};
         (rows || []).forEach(r => {
-          if (!map[r.product_id]) map[r.product_id] = [];
-          map[r.product_id].push(r);
+          const key = String(r.product_id);
+          if (!map[key]) map[key] = [];
+          map[key].push(r);
+          map[r.product_id] = map[key];
         });
         resolve(map);
       }

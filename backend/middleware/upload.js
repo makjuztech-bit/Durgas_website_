@@ -4,19 +4,19 @@ const fs = require('fs');
 
 let storage;
 
-// Use Cloudinary if credentials are provided; otherwise fall back to local disk storage
-if (
-  process.env.CLOUDINARY_CLOUD_NAME &&
-  process.env.CLOUDINARY_API_KEY &&
-  process.env.CLOUDINARY_API_SECRET
-) {
+// Use Cloudinary for permanent CDN storage; fall back to local disk storage if Cloudinary fails
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'axnxeomx';
+const apiKey = process.env.CLOUDINARY_API_KEY || '169591887322584';
+const apiSecret = process.env.CLOUDINARY_API_SECRET || 'Cuel0EoOsDLM7TxnrSyJcFwCbNo';
+
+if (cloudName && apiKey && apiSecret) {
   const { CloudinaryStorage } = require('multer-storage-cloudinary');
   const cloudinary = require('cloudinary').v2;
 
   cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key:    process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
+    cloud_name: cloudName,
+    api_key:    apiKey,
+    api_secret: apiSecret,
   });
 
   storage = new CloudinaryStorage({

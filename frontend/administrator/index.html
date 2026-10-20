@@ -497,11 +497,24 @@ async function loadProducts() {
 }
 
 async function loadCategorySelect(selectedId) {
-  const res = await apiFetch('/categories');
-  categories = await res.json();
-  document.getElementById('pCategory').innerHTML = categories.map(c =>
+  try {
+    if (!categories || !categories.length) {
+      const res = await apiFetch('/categories');
+      if (res.ok) categories = await res.json();
+    }
+  } catch (e) {
+    console.error('Failed to fetch categories:', e);
+  }
+  const el = document.getElementById('pCategory');
+  if (!el) return;
+  if (!categories || !categories.length) {
+    el.innerHTML = '<option value="">-- No Categories Available --</option>';
+    return;
+  }
+  el.innerHTML = categories.map(c =>
     `<option value="${c.id}" ${selectedId && String(selectedId) === String(c.id) ? 'selected' : ''}>${c.name}</option>`
   ).join('');
+  if (selectedId) el.value = String(selectedId);
 }
 
 function generateRandomSku() {
@@ -634,7 +647,6 @@ async function saveProduct(e) {
     alert(editId ? 'Product updated successfully!' : 'Product created successfully and published to website!');
     resetProductForm();
     showSection('products');
-    loadProducts();
   } catch (err) {
     console.error('saveProduct error:', err);
     alert('An unexpected error occurred: ' + err.message);
