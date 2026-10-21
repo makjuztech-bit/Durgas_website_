@@ -21,16 +21,39 @@ let poolInitError = null;
 let connectionError = null;
 let reconnectTimer = null;
 
-let rawConnectionString = process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL || process.env.SUPABASE_DB_URL || 'postgresql://postgres.xuoedlqfzlukddpspuls:Sabari%401412@aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres';
-let connectionString = (rawConnectionString || '').trim().replace(/^["']+|["']+$/g, '');
+const defaultDbUrl = 'postgresql://postgres.xuoedlqfzlukddpspuls:Sabari%401412@aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres';
 
-// Auto-map direct Supabase host (IPv6 only) or session pooler (5432 limit 15) to Supabase IPv4 Transaction Pooler (6543)
-if (connectionString && (connectionString.includes('xuoedlqfzlukddpspuls.supabase.co') || connectionString.includes('aws-0-ap-southeast-2.pooler.supabase.com:5432'))) {
-  connectionString = connectionString
-    .replace(/@db\.xuoedlqfzlukddpspuls\.supabase\.co(:5432)?/g, '@aws-0-ap-southeast-2.pooler.supabase.com:6543')
-    .replace(/@aws-0-ap-southeast-2\.pooler\.supabase\.com(:5432)?/g, '@aws-0-ap-southeast-2.pooler.supabase.com:6543')
-    .replace(/\/\/postgres(?!\.xuoedlqfzlukddpspuls):/g, '//postgres.xuoedlqfzlukddpspuls:');
+function resolveDatabaseUrl() {
+  const candidates = [
+    process.env.DATABASE_URL,
+    process.env.SUPABASE_DATABASE_URL,
+    process.env.SUPABASE_DB_URL,
+    defaultDbUrl,
+  ];
+
+  for (let candidate of candidates) {
+    if (!candidate || typeof candidate !== 'string') continue;
+    let str = candidate.trim().replace(/^["']+|["']+$/g, '');
+    if (str.includes('[YOUR-PASSWORD]') || str.includes('[PROJECT-REF]') || str.includes('[YOUR_')) {
+      continue;
+    }
+    // Auto-map direct Supabase host (IPv6 only) or session pooler (5432) to Supabase IPv4 Transaction Pooler (6543)
+    if (str.includes('xuoedlqfzlukddpspuls.supabase.co') || str.includes('aws-0-ap-southeast-2.pooler.supabase.com:5432')) {
+      str = str
+        .replace(/@db\.xuoedlqfzlukddpspuls\.supabase\.co(:5432)?/g, '@aws-0-ap-southeast-2.pooler.supabase.com:6543')
+        .replace(/@aws-0-ap-southeast-2\.pooler\.supabase\.com(:5432)?/g, '@aws-0-ap-southeast-2.pooler.supabase.com:6543')
+        .replace(/\/\/postgres(?!\.xuoedlqfzlukddpspuls):/g, '//postgres.xuoedlqfzlukddpspuls:');
+    }
+    try {
+      return validateDatabaseUrl(str);
+    } catch (e) {
+      // Try next candidate
+    }
+  }
+  return defaultDbUrl;
 }
+
+let connectionString = resolveDatabaseUrl();
 
 let pool = null;
 if (connectionString) {
