@@ -1,35 +1,32 @@
 const db = require('../config/db');
 
-exports.getDashboardStats = (req, res) => {
-  const queries = {
-    totalProducts: 'SELECT COUNT(*) AS count FROM products',
-    totalOrders: 'SELECT COUNT(*) AS count FROM orders',
-    totalCustomers: "SELECT COUNT(*) AS count FROM users WHERE role = 'customer'",
-    totalRevenue: "SELECT COALESCE(SUM(total_amount), 0) AS total FROM orders WHERE status != 'cancelled'",
-  };
+exports.getDashboardStats = async (req, res) => {
+  try {
+    const [productsRes, ordersRes, customersRes, revenueRes] = await Promise.all([
+      db.query('SELECT COUNT(*) AS count FROM products'),
+      db.query('SELECT COUNT(*) AS count FROM orders'),
+      db.query("SELECT COUNT(*) AS count FROM users WHERE role = 'customer'"),
+      db.query("SELECT COALESCE(SUM(total_amount), 0) AS total FROM orders WHERE status != 'cancelled'"),
+    ]);
 
-  const stats = {};
-  const keys = Object.keys(queries);
-  let completed = 0;
+    const totalProducts = productsRes && productsRes[0] ? (Number(productsRes[0].count) || 0) : 0;
+    const totalOrders = ordersRes && ordersRes[0] ? (Number(ordersRes[0].count) || 0) : 0;
+    const totalCustomers = customersRes && customersRes[0] ? (Number(customersRes[0].count) || 0) : 0;
+    const totalRevenue = revenueRes && revenueRes[0] ? (parseFloat(revenueRes[0].total) || 0) : 0;
 
-  keys.forEach((key) => {
-    db.query(queries[key], (err, rows) => {
-      if (err) return res.status(500).json({ message: err.message });
-      stats[key] = key === 'totalRevenue' ? parseFloat(rows[0].total) : rows[0].count;
-      completed++;
-      if (completed === keys.length) {
-        res.json({
-          totalProducts: stats.totalProducts,
-          totalOrders: stats.totalOrders,
-          totalCustomers: stats.totalCustomers,
-          totalRevenue: stats.totalRevenue,
-        });
-      }
+    return res.json({
+      totalProducts,
+      totalOrders,
+      totalCustomers,
+      totalRevenue,
     });
-  });
+  } catch (err) {
+    if (res.headersSent) return;
+    return res.status(500).json({ message: err.message || 'Failed to fetch dashboard statistics' });
+  }
 };
 
-exports.getReviews = (req, res) => {
+exports.getReviews = async (req, res) => {
   const sql = `
     SELECT r.*, p.name AS product_name
     FROM reviews r
@@ -37,24 +34,29 @@ exports.getReviews = (req, res) => {
     ORDER BY r.created_at DESC
   `;
 
-  db.query(sql, (err, rows) => {
-    if (err) return res.status(500).json({ message: err.message });
-    res.json(rows);
-  });
+  try {
+    const rows = await db.query(sql);
+    return res.json(rows || []);
+  } catch (err) {
+    if (res.headersSent) return;
+    return res.status(500).json({ message: err.message });
+  }
 };
 
-exports.getProductReviews = (req, res) => {
-  db.query(
-    "SELECT * FROM reviews WHERE product_id = ? AND (status IS NULL OR status = 'approved') ORDER BY created_at DESC",
-    [req.params.productId],
-    (err, rows) => {
-      if (err) return res.status(500).json({ message: err.message });
-      res.json(rows);
-    }
-  );
+exports.getProductReviews = async (req, res) => {
+  try {
+    const rows = await db.query(
+      "SELECT * FROM reviews WHERE product_id = ? AND (status IS NULL OR status = 'approved') ORDER BY created_at DESC",
+      [req.params.productId]
+    );
+    return res.json(rows || []);
+  } catch (err) {
+    if (res.headersSent) return;
+    return res.status(500).json({ message: err.message });
+  }
 };
 
-exports.addReview = (req, res) => {
+exports.addReview = async (req, res) => {
   const { product_id, rating, reviewer_name, review_text } = req.body || {};
   const parsedProductId = parseInt(product_id, 10);
   if (!parsedProductId) {
@@ -74,30 +76,30 @@ exports.addReview = (req, res) => {
   const userId = req.user ? req.user.id : null;
   const cleanName = (reviewer_name || (req.user ? (req.user.full_name || req.user.name) : 'Verified Customer')).trim();
 
-  // Verify product exists and is active
-  db.query('SELECT id, name FROM products WHERE id = ?', [parsedProductId], (checkErr, prodRows) => {
-    if (checkErr) return res.status(500).json({ message: checkErr.message });
-    if (!prodRows.length) return res.status(404).json({ message: 'Product not found.' });
+  try {
+    const prodRows = await db.query('SELECT id, name FROM products WHERE id = ?', [parsedProductId]);
+    if (!prodRows || !prodRows.length) return res.status(404).json({ message: 'Product not found.' });
 
     const sql = `
       INSERT INTO reviews (product_id, user_id, reviewer_name, rating, review_text, created_at, status)
       VALUES (?, ?, ?, ?, ?, NOW(), 'approved')
     `;
 
-    db.query(sql, [parsedProductId, userId, cleanName, parsedRating, cleanReviewText], (insErr, result) => {
-      if (insErr) return res.status(500).json({ message: 'Failed to record review: ' + insErr.message });
-      res.status(201).json({
-        message: 'Review submitted successfully',
-        review: {
-          id: result.insertId,
-          product_id: parsedProductId,
-          user_id: userId,
-          reviewer_name: cleanName,
-          rating: parsedRating,
-          review_text: cleanReviewText,
-          created_at: new Date().toISOString()
-        }
-      });
+    const result = await db.query(sql, [parsedProductId, userId, cleanName, parsedRating, cleanReviewText]);
+    return res.status(201).json({
+      message: 'Review submitted successfully',
+      review: {
+        id: result.insertId,
+        product_id: parsedProductId,
+        user_id: userId,
+        reviewer_name: cleanName,
+        rating: parsedRating,
+        review_text: cleanReviewText,
+        created_at: new Date().toISOString()
+      }
     });
-  });
+  } catch (err) {
+    if (res.headersSent) return;
+    return res.status(500).json({ message: 'Failed to record review: ' + err.message });
+  }
 };

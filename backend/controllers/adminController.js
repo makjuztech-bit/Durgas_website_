@@ -296,9 +296,9 @@ exports.listOrders = async (req, res) => {
     const params = [];
 
     if (search) {
-      where += ' AND (o.order_number ILIKE ? OR u.full_name ILIKE ? OR u.email ILIKE ?)';
+      where += ' AND (o.order_number ILIKE ? OR u.full_name ILIKE ? OR o.customer_name ILIKE ? OR u.email ILIKE ? OR o.customer_email ILIKE ? OR o.shipping_phone ILIKE ?)';
       const s = `%${search}%`;
-      params.push(s, s, s);
+      params.push(s, s, s, s, s, s);
     }
     if (status && status !== 'all') {
       where += ' AND o.status = ?';

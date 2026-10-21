@@ -486,24 +486,33 @@ function showSection(name, keepForm = false) {
 }
 
 async function loadDashboard() {
-  const res = await apiFetch('/analytics/dashboard');
-  const data = await res.json();
-  document.getElementById('statProducts').textContent = data.totalProducts;
-  document.getElementById('statOrders').textContent = data.totalOrders;
-  document.getElementById('statCustomers').textContent = data.totalCustomers;
-  document.getElementById('statRevenue').textContent = formatPrice(data.totalRevenue);
+  try {
+    const res = await apiFetch('/analytics/dashboard');
+    const data = await res.json();
+    document.getElementById('statProducts').textContent = data.totalProducts ?? 0;
+    document.getElementById('statOrders').textContent = data.totalOrders ?? 0;
+    document.getElementById('statCustomers').textContent = data.totalCustomers ?? 0;
+    document.getElementById('statRevenue').textContent = formatPrice(data.totalRevenue ?? 0);
+  } catch (e) {
+    console.error('Failed to load dashboard stats:', e);
+  }
 
-  const ordersRes = await apiFetch('/orders');
-  const orders = await ordersRes.json();
-  document.getElementById('recentOrdersTable').innerHTML = orders.slice(0, 5).map(o => `
-    <tr>
-      <td><strong>${o.order_number}</strong></td>
-      <td>${o.order_source === 'whatsapp' ? '<span class="badge" style="background:#25D366;color:#ffffff;font-weight:600;">WhatsApp</span>' : '<span class="badge badge-processing">Website</span>'}</td>
-      <td>${o.full_name || '—'}</td>
-      <td>${formatPrice(o.total_amount)}</td>
-      <td>${statusBadge(o.status)}</td>
-      <td>${formatDate(o.created_at)}</td>
-    </tr>`).join('') || '<tr><td colspan="6">No orders yet</td></tr>';
+  try {
+    const ordersRes = await apiFetch('/orders');
+    const ordersData = await ordersRes.json();
+    const orders = Array.isArray(ordersData) ? ordersData : [];
+    document.getElementById('recentOrdersTable').innerHTML = orders.slice(0, 5).map(o => `
+      <tr>
+        <td><strong>${o.order_number}</strong></td>
+        <td>${o.order_source === 'whatsapp' ? '<span class="badge" style="background:#25D366;color:#ffffff;font-weight:600;">WhatsApp</span>' : '<span class="badge badge-processing">Website</span>'}</td>
+        <td>${o.full_name || '—'}</td>
+        <td>${formatPrice(o.total_amount)}</td>
+        <td>${statusBadge(o.status)}</td>
+        <td>${formatDate(o.created_at)}</td>
+      </tr>`).join('') || '<tr><td colspan="6">No orders yet</td></tr>';
+  } catch (e) {
+    console.error('Failed to load recent orders:', e);
+  }
 }
 
 function resolveImageUrl(url) {
@@ -516,24 +525,30 @@ function resolveImageUrl(url) {
 }
 
 async function loadProducts() {
-  const res = await apiFetch('/products/admin/all');
-  const products = await res.json();
-  document.getElementById('productsTable').innerHTML = products.map(p => {
-    const thumb = resolveImageUrl(p.image);
-    return `
-    <tr>
-      <td>${thumb ? `<img src="${thumb}" class="product-thumb" onerror="this.style.opacity='0.3'">` : '—'}</td>
-      <td><strong>${p.name}</strong><br><small style="color:var(--gray)">SKU: ${p.sku || ('DJ-' + p.id)}</small></td>
-      <td>${p.category_name || '—'}</td>
-      <td>${formatPrice(p.price)}</td>
-      <td>${p.stock}</td>
-      <td>${p.badge || '—'}</td>
-      <td>
-        <button class="btn btn-edit" onclick="editProduct(${p.id})">Edit</button>
-        <button class="btn btn-danger" onclick="deleteProduct(${p.id})">Delete</button>
-      </td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="7">No products yet. Add your first product!</td></tr>';
+  try {
+    const res = await apiFetch('/products/admin/all');
+    const data = await res.json();
+    const products = Array.isArray(data) ? data : [];
+    document.getElementById('productsTable').innerHTML = products.map(p => {
+      const thumb = resolveImageUrl(p.image);
+      return `
+      <tr>
+        <td>${thumb ? `<img src="${thumb}" class="product-thumb" onerror="this.style.opacity='0.3'">` : '—'}</td>
+        <td><strong>${p.name}</strong><br><small style="color:var(--gray)">SKU: ${p.sku || ('DJ-' + p.id)}</small></td>
+        <td>${p.category_name || '—'}</td>
+        <td>${formatPrice(p.price)}</td>
+        <td>${p.stock}</td>
+        <td>${p.badge || '—'}</td>
+        <td>
+          <button class="btn btn-edit" onclick="editProduct(${p.id})">Edit</button>
+          <button class="btn btn-danger" onclick="deleteProduct(${p.id})">Delete</button>
+        </td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="7">No products yet. Add your first product!</td></tr>';
+  } catch (e) {
+    console.error('Failed to load products:', e);
+    document.getElementById('productsTable').innerHTML = '<tr><td colspan="7" style="color:red; text-align:center;">Failed to load products</td></tr>';
+  }
 }
 
 async function loadCategorySelect(selectedId) {
@@ -853,18 +868,23 @@ async function deleteProduct(id) {
 }
 
 async function loadCategories() {
-  const res = await apiFetch('/categories');
-  categories = await res.json();
-  document.getElementById('categoriesTable').innerHTML = categories.map(c => `
-    <tr>
-      <td><strong>${c.name}</strong></td>
-      <td>${c.tamil_name || '—'}</td>
-      <td>${c.product_count || 0}</td>
-      <td>
-        <button class="btn btn-edit" onclick="editCategory(${c.id})">Edit</button>
-        <button class="btn btn-danger" onclick="deleteCategory(${c.id})">Delete</button>
-      </td>
-    </tr>`).join('');
+  try {
+    const res = await apiFetch('/categories');
+    const data = await res.json();
+    categories = Array.isArray(data) ? data : [];
+    document.getElementById('categoriesTable').innerHTML = categories.map(c => `
+      <tr>
+        <td><strong>${c.name}</strong></td>
+        <td>${c.tamil_name || '—'}</td>
+        <td>${c.product_count || 0}</td>
+        <td>
+          <button class="btn btn-edit" onclick="editCategory(${c.id})">Edit</button>
+          <button class="btn btn-danger" onclick="deleteCategory(${c.id})">Delete</button>
+        </td>
+      </tr>`).join('') || '<tr><td colspan="4">No categories yet</td></tr>';
+  } catch (e) {
+    console.error('Failed to load categories:', e);
+  }
 }
 
 function showAddCategory() {
@@ -936,32 +956,37 @@ async function deleteCategory(id) {
 }
 
 async function loadOrders() {
-  const res = await apiFetch('/orders');
-  const orders = await res.json();
-  document.getElementById('ordersTable').innerHTML = orders.map(o => `
-    <tr>
-      <td><strong>${o.order_number}</strong></td>
-      <td>${o.order_source === 'whatsapp' ? '<span class="badge" style="background:#25D366;color:#ffffff;font-weight:600;">WhatsApp Order</span>' : '<span class="badge badge-processing">Website</span>'}</td>
-      <td>
-        <strong>${o.full_name || 'Guest'}</strong><br>
-        <small style="color:var(--gray)">${o.shipping_phone || o.phone || '—'}</small>
-        ${o.customer_notes ? `<br><small style="color:#b37d14;font-style:italic">Note: ${o.customer_notes}</small>` : ''}
-      </td>
-      <td>${o.items?.length || 0} items</td>
-      <td>${formatPrice(o.total_amount)}</td>
-      <td><span style="font-size:0.75rem;text-transform:uppercase">${o.payment_method || '—'}</span><br><small style="color:var(--gray)">${o.payment_status || '—'}</small></td>
-      <td>${statusBadge(o.status)}</td>
-      <td>${formatDate(o.created_at)}</td>
-      <td>
-        <select onchange="updateOrderStatus(${o.id}, this.value)" style="font-size:0.75rem;padding:4px">
-          <option value="pending" ${o.status==='pending'?'selected':''}>Pending</option>
-          <option value="processing" ${o.status==='processing'?'selected':''}>Processing</option>
-          <option value="shipped" ${o.status==='shipped'?'selected':''}>Shipped</option>
-          <option value="delivered" ${o.status==='delivered'?'selected':''}>Delivered</option>
-          <option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelled</option>
-        </select>
-      </td>
-    </tr>`).join('') || '<tr><td colspan="9">No orders yet</td></tr>';
+  try {
+    const res = await apiFetch('/orders');
+    const data = await res.json();
+    const orders = Array.isArray(data) ? data : [];
+    document.getElementById('ordersTable').innerHTML = orders.map(o => `
+      <tr>
+        <td><strong>${o.order_number}</strong></td>
+        <td>${o.order_source === 'whatsapp' ? '<span class="badge" style="background:#25D366;color:#ffffff;font-weight:600;">WhatsApp Order</span>' : '<span class="badge badge-processing">Website</span>'}</td>
+        <td>
+          <strong>${o.full_name || 'Guest'}</strong><br>
+          <small style="color:var(--gray)">${o.shipping_phone || o.phone || '—'}</small>
+          ${o.customer_notes ? `<br><small style="color:#b37d14;font-style:italic">Note: ${o.customer_notes}</small>` : ''}
+        </td>
+        <td>${o.items?.length || 0} items</td>
+        <td>${formatPrice(o.total_amount)}</td>
+        <td><span style="font-size:0.75rem;text-transform:uppercase">${o.payment_method || '—'}</span><br><small style="color:var(--gray)">${o.payment_status || '—'}</small></td>
+        <td>${statusBadge(o.status)}</td>
+        <td>${formatDate(o.created_at)}</td>
+        <td>
+          <select onchange="updateOrderStatus(${o.id}, this.value)" style="font-size:0.75rem;padding:4px">
+            <option value="pending" ${o.status==='pending'?'selected':''}>Pending</option>
+            <option value="processing" ${o.status==='processing'?'selected':''}>Processing</option>
+            <option value="shipped" ${o.status==='shipped'?'selected':''}>Shipped</option>
+            <option value="delivered" ${o.status==='delivered'?'selected':''}>Delivered</option>
+            <option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelled</option>
+          </select>
+        </td>
+      </tr>`).join('') || '<tr><td colspan="9">No orders yet</td></tr>';
+  } catch (e) {
+    console.error('Failed to load orders:', e);
+  }
 }
 
 async function updateOrderStatus(id, status) {
@@ -1017,28 +1042,38 @@ async function saveSettings(e) {
 }
 
 async function loadCustomers() {
-  const res = await apiFetch('/auth/customers');
-  const customers = await res.json();
-  document.getElementById('customersTable').innerHTML = customers.map(c => `
-    <tr>
-      <td>${c.full_name}</td>
-      <td>${c.email}</td>
-      <td>${c.phone || '—'}</td>
-      <td>${formatDate(c.created_at)}</td>
-    </tr>`).join('') || '<tr><td colspan="4">No customers yet</td></tr>';
+  try {
+    const res = await apiFetch('/auth/customers');
+    const data = await res.json();
+    const customers = Array.isArray(data) ? data : [];
+    document.getElementById('customersTable').innerHTML = customers.map(c => `
+      <tr>
+        <td>${c.full_name}</td>
+        <td>${c.email}</td>
+        <td>${c.phone || '—'}</td>
+        <td>${formatDate(c.created_at)}</td>
+      </tr>`).join('') || '<tr><td colspan="4">No customers yet</td></tr>';
+  } catch (e) {
+    console.error('Failed to load customers:', e);
+  }
 }
 
 async function loadReviews() {
-  const res = await apiFetch('/analytics/reviews');
-  const reviews = await res.json();
-  document.getElementById('reviewsTable').innerHTML = reviews.map(r => `
-    <tr>
-      <td>${r.product_name}</td>
-      <td>${r.reviewer_name || '—'}</td>
-      <td>${'★'.repeat(r.rating)}</td>
-      <td>${r.review_text?.substring(0, 80) || '—'}...</td>
-      <td>${formatDate(r.created_at)}</td>
-    </tr>`).join('') || '<tr><td colspan="5">No reviews yet</td></tr>';
+  try {
+    const res = await apiFetch('/analytics/reviews');
+    const data = await res.json();
+    const reviews = Array.isArray(data) ? data : [];
+    document.getElementById('reviewsTable').innerHTML = reviews.map(r => `
+      <tr>
+        <td>${r.product_name}</td>
+        <td>${r.reviewer_name || '—'}</td>
+        <td>${'★'.repeat(r.rating)}</td>
+        <td>${r.review_text?.substring(0, 80) || '—'}...</td>
+        <td>${formatDate(r.created_at)}</td>
+      </tr>`).join('') || '<tr><td colspan="5">No reviews yet</td></tr>';
+  } catch (e) {
+    console.error('Failed to load reviews:', e);
+  }
 }
 
 // Auto-login if session exists

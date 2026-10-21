@@ -374,6 +374,7 @@ function adaptSqlForSqlite(sql, params = []) {
     .replace(/\bRETURNING\s+id\b/gi, '')
     .replace(/\b(is_active|is_primary)\s*=\s*TRUE\b/gi, '$1 = 1')
     .replace(/\b(is_active|is_primary)\s*=\s*FALSE\b/gi, '$1 = 0')
+    .replace(/\bILIKE\b/gi, 'LIKE')
     .replace(/\bJSONB\b/gi, 'TEXT')
     .replace(/\bTIMESTAMPTZ\b/gi, 'TEXT')
     .replace(/\bBIGSERIAL\b/gi, 'INTEGER PRIMARY KEY AUTOINCREMENT')
@@ -385,35 +386,69 @@ function adaptSqlForSqlite(sql, params = []) {
     cleanSql = cleanSql.replace(/\$\d+/g, '?');
   }
 
-  // Handle VALUES ? multi-row insert patterns
-  if (/\bVALUES\s+\?/i.test(cleanSql)) {
-    const nestedArray = params.find(p => Array.isArray(p) && p.length > 0 && Array.isArray(p[0]));
-    if (nestedArray) {
-      const rowPlaceholders = nestedArray.map(r => `(${r.map(() => '?').join(', ')})`).join(', ');
-      cleanSql = cleanSql.replace(/\bVALUES\s+\?/i, `VALUES ${rowPlaceholders}`);
-    }
-  }
+  const cleanParams = [];
+  let paramIdx = 0;
+  let quote = null;
+  let expandedSql = '';
 
-  // Flatten nested arrays if passed for IN clauses or batch inserts
-  const flatParams = [];
-  for (const p of params) {
-    if (Array.isArray(p)) {
-      for (const item of p) {
-        if (Array.isArray(item)) {
-          flatParams.push(...item);
+  for (let i = 0; i < cleanSql.length; i++) {
+    const ch = cleanSql[i];
+    if (quote) {
+      expandedSql += ch;
+      if (ch === quote) {
+        if (cleanSql[i + 1] === quote) {
+          expandedSql += cleanSql[i + 1];
+          i++;
         } else {
-          flatParams.push(item);
+          quote = null;
         }
       }
+      continue;
+    }
+    if (ch === "'" || ch === '"') {
+      quote = ch;
+      expandedSql += ch;
+      continue;
+    }
+    if (ch === '?') {
+      if (paramIdx < params.length) {
+        const p = params[paramIdx++];
+        if (Array.isArray(p)) {
+          if (p.length === 0) {
+            expandedSql += 'NULL';
+          } else if (Array.isArray(p[0])) {
+            const rowStrings = p.map(row => {
+              row.forEach(item => cleanParams.push(typeof item === 'boolean' ? (item ? 1 : 0) : item));
+              return `(${row.map(() => '?').join(', ')})`;
+            });
+            expandedSql += rowStrings.join(', ');
+          } else {
+            p.forEach(item => cleanParams.push(typeof item === 'boolean' ? (item ? 1 : 0) : item));
+            expandedSql += p.map(() => '?').join(', ');
+          }
+        } else {
+          cleanParams.push(typeof p === 'boolean' ? (p ? 1 : 0) : p);
+          expandedSql += '?';
+        }
+      } else {
+        expandedSql += '?';
+      }
+      continue;
+    }
+    expandedSql += ch;
+  }
+
+  // Convert any remaining booleans (if extra parameters exist)
+  while (paramIdx < params.length) {
+    const p = params[paramIdx++];
+    if (Array.isArray(p)) {
+      p.flat(Infinity).forEach(item => cleanParams.push(typeof item === 'boolean' ? (item ? 1 : 0) : item));
     } else {
-      flatParams.push(p);
+      cleanParams.push(typeof p === 'boolean' ? (p ? 1 : 0) : p);
     }
   }
 
-  // Convert booleans to 1 / 0 because node:sqlite rejects JavaScript booleans
-  const cleanParams = flatParams.map(p => (typeof p === 'boolean' ? (p ? 1 : 0) : p));
-
-  return { sql: cleanSql, params: cleanParams };
+  return { sql: expandedSql, params: cleanParams };
 }
 
 function executeLocalQuery(sql, params = [], callback) {
