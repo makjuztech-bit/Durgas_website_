@@ -17,8 +17,12 @@ try {
 }
 
 let useLocalFallback = false;
+let poolInitError = null;
+let connectionError = null;
+let reconnectTimer = null;
 
-let connectionString = process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL || process.env.SUPABASE_DB_URL || 'postgresql://postgres.xuoedlqfzlukddpspuls:Sabari%401412@aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres';
+let rawConnectionString = process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL || process.env.SUPABASE_DB_URL || 'postgresql://postgres.xuoedlqfzlukddpspuls:Sabari%401412@aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres';
+let connectionString = (rawConnectionString || '').trim().replace(/^["']+|["']+$/g, '');
 
 // Auto-map direct Supabase host (IPv6 only) or session pooler (5432 limit 15) to Supabase IPv4 Transaction Pooler (6543)
 if (connectionString && (connectionString.includes('xuoedlqfzlukddpspuls.supabase.co') || connectionString.includes('aws-0-ap-southeast-2.pooler.supabase.com:5432'))) {
@@ -31,7 +35,7 @@ if (connectionString && (connectionString.includes('xuoedlqfzlukddpspuls.supabas
 let pool = null;
 if (connectionString) {
   try {
-    validateDatabaseUrl(connectionString);
+    connectionString = validateDatabaseUrl(connectionString);
 
     const sslConfig = () => {
       if (process.env.DB_SSL === 'false') return false;
@@ -54,9 +58,6 @@ if (connectionString) {
     pool.on('error', (err) => {
       console.error('[db pool error] Idle client error:', err.message);
     });
-
-    let connectionError = null;
-    let reconnectTimer = null;
 
     const scheduleReconnect = () => {
       if (reconnectTimer || !pool) return;
@@ -98,6 +99,7 @@ if (connectionString) {
     attemptConnect();
   } catch (err) {
     console.error('[db] Error configuring PostgreSQL connection pool:', err.message);
+    poolInitError = err.message;
     pool = null;
   }
 } else {
@@ -185,7 +187,7 @@ const db = {
   ping: () => (useLocalFallback && localDb ? localDb.ping() : (pool ? pool.query('SELECT 1') : Promise.resolve())),
   getHealthInfo: async () => {
     let pgStatus = 'disconnected';
-    let pgError = null;
+    let pgError = poolInitError || connectionError;
     let pgProductsCount = 0;
     if (pool) {
       try {
@@ -193,6 +195,7 @@ const db = {
         pgStatus = 'connected';
         pgProductsCount = Number(check.rows[0]?.count || 0);
         useLocalFallback = false;
+        pgError = null;
       } catch (e) {
         pgStatus = 'error';
         pgError = e.message;
@@ -209,6 +212,7 @@ const db = {
       postgres: {
         status: pgStatus,
         error: pgError,
+        poolInitialized: Boolean(pool),
         productsCount: pgProductsCount,
         endpoint: hostInfo,
       },
