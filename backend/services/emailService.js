@@ -13,14 +13,62 @@ const createTransporter = () => {
       port,
       secure,
       auth: { user, pass },
-      connectionTimeout: 3000,
-      greetingTimeout: 3000,
-      socketTimeout: 3000,
+      connectionTimeout: 5000,
+      greetingTimeout: 5000,
+      socketTimeout: 5000,
       tls: {
         rejectUnauthorized: false,
       },
     });
   }
+  return null;
+};
+
+// Unified mail sender supporting Resend REST API or SMTP
+const sendMailMessage = async ({ to, subject, html, text }) => {
+  const defaultFrom = process.env.EMAIL_FROM || '"DURGAS FIVE METAL JEWELLERY" <durgasjewellery20@gmail.com>';
+
+  // 1. If RESEND_API_KEY is configured, send directly via Resend REST API
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY.trim()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: defaultFrom,
+          to: Array.isArray(to) ? to : [to],
+          subject,
+          html,
+          text,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || `Resend API Error: ${res.statusText}`);
+      }
+      return { success: true, messageId: data.id, provider: 'resend-api' };
+    } catch (apiErr) {
+      console.warn('[Email Service - Resend API Warning]:', apiErr.message);
+    }
+  }
+
+  // 2. Otherwise use SMTP transporter (e.g. smtp.resend.com or SendGrid/Gmail)
+  const transporter = createTransporter();
+  if (transporter) {
+    const info = await transporter.sendMail({
+      from: defaultFrom,
+      to,
+      subject,
+      html,
+      text,
+    });
+    return { success: true, messageId: info.messageId, provider: 'smtp' };
+  }
+
   return null;
 };
 
@@ -153,34 +201,26 @@ const generateInvoiceHtml = (order, items = []) => {
 const sendOrderConfirmation = async ({ order, items = [], customerEmail }) => {
   if (!customerEmail) return;
 
-  const transporter = createTransporter();
   const htmlContent = generateInvoiceHtml(order, items);
 
-  if (!transporter) {
-    console.log(`[Email Service Simulated] Order confirmation invoice generated for ${customerEmail} (Order #${order.order_number}). Configure SMTP in .env to send real emails.`);
-    return;
-  }
-
-  const mailOptions = {
-    from: process.env.EMAIL_FROM || `"DURGAS FIVE METAL JEWELLERY" <durgasjewellery20@gmail.com>`,
+  const res = await sendMailMessage({
     to: customerEmail,
     subject: `Order Confirmation & Tax Invoice — #${order.order_number}`,
     html: htmlContent,
-  };
+  });
 
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`[Email Service] Order confirmation email sent to ${customerEmail}. Message ID: ${info.messageId}`);
-    return info;
-  } catch (err) {
-    console.error(`[Email Service Error] Failed to send order email to ${customerEmail}:`, err.message);
+  if (!res) {
+    console.log(`[Email Service Simulated] Order confirmation invoice generated for ${customerEmail} (Order #${order.order_number}). Configure RESEND_API_KEY or SMTP in .env to send real emails.`);
+    return;
   }
+
+  console.log(`[Email Service] Order confirmation email sent to ${customerEmail} via ${res.provider}. Message ID: ${res.messageId}`);
+  return res;
 };
 
 const sendOtpEmail = async ({ toEmail, otp, purpose = 'Login' }) => {
   if (!toEmail) return { success: false, message: 'Recipient email required' };
 
-  const transporter = createTransporter();
   const htmlContent = `
   <!DOCTYPE html>
   <html>
@@ -206,32 +246,26 @@ const sendOtpEmail = async ({ toEmail, otp, purpose = 'Login' }) => {
 
   const isProd = process.env.NODE_ENV === 'production';
 
-  if (!transporter) {
+  try {
+    const res = await sendMailMessage({
+      to: toEmail,
+      subject: `Your DURGAS Verification Code: ${otp}`,
+      html: htmlContent,
+    });
+
+    if (res && res.success) {
+      console.log(`[Email Service] OTP email sent to ${toEmail} via ${res.provider}. Message ID: ${res.messageId}`);
+      return { success: true, messageId: res.messageId };
+    }
+
     if (!isProd) {
       console.log(`[Email Service Simulated] OTP for ${toEmail}: ${otp} (valid for 10 min)`);
     } else {
-      console.warn(`[Email Service Warning] SMTP not configured. OTP not sent to ${toEmail}.`);
+      console.warn(`[Email Service Warning] Mail provider not configured. OTP not sent to ${toEmail}.`);
     }
     return { success: true, simulated: !isProd, otp: isProd ? undefined : otp };
-  }
-
-  const mailOptions = {
-    from: process.env.EMAIL_FROM || `"DURGAS FIVE METAL JEWELLERY" <durgasjewellery20@gmail.com>`,
-    to: toEmail,
-    subject: `Your DURGAS Verification Code: ${otp}`,
-    html: htmlContent,
-  };
-
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`[Email Service] OTP email sent to ${toEmail}. Message ID: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
   } catch (err) {
-    if (err.message && err.message.includes('550 The from address does not match a verified Sender Identity')) {
-      console.log(`[Email Service] Verification OTP for ${toEmail}: ${otp}`);
-      return { success: true, fallback: true, otp };
-    }
-    console.warn(`[Email Service Warning] SMTP delivery attempt: ${err.message}`);
+    console.warn(`[Email Service Delivery Error]: ${err.message}`);
     if (!isProd) {
       console.log(`[Email Service Fallback OTP] Verification code for ${toEmail} is: ${otp}`);
       return { success: true, fallback: true, otp };
