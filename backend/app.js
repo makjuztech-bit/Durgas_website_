@@ -201,10 +201,10 @@ app.get('/', (req, res) => {
 // Database-aware health check
 app.get('/health', async (req, res) => {
   try {
-    await db.ping();
-    res.status(200).json({ status: 'ok', database: 'connected', timestamp: new Date() });
+    const health = db.getHealthInfo ? await db.getHealthInfo() : { status: 'ok' };
+    res.status(200).json(health);
   } catch (err) {
-    res.status(503).json({ status: 'unhealthy', database: 'disconnected', timestamp: new Date() });
+    res.status(503).json({ status: 'unhealthy', error: err.message, timestamp: new Date().toISOString() });
   }
 });
 

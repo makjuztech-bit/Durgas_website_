@@ -47,7 +47,7 @@ if (connectionString) {
       connectionString,
       ssl: sslConfig(),
       max: parseInt(process.env.DB_POOL_MAX || '10', 10),
-      connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT_MS || '10000', 10),
+      connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT_MS || '25000', 10),
       idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT_MS || '30000', 10),
     });
 
@@ -55,14 +55,47 @@ if (connectionString) {
       console.error('[db pool error] Idle client error:', err.message);
     });
 
-    pool.query('SELECT 1', (err) => {
-      if (err) {
-        console.warn('Supabase/Postgres direct connection unavailable (' + err.message + '). Active fallback: local resilient SQLite database.');
-        if (localDb) useLocalFallback = true;
-      } else {
-        console.log('Supabase/Postgres database connected.');
-      }
-    });
+    let connectionError = null;
+    let reconnectTimer = null;
+
+    const scheduleReconnect = () => {
+      if (reconnectTimer || !pool) return;
+      reconnectTimer = setTimeout(async () => {
+        reconnectTimer = null;
+        try {
+          await pool.query('SELECT 1');
+          console.log('[db] PostgreSQL connection re-established. Cloud database active.');
+          useLocalFallback = false;
+          connectionError = null;
+        } catch (e) {
+          connectionError = e.message;
+          scheduleReconnect();
+        }
+      }, 5000);
+    };
+
+    const attemptConnect = (retries = 5, delay = 2000) => {
+      if (!pool) return;
+      pool.query('SELECT 1', (err) => {
+        if (err) {
+          connectionError = err.message;
+          console.warn(`[db] PostgreSQL direct connection attempt failed (${err.message}). Retries remaining: ${retries}`);
+          if (retries > 0) {
+            setTimeout(() => attemptConnect(retries - 1, delay * 1.5), delay);
+          } else {
+            console.warn('[db] Cold start retries exhausted. Fallback active until background reconnect succeeds.');
+            if (localDb) useLocalFallback = true;
+            scheduleReconnect();
+          }
+        } else {
+          connectionError = null;
+          useLocalFallback = false;
+          console.log('[db] Supabase/PostgreSQL database connected successfully.');
+        }
+      });
+    };
+
+    attemptConnect();
   } catch (err) {
     console.error('[db] Error configuring PostgreSQL connection pool:', err.message);
     pool = null;
@@ -95,46 +128,52 @@ const executeQuery = (sql, params = [], callback) => {
     params = [];
   }
 
-  if (useLocalFallback && localDb) {
+  // Critical for cloud persistence: All write queries (INSERT, UPDATE, DELETE) MUST go to persistent PostgreSQL
+  const isWrite = /^\s*(INSERT|UPDATE|DELETE|ALTER|DROP|CREATE)\b/i.test(sql);
+
+  // If pool is configured and either we're not falling back OR this is a write query: try PostgreSQL first!
+  if (pool && (!useLocalFallback || isWrite)) {
+    const { text, values } = translateSql(sql, params);
+
+    if (callback) {
+      pool.query(text, values, (err, result) => {
+        if (err) {
+          if (isNetworkError(err) && localDb && !isWrite) {
+            console.warn('[db] PostgreSQL network error on read, temporary fallback to SQLite:', err.message);
+            useLocalFallback = true;
+            return localDb.query(sql, params, callback);
+          }
+          return callback(err, null);
+        }
+        useLocalFallback = false;
+        callback(null, formatResult(text, result));
+      });
+      return;
+    }
+
+    return pool.query(text, values)
+      .then((result) => {
+        useLocalFallback = false;
+        return formatResult(text, result);
+      })
+      .catch((err) => {
+        if (isNetworkError(err) && localDb && !isWrite) {
+          console.warn('[db] PostgreSQL network error on read, temporary fallback to SQLite:', err.message);
+          useLocalFallback = true;
+          return localDb.query(sql, params);
+        }
+        throw err;
+      });
+  }
+
+  // If pool is completely missing or read failed
+  if (localDb) {
     return localDb.query(sql, params, callback);
   }
 
-  if (!pool) {
-    if (localDb) {
-      return localDb.query(sql, params, callback);
-    }
-    const err = new Error('Database is not connected. Please ensure DATABASE_URL is configured in Vercel Project Settings > Environment Variables.');
-    if (callback) return callback(err, null);
-    return Promise.reject(err);
-  }
-
-  const { text, values } = translateSql(sql, params);
-
-  if (callback) {
-    pool.query(text, values, (err, result) => {
-      if (err) {
-        if (isNetworkError(err) && localDb) {
-          console.warn('[db] PostgreSQL network error, seamlessly switching to local storage:', err.message);
-          useLocalFallback = true;
-          return localDb.query(sql, params, callback);
-        }
-        return callback(err, null);
-      }
-      callback(null, formatResult(text, result));
-    });
-    return;
-  }
-
-  return pool.query(text, values)
-    .then((result) => formatResult(text, result))
-    .catch((err) => {
-      if (isNetworkError(err) && localDb) {
-        console.warn('[db] PostgreSQL network error, seamlessly switching to local storage:', err.message);
-        useLocalFallback = true;
-        return localDb.query(sql, params);
-      }
-      throw err;
-    });
+  const err = new Error('Database is not connected. Please ensure DATABASE_URL is configured in your Environment Variables.');
+  if (callback) return callback(err, null);
+  return Promise.reject(err);
 };
 
 const db = {
@@ -144,6 +183,38 @@ const db = {
   supabaseAdmin,
   localDb,
   ping: () => (useLocalFallback && localDb ? localDb.ping() : (pool ? pool.query('SELECT 1') : Promise.resolve())),
+  getHealthInfo: async () => {
+    let pgStatus = 'disconnected';
+    let pgError = null;
+    let pgProductsCount = 0;
+    if (pool) {
+      try {
+        const check = await pool.query('SELECT count(*) as count FROM products');
+        pgStatus = 'connected';
+        pgProductsCount = Number(check.rows[0]?.count || 0);
+        useLocalFallback = false;
+      } catch (e) {
+        pgStatus = 'error';
+        pgError = e.message;
+      }
+    }
+
+    const hostMatch = connectionString.match(/@([^:/]+)(?::(\d+))?/);
+    const hostInfo = hostMatch ? `${hostMatch[1]}:${hostMatch[2] || 5432}` : 'unknown';
+
+    return {
+      status: 'ok',
+      database: pgStatus === 'connected' ? 'PostgreSQL (Supabase Cloud)' : 'Local SQLite Fallback',
+      isUsingLocalFallback: useLocalFallback,
+      postgres: {
+        status: pgStatus,
+        error: pgError,
+        productsCount: pgProductsCount,
+        endpoint: hostInfo,
+      },
+      timestamp: new Date().toISOString()
+    };
+  },
   close: async () => {
     try { if (localDb) localDb.close(); } catch (e) {}
     try { if (pool) await pool.end(); } catch (e) {}
