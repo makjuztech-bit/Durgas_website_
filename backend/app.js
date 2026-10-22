@@ -160,8 +160,17 @@ app.get('/terms-and-conditions', (req, res) => sendFrontendPage(res, 'terms-and-
 app.get('/shipping-policy', (req, res) => sendFrontendPage(res, 'shipping-policy.html'));
 app.get('/refund-policy', (req, res) => sendFrontendPage(res, 'refund-policy.html'));
 
-// Admin panel route
-app.get(['/administrator', '/administrator/', '/administrator/index.html', '/admin', '/admin/', '/admin/index.html'], (req, res) => {
+// Redirect legacy public admin paths to homepage
+app.get(['/administrator', '/administrator/*', '/admin', '/admin/*'], (req, res) => {
+  res.redirect(302, '/');
+});
+
+// Secret staff portal route
+app.get(['/staff-portal', '/staff-portal/*', '/staff-portal/index.html'], (req, res) => {
+  const adminFile = path.join(__dirname, '..', 'frontend', 'administrator', 'index.html');
+  if (fs.existsSync(adminFile)) {
+    return res.sendFile(adminFile);
+  }
   res.sendFile(path.join(__dirname, '..', 'administrator', 'index.html'));
 });
 
@@ -169,7 +178,7 @@ app.get(['/administrator', '/administrator/', '/administrator/index.html', '/adm
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
   const siteUrl = process.env.APP_URL || 'https://durgasjewellers.com';
-  res.send(`User-agent: *\nAllow: /\nDisallow: /administrator\nDisallow: /api/\nDisallow: /profile\nDisallow: /cart\nSitemap: ${siteUrl}/sitemap.xml\n`);
+  res.send(`User-agent: *\nAllow: /\nDisallow: /staff-portal\nDisallow: /administrator\nDisallow: /admin\nDisallow: /api/\nDisallow: /profile\nDisallow: /cart\nSitemap: ${siteUrl}/sitemap.xml\n`);
 });
 
 app.get('/sitemap.xml', async (req, res) => {

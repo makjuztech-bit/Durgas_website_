@@ -8,7 +8,37 @@
     ],
     "cleanUrls": true,
     "trailingSlash": false,
+    "redirects": [
+      {
+        "source": "/admin",
+        "destination": "/",
+        "type": 302
+      },
+      {
+        "source": "/admin/**",
+        "destination": "/",
+        "type": 302
+      },
+      {
+        "source": "/administrator",
+        "destination": "/",
+        "type": 302
+      },
+      {
+        "source": "/administrator/**",
+        "destination": "/",
+        "type": 302
+      }
+    ],
     "rewrites": [
+      {
+        "source": "/staff-portal",
+        "destination": "/administrator/index.html"
+      },
+      {
+        "source": "/staff-portal/**",
+        "destination": "/administrator/index.html"
+      },
       {
         "source": "/product/**",
         "destination": "/product-details.html"
@@ -24,14 +54,6 @@
       {
         "source": "/order",
         "destination": "/cart.html"
-      },
-      {
-        "source": "/admin",
-        "destination": "/administrator/index.html"
-      },
-      {
-        "source": "/admin/**",
-        "destination": "/administrator/index.html"
       }
     ]
   }

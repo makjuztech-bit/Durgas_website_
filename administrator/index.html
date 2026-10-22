@@ -392,6 +392,11 @@
 </main>
 
 <script>
+// Security check: if visited via public /admin or /administrator, immediately bounce to homepage
+if (window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/administrator')) {
+  window.location.replace('/');
+}
+
 const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? (window.location.port !== '5000' ? 'http://localhost:5000' : '')
   : 'https://durgas-backend.onrender.com';

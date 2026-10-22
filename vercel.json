@@ -10,20 +10,25 @@
       "root": "frontend"
     }
   },
+  "redirects": [
+    {
+      "source": "/admin(.*)",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/administrator(.*)",
+      "destination": "/",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "https://durgas-backend.onrender.com/api/$1"
     },
     {
-      "source": "/administrator(.*)",
-      "destination": {
-        "service": "frontend",
-        "path": "/administrator/index.html"
-      }
-    },
-    {
-      "source": "/admin(.*)",
+      "source": "/staff-portal(.*)",
       "destination": {
         "service": "frontend",
         "path": "/administrator/index.html"

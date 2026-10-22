@@ -417,7 +417,7 @@ async function loginUser() {
 
     setTimeout(() => {
       if (data.user && (data.user.role === 'admin' || data.user.role === 'superadmin')) {
-        window.location.href = '/administrator';
+        window.location.href = '/staff-portal';
       } else if (window.location.pathname.includes('login') || window.location.pathname.includes('register')) {
         window.location.href = '/';
       } else {
@@ -586,7 +586,7 @@ async function handleOtpSubmit(e) {
 
     setTimeout(() => {
       if (data.user && (data.user.role === 'admin' || data.user.role === 'superadmin')) {
-        window.location.href = '/administrator';
+        window.location.href = '/staff-portal';
       } else if (window.location.pathname.includes('login') || window.location.pathname.includes('register')) {
         window.location.href = '/';
       } else {
