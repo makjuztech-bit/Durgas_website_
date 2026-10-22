@@ -1,36 +1,88 @@
 const nodemailer = require('nodemailer');
 
 const createTransporter = () => {
-  const host = process.env.SMTP_HOST;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS;
+  const host = (process.env.SMTP_HOST || '').trim().toLowerCase();
+  const user = (process.env.SMTP_USER || '').trim();
+  const pass = (process.env.SMTP_PASSWORD || process.env.SMTP_PASS || '').trim();
   const port = parseInt(process.env.SMTP_PORT || '587', 10);
-  const secure = process.env.SMTP_SECURE === 'true' || port === 465;
 
+  if (!user && !pass) return null;
+
+  // 1. SendGrid Auto-Detection (if pass starts with SG. or host contains sendgrid)
+  // SendGrid strictly requires the username to be the literal string 'apikey'
+  if (host.includes('sendgrid') || pass.startsWith('SG.')) {
+    return nodemailer.createTransport({
+      host: 'smtp.sendgrid.net',
+      port: 587,
+      secure: false,
+      auth: {
+        user: 'apikey',
+        pass: pass,
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
+    });
+  }
+
+  // 2. Resend SMTP Auto-Detection (if pass starts with re_ or host contains resend)
+  if (host.includes('resend') || pass.startsWith('re_')) {
+    return nodemailer.createTransport({
+      host: 'smtp.resend.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: 'resend',
+        pass: pass,
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
+    });
+  }
+
+  // 3. Native Gmail support with Google App Password (service: 'gmail')
+  const isGmail = host.includes('gmail') || process.env.SMTP_SERVICE === 'gmail' || (!host && user.endsWith('@gmail.com'));
+  if (isGmail && user && pass) {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user, pass },
+    });
+  }
+
+  // 4. Standard custom SMTP (Brevo, AWS SES, Zoho, Mailgun)
   if (host && user && pass) {
+    const secure = process.env.SMTP_SECURE === 'true' || port === 465;
     return nodemailer.createTransport({
       host,
       port,
       secure,
       auth: { user, pass },
-      connectionTimeout: 5000,
-      greetingTimeout: 5000,
-      socketTimeout: 5000,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
       tls: {
         rejectUnauthorized: false,
       },
     });
   }
+
   return null;
 };
 
 // Unified mail sender supporting Resend REST API or SMTP
 const sendMailMessage = async ({ to, subject, html, text }) => {
-  const defaultFrom = process.env.EMAIL_FROM || '"DURGAS FIVE METAL JEWELLERY" <durgasjewellery20@gmail.com>';
+  let defaultFrom = process.env.EMAIL_FROM || '"DURGAS FIVE METAL JEWELLERY" <durgasjewellery20@gmail.com>';
 
   // 1. If RESEND_API_KEY is configured, send directly via Resend REST API
   if (process.env.RESEND_API_KEY) {
     try {
+      // In Resend, if domain is not yet verified in DNS, use onboarding@resend.dev to avoid 403 error
+      let resendFrom = defaultFrom;
+      if (resendFrom.includes('@gmail.com') || resendFrom.includes('@yahoo.com') || !resendFrom.includes('@')) {
+        resendFrom = 'DURGAS FIVE METAL JEWELLERY <onboarding@resend.dev>';
+      }
+
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -38,7 +90,7 @@ const sendMailMessage = async ({ to, subject, html, text }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: defaultFrom,
+          from: resendFrom,
           to: Array.isArray(to) ? to : [to],
           subject,
           html,

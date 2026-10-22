@@ -181,11 +181,28 @@ exports.sendOtp = async (req, res) => {
     isMail,
   });
 
+  let dispatchEmail = isMail ? targetKey : null;
+
+  if (!isMail) {
+    // If mobile number, lookup registered email from users database
+    try {
+      const userEmail = await new Promise((resolve) => {
+        db.query('SELECT email FROM users WHERE phone LIKE ? LIMIT 1', [`%${targetKey}%`], (err, rows) => {
+          if (!err && rows && rows.length && rows[0].email) resolve(rows[0].email);
+          else resolve(null);
+        });
+      });
+      if (userEmail) dispatchEmail = userEmail;
+    } catch (e) {
+      console.warn('[lookup registered email for mobile error]', e.message);
+    }
+  }
+
   // Send OTP directly to email inbox
-  if (isMail) {
+  if (dispatchEmail) {
     try {
       await emailService.sendOtpEmail({
-        toEmail: targetKey,
+        toEmail: dispatchEmail,
         otp,
         purpose: purpose === 'reset' ? 'Password Reset' : 'Sign In',
       });
@@ -196,10 +213,31 @@ exports.sendOtp = async (req, res) => {
     console.log(`[Mobile Verification] Code generated for +91-${targetKey}: ${otp}`);
   }
 
+  // Also bind OTP to dispatchEmail if requested by phone
+  if (dispatchEmail && dispatchEmail.toLowerCase() !== targetKey) {
+    otpStore.set(dispatchEmail.toLowerCase(), {
+      hashedOtp: hashOtp(otp),
+      expiresAt,
+      createdAt: Date.now(),
+      attempts: 0,
+      purpose: purpose.toLowerCase(),
+      targetKey: dispatchEmail,
+      isMail: true,
+    });
+  }
+
+  const maskEmail = (em) => {
+    if (!em || !em.includes('@')) return em;
+    const [name, domain] = em.split('@');
+    return name.slice(0, 2) + '***' + (name.slice(-1) || '') + '@' + domain;
+  };
+
   return res.json({
     message: isMail
       ? `A 6-digit verification code has been sent to ${targetKey}. Please check your email inbox.`
-      : `A 6-digit verification code has been sent to mobile +91-${targetKey}. Valid for 10 minutes.`,
+      : (dispatchEmail
+          ? `A 6-digit verification code has been sent to your registered email (${maskEmail(dispatchEmail)}). Please check your email inbox.`
+          : `A 6-digit verification code has been sent to mobile +91-${targetKey}. Valid for 10 minutes.`),
     target: targetKey,
     isEmail: isMail,
     expiresIn: 600

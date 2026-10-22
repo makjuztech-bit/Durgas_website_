@@ -728,8 +728,8 @@ async function sendResetOtp() {
       return;
     }
 
-    const destName = isMail ? rawIdent : `mobile +91-${mobile10}`;
-    showAlert('helpStatusAlert', `✓ A 6-digit password reset code has been sent to ${destName}. Please check your inbox and enter the code below.`, true);
+    const destMsg = data.message || `✓ A 6-digit password reset code has been sent to ${isMail ? rawIdent : 'mobile +91-' + mobile10}. Please check your inbox and enter the code below.`;
+    showAlert('helpStatusAlert', destMsg, true);
 
     if (resetGroup) resetGroup.style.display = 'block';
     if (submitBtn) submitBtn.style.display = 'block';
