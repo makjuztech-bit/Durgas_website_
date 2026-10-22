@@ -13,20 +13,20 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": {
-        "service": "backend"
-      }
+      "destination": "https://durgas-backend.onrender.com/api/$1"
     },
     {
       "source": "/administrator(.*)",
       "destination": {
-        "service": "backend"
+        "service": "frontend",
+        "path": "/administrator/index.html"
       }
     },
     {
       "source": "/admin(.*)",
       "destination": {
-        "service": "backend"
+        "service": "frontend",
+        "path": "/administrator/index.html"
       }
     },
     {

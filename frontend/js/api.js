@@ -1,15 +1,13 @@
-const BACKEND_URL = (typeof window !== 'undefined' && (
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1'
-  ))
-  ? (window.location.port !== '5000' ? 'http://localhost:5000' : '')
+const BACKEND_URL = (typeof window !== 'undefined' && window.__BACKEND_URL__)
+  ? window.__BACKEND_URL__.replace(/\/+$/, '')
   : (typeof window !== 'undefined' && (
-      window.location.hostname.endsWith('web.app') ||
-      window.location.hostname.endsWith('firebaseapp.com') ||
-      window.location.protocol === 'file:'
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1'
     ))
-    ? 'https://durgas-backend.onrender.com'
-    : (typeof process !== 'undefined' && process.env?.BACKEND_URL ? process.env.BACKEND_URL.replace(/\/+$/, '') : '');
+    ? (window.location.port !== '5000' ? 'http://localhost:5000' : '')
+    : (typeof process !== 'undefined' && process.env?.BACKEND_URL
+        ? process.env.BACKEND_URL.replace(/\/+$/, '')
+        : 'https://durgas-backend.onrender.com');
 
 const API = (BACKEND_URL ? BACKEND_URL.replace(/\/+$/, '') : '') + '/api';
 let userToken = localStorage.getItem('userToken') || null;

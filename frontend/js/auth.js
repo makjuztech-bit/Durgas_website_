@@ -14,6 +14,46 @@ function parseIdentifier(input) {
   return { val, isMail, isMobile, mobile10: digits.slice(-10) };
 }
 
+// Safe Auth Fetch Helper with dynamic API base, automatic retry, and non-crashing JSON parse
+async function safeAuthFetch(endpoint, options = {}, retries = 1) {
+  const base = (typeof API !== 'undefined' && API)
+    ? API
+    : ((typeof BACKEND_URL !== 'undefined' && BACKEND_URL) ? BACKEND_URL.replace(/\/+$/, '') : 'https://durgas-backend.onrender.com') + '/api';
+
+  try {
+    const res = await fetch(base + endpoint, {
+      credentials: 'include',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      }
+    });
+
+    let data = {};
+    try {
+      data = await res.json();
+    } catch (parseErr) {
+      if (res.status === 502 || res.status === 503 || res.status === 504) {
+        data = { message: 'Server is starting up. Please wait 10 seconds and try again.' };
+      } else {
+        data = { message: res.ok ? 'Success' : `Server returned status ${res.status}.` };
+      }
+    }
+    return { ok: res.ok, status: res.status, data };
+  } catch (netErr) {
+    if (retries > 0) {
+      await new Promise((r) => setTimeout(r, 1800));
+      return safeAuthFetch(endpoint, options, retries - 1);
+    }
+    return {
+      ok: false,
+      status: 0,
+      data: { message: 'Unable to reach the server. Please check your internet connection or try again in a moment.' }
+    };
+  }
+}
+
 // ----------------------------------------------------------------------------
 // MODAL & NAVIGATION CONTROLS
 // ----------------------------------------------------------------------------
@@ -342,10 +382,8 @@ async function loginUser() {
   }
 
   try {
-    const res = await fetch(API + '/auth/login', {
+    const { ok, data } = await safeAuthFetch('/auth/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({
         email: isMail ? rawIdent : undefined,
         phone: isMobile ? mobile10 : undefined,
@@ -354,8 +392,8 @@ async function loginUser() {
         password
       }),
     });
-    const data = await res.json();
-    if (!res.ok) {
+
+    if (!ok) {
       showLoginAlert(data.message || 'Invalid credentials. Please check your password or sign in with OTP.');
       return;
     }
@@ -388,7 +426,7 @@ async function loginUser() {
     }, 600);
   } catch (err) {
     console.error(err);
-    showLoginAlert('Connection error. Please try again.');
+    showLoginAlert(err.message || 'Connection error. Please try again.');
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -422,9 +460,8 @@ async function sendLoginOtp() {
   }
 
   try {
-    const res = await fetch(API + '/auth/send-otp', {
+    const { ok, data } = await safeAuthFetch('/auth/send-otp', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         identifier: isMobile ? mobile10 : rawIdent,
         email: isMail ? rawIdent : undefined,
@@ -432,8 +469,8 @@ async function sendLoginOtp() {
         purpose: 'login'
       })
     });
-    const data = await res.json();
-    if (!res.ok) {
+
+    if (!ok) {
       showLoginAlert(data.message || 'Failed to send OTP.');
       if (btn) { btn.disabled = false; btn.innerHTML = '<span>Send OTP</span>'; }
       return;
@@ -512,18 +549,16 @@ async function handleOtpSubmit(e) {
   }
 
   try {
-    const res = await fetch(API + '/auth/verify-otp', {
+    const { ok, data } = await safeAuthFetch('/auth/verify-otp', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({
         identifier: isMobile ? mobile10 : rawIdent,
         otp,
         purpose: 'login'
       })
     });
-    const data = await res.json();
-    if (!res.ok) {
+
+    if (!ok) {
       showLoginAlert(data.message || 'OTP verification failed.');
       if (verifyBtn) {
         verifyBtn.disabled = false;
@@ -616,10 +651,8 @@ async function registerUser(e) {
   }
 
   try {
-    const res = await fetch(API + '/auth/register', {
+    const { ok, data } = await safeAuthFetch('/auth/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({
         full_name,
         name: full_name,
@@ -628,9 +661,9 @@ async function registerUser(e) {
         password
       }),
     });
-    const data = await res.json();
-    if (!res.ok) {
-      showAlert('regStatusAlert', data.message || 'Registration failed.');
+
+    if (!ok) {
+      showAlert('regStatusAlert', data.message || 'Registration failed. Please check your details and try again.');
       return;
     }
 
@@ -652,7 +685,7 @@ async function registerUser(e) {
       window.location.href = '/';
     }, 600);
   } catch (err) {
-    showAlert('regStatusAlert', 'Connection error. Please try again.');
+    showAlert('regStatusAlert', err.message || 'Connection error. Please try again.');
     console.error(err);
   } finally {
     if (regBtn) {
@@ -687,16 +720,15 @@ async function sendResetOtp() {
   }
 
   try {
-    const res = await fetch(API + '/auth/send-otp', {
+    const { ok, data } = await safeAuthFetch('/auth/send-otp', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         identifier: isMobile ? mobile10 : rawIdent,
         purpose: 'reset'
       })
     });
-    const data = await res.json();
-    if (!res.ok) {
+
+    if (!ok) {
       showAlert('helpStatusAlert', data.message || 'Failed to send reset code.');
       if (btn) { btn.disabled = false; btn.innerHTML = '<span>Send OTP</span>'; }
       return;
@@ -767,9 +799,8 @@ async function handleResetPasswordSubmit(e) {
   }
 
   try {
-    const res = await fetch(API + '/auth/verify-otp', {
+    const { ok, data } = await safeAuthFetch('/auth/verify-otp', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         identifier: isMobile ? mobile10 : rawIdent,
         otp,
@@ -777,8 +808,8 @@ async function handleResetPasswordSubmit(e) {
         new_password
       })
     });
-    const data = await res.json();
-    if (!res.ok) {
+
+    if (!ok) {
       showAlert('helpStatusAlert', data.message || 'Password reset failed.');
       return;
     }
@@ -799,7 +830,7 @@ async function handleResetPasswordSubmit(e) {
 
   } catch (err) {
     console.error(err);
-    showAlert('helpStatusAlert', 'Connection error. Please try again.');
+    showAlert('helpStatusAlert', err.message || 'Connection error. Please try again.');
   } finally {
     if (submitBtn) {
       submitBtn.disabled = false;
@@ -832,13 +863,12 @@ async function handleLookupEmail(e) {
   }
 
   try {
-    const res = await fetch(API + '/auth/lookup', {
+    const { ok, data } = await safeAuthFetch('/auth/lookup', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone: digits.slice(-10) })
     });
-    const data = await res.json();
-    if (!res.ok) {
+
+    if (!ok) {
       showAlert('helpStatusAlert', data.message || 'No registered account found for this mobile number.');
       if (resultCard) resultCard.style.display = 'none';
       return;

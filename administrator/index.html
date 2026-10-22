@@ -394,9 +394,7 @@
 <script>
 const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? (window.location.port !== '5000' ? 'http://localhost:5000' : '')
-  : (window.location.hostname.endsWith('web.app') || window.location.hostname.endsWith('firebaseapp.com') || window.location.protocol === 'file:')
-    ? 'https://durgas-backend.onrender.com'
-    : '';
+  : 'https://durgas-backend.onrender.com';
 const API = (BACKEND_URL ? BACKEND_URL.replace(/\/+$/, '') : '') + '/api';
 let token = null;
 let categories = [];

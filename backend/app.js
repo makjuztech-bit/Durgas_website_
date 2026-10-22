@@ -17,18 +17,32 @@ const { securityHeaders, apiLimiter, authLimiter } = createSecurityMiddleware();
 app.use(securityHeaders);
 app.use(compression());
 
-// Strict CORS configuration
+// CORS configuration
 app.use(cors({
   origin: (origin, callback) => {
-    const isProd = process.env.NODE_ENV === 'production';
-    const defaultOrigins = isProd ? [] : ['http://localhost:5000', 'http://127.0.0.1:5000', 'http://localhost:3000'];
+    if (!origin) return callback(null, true); // Mobile apps, curl, server-to-server
+    const defaultOrigins = ['http://localhost:5000', 'http://127.0.0.1:5000', 'http://localhost:3000', 'http://localhost:5173'];
     const configured = (process.env.FRONTEND_ORIGINS || '')
       .split(',')
       .map((value) => value.trim())
       .filter(Boolean);
     const allowedOrigins = [...defaultOrigins, ...configured];
-    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app') || origin.endsWith('.web.app') || origin.endsWith('.firebaseapp.com')) return callback(null, true);
-    return callback(new Error('Origin is not allowed by CORS policy'));
+
+    const isAllowed =
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      origin.endsWith('.web.app') ||
+      origin.endsWith('.firebaseapp.com') ||
+      origin.endsWith('.onrender.com') ||
+      origin.includes('durgas') ||
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1');
+
+    if (isAllowed || process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    // Allow custom domains safely without crashing Express pipeline
+    return callback(null, true);
   },
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],

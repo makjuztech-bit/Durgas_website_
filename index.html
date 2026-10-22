@@ -3150,7 +3150,15 @@
   </footer>
 
   <script>
-    const API = '/api';
+    const BACKEND_URL = (typeof window !== 'undefined' && window.__BACKEND_URL__)
+      ? window.__BACKEND_URL__.replace(/\/+$/, '')
+      : (typeof window !== 'undefined' && (
+          window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1'
+        ))
+        ? (window.location.port !== '5000' ? 'http://localhost:5000' : '')
+        : 'https://durgas-backend.onrender.com';
+    const API = (BACKEND_URL ? BACKEND_URL.replace(/\/+$/, '') : '') + '/api';
     let userToken = localStorage.getItem('userToken');
     let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
     let currentProduct = null;
@@ -3500,16 +3508,37 @@
     }
 
     async function loginUser() {
-      const email = document.getElementById('authEmail').value;
-      const password = document.getElementById('authPassword').value;
+      const email = (document.getElementById('authEmail')?.value || '').trim();
+      const password = document.getElementById('authPassword')?.value || '';
       const errEl = document.getElementById('authError');
+      if (!email || !password) {
+        if (errEl) errEl.textContent = 'Please enter both email and password.';
+        return;
+      }
+      if (errEl) {
+        errEl.textContent = 'Signing in...';
+        errEl.style.color = 'var(--text)';
+      }
       try {
         const res = await fetch(API + '/auth/login', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ email, identifier: email, password }),
         });
-        const data = await res.json();
-        if (!res.ok) { errEl.textContent = data.message; return; }
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (e) {
+          data = { message: res.ok ? '' : 'Server returned an invalid response. Please try again.' };
+        }
+        if (!res.ok) {
+          if (errEl) {
+            errEl.style.color = '#c0392b';
+            errEl.textContent = data.message || 'Invalid credentials. Please try again.';
+          }
+          return;
+        }
         userToken = data.token;
         currentUser = data.user;
         localStorage.setItem('userToken', userToken);
@@ -3517,31 +3546,72 @@
         updateAccountBtn();
         closeAuthModal();
         syncCartFromServer();
-      } catch { errEl.textContent = 'Connection error.'; }
+      } catch (err) {
+        if (errEl) {
+          errEl.style.color = '#c0392b';
+          errEl.textContent = 'Server is waking up or connection was interrupted. Please try again.';
+        }
+      }
     }
 
     async function registerUser() {
-      const body = {
-        full_name: document.getElementById('regName').value,
-        email: document.getElementById('regEmail').value,
-        phone: document.getElementById('regPhone').value,
-        password: document.getElementById('regPassword').value,
-      };
+      const full_name = (document.getElementById('regName')?.value || '').trim();
+      const email = (document.getElementById('regEmail')?.value || '').trim();
+      const rawPhone = (document.getElementById('regPhone')?.value || '').replace(/\D/g, '');
+      const phone = rawPhone ? rawPhone.slice(-10) : undefined;
+      const password = document.getElementById('regPassword')?.value || '';
       const errEl = document.getElementById('regError');
+
+      if (!full_name) {
+        if (errEl) { errEl.style.color = '#c0392b'; errEl.textContent = 'Please enter your full name.'; }
+        return;
+      }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        if (errEl) { errEl.style.color = '#c0392b'; errEl.textContent = 'Please enter a valid email address.'; }
+        return;
+      }
+      if (!password || password.length < 8) {
+        if (errEl) { errEl.style.color = '#c0392b'; errEl.textContent = 'Password must be at least 8 characters long.'; }
+        return;
+      }
+
+      const body = { full_name, name: full_name, email, phone, password };
+      if (errEl) {
+        errEl.textContent = 'Creating account...';
+        errEl.style.color = 'var(--text)';
+      }
       try {
         const res = await fetch(API + '/auth/register', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(body),
         });
-        const data = await res.json();
-        if (!res.ok) { errEl.textContent = data.message; return; }
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (e) {
+          data = { message: res.ok ? '' : 'Server returned an invalid response. Please try again.' };
+        }
+        if (!res.ok) {
+          if (errEl) {
+            errEl.style.color = '#c0392b';
+            errEl.textContent = data.message || 'Registration failed. Please check your details.';
+          }
+          return;
+        }
         userToken = data.token;
         currentUser = data.user;
         localStorage.setItem('userToken', userToken);
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
         updateAccountBtn();
         closeAuthModal();
-      } catch { errEl.textContent = 'Connection error.'; }
+      } catch (err) {
+        if (errEl) {
+          errEl.style.color = '#c0392b';
+          errEl.textContent = 'Server is waking up or connection was interrupted. Please try again.';
+        }
+      }
     }
 
     function logoutUser() {
