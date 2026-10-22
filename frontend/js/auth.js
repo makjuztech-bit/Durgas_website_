@@ -476,26 +476,20 @@ async function sendLoginOtp() {
       return;
     }
 
-    const activeOtp = data.otp || data.simulatedOtp;
     const destName = isMail ? rawIdent : `mobile +91-${mobile10}`;
-
-    if (activeOtp) {
-      showLoginAlert(`✓ Instant OTP Generated: ${activeOtp} (Auto-filled below). Click "Verify OTP & Sign In".`, true);
-    } else {
-      showLoginAlert(`✓ Verification OTP dispatched to ${destName}. Valid for 10 minutes.`, true);
-    }
+    showLoginAlert(`✓ A 6-digit verification code has been dispatched to ${destName}. Please check your inbox and enter the code below.`, true);
 
     if (otpGroup) otpGroup.style.display = 'block';
     if (verifyBtn) verifyBtn.style.display = 'block';
 
     const otpInput = document.getElementById('otpCode');
     if (otpInput) {
-      if (activeOtp) otpInput.value = activeOtp;
+      otpInput.value = '';
       otpInput.focus();
     }
-    if (badgeEl && activeOtp) {
-      badgeEl.style.display = 'block';
-      badgeEl.innerHTML = `<strong>✨ Instant OTP Code:</strong> <span style="font-size:1.15rem;font-weight:700;letter-spacing:4px;color:#6B1D2F;">${activeOtp}</span> (Auto-filled!)`;
+    if (badgeEl) {
+      badgeEl.style.display = 'none';
+      badgeEl.innerHTML = '';
     }
 
     // Start 30s countdown
@@ -734,24 +728,20 @@ async function sendResetOtp() {
       return;
     }
 
-    const activeOtp = data.otp || data.simulatedOtp;
-    if (activeOtp) {
-      showAlert('helpStatusAlert', `✓ Reset Code: ${activeOtp} (Auto-filled below). Enter new password and click Save.`, true);
-    } else {
-      showAlert('helpStatusAlert', `✓ Password reset code dispatched. Valid for 10 minutes.`, true);
-    }
+    const destName = isMail ? rawIdent : `mobile +91-${mobile10}`;
+    showAlert('helpStatusAlert', `✓ A 6-digit password reset code has been sent to ${destName}. Please check your inbox and enter the code below.`, true);
 
     if (resetGroup) resetGroup.style.display = 'block';
     if (submitBtn) submitBtn.style.display = 'block';
 
     const codeInput = document.getElementById('resetOtpCode');
     if (codeInput) {
-      if (activeOtp) codeInput.value = activeOtp;
+      codeInput.value = '';
       codeInput.focus();
     }
-    if (badgeEl && activeOtp) {
-      badgeEl.style.display = 'block';
-      badgeEl.innerHTML = `<strong>✨ Instant Reset Code:</strong> <span style="font-size:1.15rem;font-weight:700;letter-spacing:4px;color:#6B1D2F;">${activeOtp}</span> (Auto-filled!)`;
+    if (badgeEl) {
+      badgeEl.style.display = 'none';
+      badgeEl.innerHTML = '';
     }
 
   } catch (err) {

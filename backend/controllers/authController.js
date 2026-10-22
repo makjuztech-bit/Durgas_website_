@@ -181,28 +181,28 @@ exports.sendOtp = async (req, res) => {
     isMail,
   });
 
-  // Non-blocking dispatch in background
+  // Send OTP directly to email inbox
   if (isMail) {
-    emailService.sendOtpEmail({
-      toEmail: targetKey,
-      otp,
-      purpose: purpose === 'reset' ? 'Password Reset' : 'Sign In',
-    }).catch((err) => {
-      console.warn('[sendOtp background email warning]', err ? err.message : err);
-    });
+    try {
+      await emailService.sendOtpEmail({
+        toEmail: targetKey,
+        otp,
+        purpose: purpose === 'reset' ? 'Password Reset' : 'Sign In',
+      });
+    } catch (err) {
+      console.warn('[sendOtp email warning]', err ? err.message : err);
+    }
   } else {
-    console.log(`[SMS/WhatsApp OTP Simulated] Verification code for mobile +91-${targetKey}: ${otp}`);
+    console.log(`[Mobile Verification] Code generated for +91-${targetKey}: ${otp}`);
   }
 
   return res.json({
     message: isMail
-      ? `OTP sent to ${targetKey}. Valid for 10 minutes.`
-      : `OTP sent to mobile +91-${targetKey}. Valid for 10 minutes.`,
+      ? `A 6-digit verification code has been sent to ${targetKey}. Please check your email inbox.`
+      : `A 6-digit verification code has been sent to mobile +91-${targetKey}. Valid for 10 minutes.`,
     target: targetKey,
     isEmail: isMail,
-    expiresIn: 600,
-    otp: otp,
-    simulatedOtp: otp
+    expiresIn: 600
   });
 };
 
