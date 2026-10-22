@@ -22,6 +22,7 @@ COPY --from=builder --chown=node:node /app/config ./config
 COPY --from=builder --chown=node:node /app/controllers ./controllers
 COPY --from=builder --chown=node:node /app/middleware ./middleware
 COPY --from=builder --chown=node:node /app/routes ./routes
+COPY --from=builder --chown=node:node /app/services ./services
 COPY --from=builder --chown=node:node /app/uploads ./uploads
 
 ENV NODE_ENV=production

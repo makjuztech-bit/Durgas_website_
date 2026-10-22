@@ -1,15 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
-  "services": {
-    "backend": {
-      "root": "backend",
-      "framework": "express"
-    },
-    "frontend": {
-      "root": "frontend"
-    }
-  },
+  "outputDirectory": "frontend",
   "redirects": [
     {
       "source": "/admin(.*)",
@@ -29,121 +21,67 @@
     },
     {
       "source": "/staff-portal(.*)",
-      "destination": {
-        "service": "frontend",
-        "path": "/administrator/index.html"
-      }
+      "destination": "/administrator/index.html"
     },
     {
       "source": "/product/(.*)",
-      "destination": {
-        "service": "frontend",
-        "path": "/product-details.html"
-      }
+      "destination": "/product-details.html"
     },
     {
       "source": "/product-details",
-      "destination": {
-        "service": "frontend",
-        "path": "/product-details.html"
-      }
+      "destination": "/product-details.html"
     },
     {
       "source": "/products",
-      "destination": {
-        "service": "frontend",
-        "path": "/products.html"
-      }
+      "destination": "/products.html"
     },
     {
       "source": "/cart",
-      "destination": {
-        "service": "frontend",
-        "path": "/cart.html"
-      }
+      "destination": "/cart.html"
     },
     {
       "source": "/checkout",
-      "destination": {
-        "service": "frontend",
-        "path": "/cart.html"
-      }
+      "destination": "/cart.html"
     },
     {
       "source": "/order",
-      "destination": {
-        "service": "frontend",
-        "path": "/cart.html"
-      }
+      "destination": "/cart.html"
     },
     {
       "source": "/login",
-      "destination": {
-        "service": "frontend",
-        "path": "/login.html"
-      }
+      "destination": "/login.html"
     },
     {
       "source": "/register",
-      "destination": {
-        "service": "frontend",
-        "path": "/register.html"
-      }
+      "destination": "/register.html"
     },
     {
       "source": "/profile",
-      "destination": {
-        "service": "frontend",
-        "path": "/profile.html"
-      }
+      "destination": "/profile.html"
     },
     {
       "source": "/about",
-      "destination": {
-        "service": "frontend",
-        "path": "/about.html"
-      }
+      "destination": "/about.html"
     },
     {
       "source": "/contact",
-      "destination": {
-        "service": "frontend",
-        "path": "/contact.html"
-      }
+      "destination": "/contact.html"
     },
     {
       "source": "/privacy-policy",
-      "destination": {
-        "service": "frontend",
-        "path": "/privacy-policy.html"
-      }
+      "destination": "/privacy-policy.html"
     },
     {
       "source": "/terms-and-conditions",
-      "destination": {
-        "service": "frontend",
-        "path": "/terms-and-conditions.html"
-      }
+      "destination": "/terms-and-conditions.html"
     },
     {
       "source": "/shipping-policy",
-      "destination": {
-        "service": "frontend",
-        "path": "/shipping-policy.html"
-      }
+      "destination": "/shipping-policy.html"
     },
     {
       "source": "/refund-policy",
-      "destination": {
-        "service": "frontend",
-        "path": "/refund-policy.html"
-      }
-    },
-    {
-      "source": "/(.*)",
-      "destination": {
-        "service": "frontend"
-      }
+      "destination": "/refund-policy.html"
     }
   ]
 }

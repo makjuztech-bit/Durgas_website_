@@ -6,7 +6,7 @@
     "test": "npm --prefix backend test",
     "start": "npm --prefix backend start",
     "dev": "npm --prefix backend run dev",
-    "build": "echo Static assets ready - no build step required",
+    "build": "npm --prefix backend install",
     "seed": "npm --prefix backend run seed",
     "migrate": "npm --prefix backend run migrate"
   },
