@@ -140,9 +140,9 @@ app.use((req, res, next) => {
 
 // Route mappings for clean URLs pointing to frontend pages
 const sendFrontendPage = (res, pageName) => {
-  const rootPath = path.join(__dirname, '..', 'frontend', pageName);
-  const pagesPath = path.join(__dirname, '..', 'frontend', 'pages', pageName);
-  return res.sendFile(fs.existsSync(rootPath) ? rootPath : pagesPath);
+  const filePath = path.join(__dirname, '..', 'frontend', pageName);
+  if (fs.existsSync(filePath)) return res.sendFile(filePath);
+  return res.status(404).json({ message: `Page '${pageName}' not found on backend. Frontend is hosted separately.` });
 };
 
 app.get('/products', (req, res) => sendFrontendPage(res, 'products.html'));
@@ -168,10 +168,14 @@ app.get(['/administrator', '/administrator/*', '/admin', '/admin/*'], (req, res)
 // Secret staff portal route
 app.get(['/staff-portal', '/staff-portal/*', '/staff-portal/index.html'], (req, res) => {
   const adminFile = path.join(__dirname, '..', 'frontend', 'administrator', 'index.html');
+  const rootAdminFile = path.join(__dirname, '..', 'administrator', 'index.html');
   if (fs.existsSync(adminFile)) {
     return res.sendFile(adminFile);
   }
-  res.sendFile(path.join(__dirname, '..', 'administrator', 'index.html'));
+  if (fs.existsSync(rootAdminFile)) {
+    return res.sendFile(rootAdminFile);
+  }
+  return res.redirect(302, 'https://durgasjewellery.com/staff-portal');
 });
 
 // SEO: Robots.txt & Dynamic Sitemap

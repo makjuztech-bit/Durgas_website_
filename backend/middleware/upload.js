@@ -5,9 +5,9 @@ const fs = require('fs');
 let storage;
 
 // Use Cloudinary for permanent CDN storage; fall back to local disk storage if Cloudinary fails
-const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'axnxeomx';
-const apiKey = process.env.CLOUDINARY_API_KEY || '169591887322584';
-const apiSecret = process.env.CLOUDINARY_API_SECRET || 'Cuel0EoOsDLM7TxnrSyJcFwCbNo';
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+const apiKey = process.env.CLOUDINARY_API_KEY;
+const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
 if (cloudName && apiKey && apiSecret) {
   const { CloudinaryStorage } = require('multer-storage-cloudinary');

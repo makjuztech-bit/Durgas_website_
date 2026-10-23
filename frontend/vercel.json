@@ -2,9 +2,29 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/admin(.*)",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/administrator(.*)",
+      "destination": "/",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
-      "source": "/product/:id*",
+      "source": "/api/(.*)",
+      "destination": "https://durgas-backend.onrender.com/api/$1"
+    },
+    {
+      "source": "/staff-portal(.*)",
+      "destination": "/administrator/index.html"
+    },
+    {
+      "source": "/product/(.*)",
       "destination": "/product-details.html"
     },
     {

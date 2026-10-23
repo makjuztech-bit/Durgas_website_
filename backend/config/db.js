@@ -21,14 +21,11 @@ let poolInitError = null;
 let connectionError = null;
 let reconnectTimer = null;
 
-const defaultDbUrl = 'postgresql://postgres.xuoedlqfzlukddpspuls:Sabari%401412@aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres';
-
 function resolveDatabaseUrl() {
   const candidates = [
     process.env.DATABASE_URL,
     process.env.SUPABASE_DATABASE_URL,
     process.env.SUPABASE_DB_URL,
-    defaultDbUrl,
   ];
 
   for (let candidate of candidates) {
@@ -50,7 +47,7 @@ function resolveDatabaseUrl() {
       // Try next candidate
     }
   }
-  return defaultDbUrl;
+  return null;
 }
 
 let connectionString = resolveDatabaseUrl();

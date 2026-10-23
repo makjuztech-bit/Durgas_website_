@@ -3,68 +3,288 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Account - DURGAS</title>
+  <title>My Profile &amp; Orders — DURGAS</title>
+  <meta name="description" content="View your order history, delivery tracking, and manage your account details on DURGAS FIVE METAL JEWELLERY.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/products.css">
   <link rel="stylesheet" href="/css/cart.css">
 </head>
 <body>
-  <div class="offer-banner">DURGAS account</div>
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- Mobile Nav -->
+  <div class="mobile-nav" id="mobileNav">
+    <button class="mobile-close" onclick="closeMobileNav()">✕</button>
+    <a href="/" onclick="closeMobileNav()">Home</a>
+    <a href="/products" onclick="closeMobileNav()">Shop Catalogue</a>
+    <a href="/about" onclick="closeMobileNav()">About Us</a>
+    <a href="/contact" onclick="closeMobileNav()">Contact</a>
+  </div>
+
+  <!-- Offer Banner -->
+  <div class="offer-banner">
+    ✦ Authentic Traditional Panchaloha Creations · Insured Pan-India Delivery ✦
+  </div>
+
+  <!-- Navigation -->
   <nav id="mainNav">
-    <a href="/" class="nav-logo"><img src="/main logo.jpeg" alt="Durgas Logo" class="logo"></a>
-    <ul class="nav-links"><li><a href="/">Home</a></li><li><a href="/products">Shop</a></li><li><a href="/about">About</a></li><li><a href="/contact">Contact</a></li></ul>
-    <div class="nav-icons"><button class="nav-icon-btn" title="Cart" onclick="window.location.href='/cart'">Bag</button><button class="nav-icon-btn" title="Sign out" onclick="logoutUser()">Exit</button></div>
+    <a href="/" class="nav-logo">
+      <img src="/durgas main logo.jpeg" alt="Durgas Logo" class="logo">
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/products">Shop Catalogue</a></li>
+      <li><a href="/about">About Us</a></li>
+      <li><a href="/contact">Contact</a></li>
+    </ul>
+    <div class="nav-icons">
+      <button class="nav-icon-btn" title="Wishlist" onclick="openWishlist()">♡</button>
+      <div class="patron-menu-wrap" id="accountMenuWrap">
+        <a href="/profile" class="nav-auth-btn" id="accountBtn" title="My Account">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span id="accountBtnText">My Account</span>
+        </a>
+        <div class="patron-dropdown" id="patronDropdown" style="display:none;">
+          <div class="patron-dropdown-header">
+            <div class="patron-dropdown-name" id="patronDropdownName">My Account</div>
+            <div class="patron-dropdown-email" id="patronDropdownEmail"></div>
+          </div>
+          <a href="/profile" class="patron-dropdown-link">🛍️ My Orders &amp; Profile</a>
+          <a href="javascript:void(0)" onclick="openWishlist()" class="patron-dropdown-link">♡ My Wishlist</a>
+          <a href="/cart" class="patron-dropdown-link">🛒 Shopping Bag</a>
+          <button type="button" onclick="logoutUser()" class="patron-dropdown-link" style="color:#c0392b; border-top:1px solid #F0EAE1;">🚪 Sign Out</button>
+        </div>
+      </div>
+      <button class="nav-icon-btn" title="Cart" onclick="window.location.href='/cart'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;display:inline-block"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="cart-count" id="cartCountBadge">0</span>
+      </button>
+      <button class="hamburger" onclick="openMobileNav()">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
   </nav>
-  <main class="page active" style="padding:70px 5vw;min-height:70vh">
-    <p class="section-tag">My account</p>
-    <h1 class="section-title">Profile <em>&amp; orders</em></h1>
-    <div style="display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:50px;max-width:1100px;margin:40px auto">
-      <section>
-        <h2 class="modal-title">Saved details</h2>
-        <form id="profileForm">
-          <div class="form-group"><label class="form-label">Full name</label><input class="form-input" id="profileName" required></div>
-          <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="profileEmail" type="email" disabled></div>
-          <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="profilePhone" type="tel"></div>
-          <div class="form-group"><label class="form-label">Address</label><textarea class="form-input form-textarea" id="profileAddress"></textarea></div>
-          <div class="form-group"><label class="form-label">City</label><input class="form-input" id="profileCity"></div>
-          <div class="form-group"><label class="form-label">State</label><input class="form-input" id="profileState"></div>
-          <div class="form-group"><label class="form-label">Pincode</label><input class="form-input" id="profilePincode" inputmode="numeric"></div>
-          <button class="btn-primary" type="submit"><span>Save details</span></button>
-          <p class="auth-error" id="profileMessage"></p>
-        </form>
-      </section>
-      <section>
-        <h2 class="modal-title">Order history</h2>
-        <div id="ordersList"><p class="loading-msg">Loading orders...</p></div>
-      </section>
+
+  <!-- Main Profile Page Container -->
+  <main class="page active" style="padding: 60px 5vw; min-height: 75vh; background: #FAF8F5;">
+    <div style="max-width: 1100px; margin: 0 auto;">
+      <div style="margin-bottom: 32px; border-bottom: 1px solid #E8E0D0; padding-bottom: 16px;">
+        <span style="font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: #8B6914; font-weight: 700;">Customer Dashboard</span>
+        <h1 style="font-family: var(--font-serif, 'Cormorant Garamond', serif); font-size: 2.4rem; color: #6B1D2F; margin: 6px 0 0;">Profile &amp; Orders</h1>
+      </div>
+
+      <div id="unauthPrompt" style="display:none; text-align:center; padding:60px 20px; background:#fff; border:1px solid #E8E0D0; border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,0.04);">
+        <div style="font-size:3rem; margin-bottom:12px;">🔒</div>
+        <h2 style="font-family:var(--font-serif); font-size:1.8rem; color:#6B1D2F; margin:0 0 8px;">Sign In to View Your Account</h2>
+        <p style="color:#666; font-size:0.9rem; max-width:480px; margin:0 auto 24px;">Please sign in with your registered email or phone to track your jewelry orders and update delivery address.</p>
+        <a href="/login" class="btn-primary" style="display:inline-block; padding:12px 28px; text-decoration:none;"><span>Sign In Now</span></a>
+      </div>
+
+      <div id="authContent" style="display:grid; grid-template-columns: minmax(300px, 380px) 1fr; gap: 36px;">
+        <!-- Left: Saved Profile Details -->
+        <section style="background:#fff; padding:28px 24px; border:1px solid #E8E0D0; border-radius:6px; height:fit-content; box-shadow:0 2px 10px rgba(0,0,0,0.03);">
+          <h2 style="font-family:var(--font-serif); font-size:1.4rem; color:#6B1D2F; margin:0 0 16px; border-bottom:1px solid #F0ECE1; padding-bottom:10px;">Saved Delivery Details</h2>
+          <form id="profileForm">
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="form-label" style="font-size:0.78rem; font-weight:600; color:#444; margin-bottom:4px; display:block;">Full Name</label>
+              <input class="form-input" id="profileName" required style="width:100%; padding:10px 12px; border:1px solid #D9CFBE; border-radius:4px; font-size:0.88rem;">
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="form-label" style="font-size:0.78rem; font-weight:600; color:#444; margin-bottom:4px; display:block;">Email Address (Account ID)</label>
+              <input class="form-input" id="profileEmail" type="email" disabled style="width:100%; padding:10px 12px; border:1px solid #E0E0E0; background:#f9f9f9; color:#777; border-radius:4px; font-size:0.88rem;">
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="form-label" style="font-size:0.78rem; font-weight:600; color:#444; margin-bottom:4px; display:block;">10-Digit Mobile Number</label>
+              <input class="form-input" id="profilePhone" type="tel" maxlength="10" placeholder="9876543210" style="width:100%; padding:10px 12px; border:1px solid #D9CFBE; border-radius:4px; font-size:0.88rem;">
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="form-label" style="font-size:0.78rem; font-weight:600; color:#444; margin-bottom:4px; display:block;">Street Address</label>
+              <textarea class="form-input form-textarea" id="profileAddress" rows="2" style="width:100%; padding:10px 12px; border:1px solid #D9CFBE; border-radius:4px; font-size:0.88rem;"></textarea>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+              <div>
+                <label class="form-label" style="font-size:0.78rem; font-weight:600; color:#444; margin-bottom:4px; display:block;">City</label>
+                <input class="form-input" id="profileCity" style="width:100%; padding:10px 12px; border:1px solid #D9CFBE; border-radius:4px; font-size:0.88rem;">
+              </div>
+              <div>
+                <label class="form-label" style="font-size:0.78rem; font-weight:600; color:#444; margin-bottom:4px; display:block;">State</label>
+                <input class="form-input" id="profileState" style="width:100%; padding:10px 12px; border:1px solid #D9CFBE; border-radius:4px; font-size:0.88rem;">
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:20px;">
+              <label class="form-label" style="font-size:0.78rem; font-weight:600; color:#444; margin-bottom:4px; display:block;">Pincode</label>
+              <input class="form-input" id="profilePincode" maxlength="6" inputmode="numeric" style="width:100%; padding:10px 12px; border:1px solid #D9CFBE; border-radius:4px; font-size:0.88rem;">
+            </div>
+            <button class="btn-primary" type="submit" style="width:100%; padding:12px; background:#6B1D2F; color:#fff; border:none; border-radius:4px; font-weight:600; cursor:pointer;">
+              <span>Update Saved Details</span>
+            </button>
+            <p id="profileMessage" style="margin-top:12px; font-size:0.82rem; text-align:center;"></p>
+          </form>
+        </section>
+
+        <!-- Right: Order History -->
+        <section style="background:#fff; padding:28px 24px; border:1px solid #E8E0D0; border-radius:6px; box-shadow:0 2px 10px rgba(0,0,0,0.03);">
+          <h2 style="font-family:var(--font-serif); font-size:1.4rem; color:#6B1D2F; margin:0 0 16px; border-bottom:1px solid #F0ECE1; padding-bottom:10px;">Order History &amp; Tracking</h2>
+          <div id="ordersList">
+            <p style="text-align:center; color:#888; padding:30px 0;">Loading your jewellery orders...</p>
+          </div>
+        </section>
+      </div>
     </div>
   </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="/" class="nav-logo" style="font-size:1.6rem">DURGAS<span style="color:var(--gold)">✦</span></a>
+        <p class="footer-desc">Fine jewellery handcrafted with traditional five-metal composition since 2008. Every piece is certified for quality and delivered fully insured.</p>
+        <div class="footer-social">
+          <a href="https://wa.me/917448882444" class="social-link" title="WhatsApp">WA</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Catalogue</h4>
+        <ul>
+          <li><a href="/products">All Pieces</a></li>
+          <li><a href="/products?category=Five-Metal%20Jewellery">Five-Metal</a></li>
+          <li><a href="/products?category=Rings">Rings</a></li>
+          <li><a href="/products?category=Necklaces">Necklaces</a></li>
+          <li><a href="/products?category=Chains">Chains</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="/about">Our Craftsmanship</a></li>
+          <li><a href="/contact">Showroom Contact</a></li>
+          <li><a href="https://wa.me/917448882444">WhatsApp Concierge</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Support</h4>
+        <ul>
+          <li><a href="/shipping-policy">Shipping Policy</a></li>
+          <li><a href="/refund-policy">Returns &amp; Exchange</a></li>
+          <li><a href="/privacy-policy">Privacy Policy</a></li>
+          <li><a href="/terms-and-conditions">Terms &amp; Conditions</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2025 DURGAS FIVE METAL JEWELLERY. All rights reserved. · <a href="/privacy-policy" style="color:inherit">Privacy Policy</a> · <a href="/terms-and-conditions" style="color:inherit">Terms of Use</a> · <a href="/shipping-policy" style="color:inherit">Shipping</a> · <a href="/refund-policy" style="color:inherit">Refund Policy</a></p>
+      <div class="footer-pay">
+        <span class="pay-badge">Visa</span>
+        <span class="pay-badge">Mastercard</span>
+        <span class="pay-badge">UPI</span>
+        <span class="pay-badge">Razorpay</span>
+      </div>
+    </div>
+  </footer>
+
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/cart.js"></script>
+  <script src="/js/wishlist.js"></script>
+  <script src="/js/app.js"></script>
   <script>
     function renderOrders(orders) {
       const target = document.getElementById('ordersList');
-      target.innerHTML = orders.length ? orders.map(order => `<article style="border-top:1px solid var(--beige-dark);padding:20px 0"><div style="display:flex;justify-content:space-between;gap:16px"><strong>${order.order_number}</strong><span>${order.status}</span></div><p>${new Date(order.created_at).toLocaleDateString('en-IN')} - ${formatPrice(order.total_amount)}</p><p>${order.shipping_address}, ${order.shipping_city}, ${order.shipping_state} ${order.shipping_pincode}</p><p>${(order.items || []).map(item => `${item.product_name} x ${item.quantity}`).join(', ')}</p></article>`).join('') : '<p class="loading-msg">No orders yet.</p>';
+      if (!orders || !orders.length) {
+        target.innerHTML = `
+          <div style="text-align:center; padding:40px 0;">
+            <p style="color:#777; margin-bottom:14px;">No past orders found under this account.</p>
+            <a href="/products" class="btn-primary" style="display:inline-block; padding:8px 18px; text-decoration:none; font-size:0.78rem;"><span>Browse Jewellery</span></a>
+          </div>`;
+        return;
+      }
+      target.innerHTML = orders.map(order => `
+        <article style="border:1px solid #EFEAE1; border-radius:6px; padding:18px 20px; margin-bottom:18px; background:#fff;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #F0ECE1; padding-bottom:10px; margin-bottom:10px;">
+            <div>
+              <span style="font-size:0.75rem; color:#888;">Order ID:</span>
+              <strong style="color:#6B1D2F; font-size:0.95rem; margin-left:4px;">${order.order_number}</strong>
+            </div>
+            <span style="font-size:0.75rem; text-transform:uppercase; padding:3px 10px; border-radius:3px; font-weight:700; background:#e8f5e9; color:#2e7d32;">${order.status || 'Processing'}</span>
+          </div>
+          <div style="font-size:0.85rem; color:#555; line-height:1.6;">
+            <p style="margin:2px 0;"><strong>Date:</strong> ${new Date(order.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })} &nbsp;·&nbsp; <strong>Total:</strong> ${formatPrice(order.total_amount)}</p>
+            <p style="margin:2px 0;"><strong>Delivery:</strong> ${order.shipping_address}, ${order.shipping_city}, ${order.shipping_state} ${order.shipping_pincode}</p>
+            <p style="margin:4px 0 0; color:#333;"><strong>Items:</strong> ${(order.items || []).map(item => `${item.product_name} (×${item.quantity})`).join(', ') || 'Custom handcrafted item'}</p>
+          </div>
+        </article>
+      `).join('');
     }
+
     async function loadProfile() {
+      if (!currentUser && !localStorage.getItem('userToken')) {
+        document.getElementById('unauthPrompt').style.display = 'block';
+        document.getElementById('authContent').style.display = 'none';
+        return;
+      }
+
       const profileRes = await apiFetch('/auth/profile');
-      if (!profileRes.ok) { logoutUser(); return; }
+      if (!profileRes.ok) {
+        document.getElementById('unauthPrompt').style.display = 'block';
+        document.getElementById('authContent').style.display = 'none';
+        return;
+      }
+
       const profile = await profileRes.json();
       currentUser = profile;
       localStorage.setItem('currentUser', JSON.stringify(profile));
-      Object.entries({ profileName: profile.full_name, profileEmail: profile.email, profilePhone: profile.phone, profileAddress: profile.address, profileCity: profile.city, profileState: profile.state, profilePincode: profile.pincode }).forEach(([id, value]) => { document.getElementById(id).value = value || ''; });
+
+      document.getElementById('unauthPrompt').style.display = 'none';
+      document.getElementById('authContent').style.display = 'grid';
+
+      Object.entries({
+        profileName: profile.full_name,
+        profileEmail: profile.email,
+        profilePhone: profile.phone,
+        profileAddress: profile.address,
+        profileCity: profile.city,
+        profileState: profile.state,
+        profilePincode: profile.pincode
+      }).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value || '';
+      });
+
       const ordersRes = await apiFetch('/orders');
       renderOrders(ordersRes.ok ? await ordersRes.json() : []);
     }
-    document.getElementById('profileForm').addEventListener('submit', async event => {
+
+    document.getElementById('profileForm')?.addEventListener('submit', async event => {
       event.preventDefault();
-      const message = document.getElementById('profileMessage');
-      const res = await apiFetch('/auth/profile', { method: 'PUT', body: JSON.stringify({ full_name: profileName.value, phone: profilePhone.value, address: profileAddress.value, city: profileCity.value, state: profileState.value, pincode: profilePincode.value }) });
+      const msg = document.getElementById('profileMessage');
+      msg.textContent = 'Saving...';
+      msg.style.color = '#555';
+      const res = await apiFetch('/auth/profile', {
+        method: 'PUT',
+        body: JSON.stringify({
+          full_name: document.getElementById('profileName').value,
+          phone: document.getElementById('profilePhone').value,
+          address: document.getElementById('profileAddress').value,
+          city: document.getElementById('profileCity').value,
+          state: document.getElementById('profileState').value,
+          pincode: document.getElementById('profilePincode').value
+        })
+      });
       const data = await res.json();
-      message.textContent = res.ok ? 'Details saved.' : data.message;
-      if (res.ok) { currentUser = data; localStorage.setItem('currentUser', JSON.stringify(data)); }
+      if (res.ok) {
+        msg.textContent = '✓ Saved successfully';
+        msg.style.color = '#27ae60';
+        currentUser = data;
+        localStorage.setItem('currentUser', JSON.stringify(data));
+      } else {
+        msg.textContent = data.message || 'Failed to update details.';
+        msg.style.color = '#c0392b';
+      }
     });
-    loadProfile().catch(() => { document.getElementById('profileMessage').textContent = 'Could not load your account.'; });
+
+    loadProfile();
   </script>
 </body>
 </html>

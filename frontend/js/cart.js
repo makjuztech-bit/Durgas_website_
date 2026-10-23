@@ -22,17 +22,18 @@ function closeCart() {
   }
 }
 
-async function addToCart(e, productId) {
-  if (e) e.stopPropagation();
+async function addToCart(e, productId, quantity = 1) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  const qty = Math.max(1, parseInt(quantity, 10) || 1);
   if (!currentUser) {
     // Add locally to cart for guests
-    addGuestItem(productId);
+    addGuestItem(productId, qty);
     return;
   }
   try {
     const res = await apiFetch('/cart/add', {
       method: 'POST',
-      body: JSON.stringify({ product_id: productId, quantity: 1 }),
+      body: JSON.stringify({ product_id: productId, quantity: qty }),
     });
     if (!res.ok) {
       const d = await res.json();
@@ -43,25 +44,26 @@ async function addToCart(e, productId) {
     openCart();
   } catch (err) {
     console.error(err);
-    addGuestItem(productId);
+    addGuestItem(productId, qty);
   }
 }
 
-async function addGuestItem(productId) {
+async function addGuestItem(productId, quantity = 1) {
+  const qty = Math.max(1, parseInt(quantity, 10) || 1);
   try {
     const res = await fetch(API + '/products/' + productId);
     if (!res.ok) return;
     const p = await res.json();
     const existing = cartItems.find(i => i.id === p.id || i.product_id === p.id);
     if (existing) {
-      existing.quantity += 1;
+      existing.quantity += qty;
     } else {
       cartItems.push({
         id: p.id,
         product_id: p.id,
         name: p.name,
         price: Number(p.price),
-        quantity: 1,
+        quantity: qty,
         image: getProductImage(p),
         sku: p.sku || ('DJ-' + p.id),
         metal_composition: p.metal_composition || p.material

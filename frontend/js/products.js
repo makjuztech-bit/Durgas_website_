@@ -369,9 +369,7 @@ async function loadProductDetail(idOrSku) {
     const addCartBtn = document.getElementById('detailAddCart');
     if (addCartBtn) {
       addCartBtn.onclick = (e) => {
-        for (let i = 0; i < selectedDetailQty; i++) {
-          addToCart(e, p.id);
-        }
+        addToCart(e, p.id, selectedDetailQty);
       };
     }
 
