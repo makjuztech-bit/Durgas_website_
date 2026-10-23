@@ -26,6 +26,7 @@ function resolveDatabaseUrl() {
     process.env.DATABASE_URL,
     process.env.SUPABASE_DATABASE_URL,
     process.env.SUPABASE_DB_URL,
+    'postgresql://postgres.xuoedlqfzlukddpspuls:Sabari%401412@aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres',
   ];
 
   for (let candidate of candidates) {
