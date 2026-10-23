@@ -161,12 +161,12 @@ app.get('/shipping-policy', (req, res) => sendFrontendPage(res, 'shipping-policy
 app.get('/refund-policy', (req, res) => sendFrontendPage(res, 'refund-policy.html'));
 
 // Redirect legacy public admin paths to homepage
-app.get(['/administrator', '/administrator/*', '/admin', '/admin/*'], (req, res) => {
+app.get(/^\/(administrator|admin)(\/.*)?$/, (req, res) => {
   res.redirect(302, '/');
 });
 
 // Secret staff portal route
-app.get(['/staff-portal', '/staff-portal/*', '/staff-portal/index.html'], (req, res) => {
+app.get(/^\/staff-portal(\/.*)?$/, (req, res) => {
   const adminFile = path.join(__dirname, '..', 'frontend', 'administrator', 'index.html');
   const rootAdminFile = path.join(__dirname, '..', 'administrator', 'index.html');
   if (fs.existsSync(adminFile)) {
