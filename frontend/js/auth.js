@@ -479,6 +479,10 @@ async function sendLoginOtp() {
     const destName = isMail ? rawIdent : `mobile +91-${mobile10}`;
     showLoginAlert(`✓ A 6-digit verification code has been dispatched to ${destName}. Please check your inbox and enter the code below.`, true);
 
+    if (btn) {
+      btn.innerHTML = '<span>OTP Sent ✓</span>';
+    }
+
     if (otpGroup) otpGroup.style.display = 'block';
     if (verifyBtn) verifyBtn.style.display = 'block';
 
@@ -731,6 +735,10 @@ async function sendResetOtp() {
     const destMsg = data.message || `✓ A 6-digit password reset code has been sent to ${isMail ? rawIdent : 'mobile +91-' + mobile10}. Please check your inbox and enter the code below.`;
     showAlert('helpStatusAlert', destMsg, true);
 
+    if (btn) {
+      btn.innerHTML = '<span>Code Sent ✓</span>';
+    }
+
     if (resetGroup) resetGroup.style.display = 'block';
     if (submitBtn) submitBtn.style.display = 'block';
 
@@ -744,10 +752,23 @@ async function sendResetOtp() {
       badgeEl.innerHTML = '';
     }
 
+    // 30s countdown before enabling Resend
+    let remaining = 30;
+    clearInterval(resetOtpTimer);
+    resetOtpTimer = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(resetOtpTimer);
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<span>Resend OTP</span>';
+        }
+      }
+    }, 1000);
+
   } catch (err) {
     console.error(err);
     showAlert('helpStatusAlert', 'Network error. Please try again.');
-  } finally {
     if (btn) {
       btn.disabled = false;
       btn.innerHTML = '<span>Send OTP</span>';
