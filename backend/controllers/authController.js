@@ -25,10 +25,12 @@ const cookieOptions = `Path=/; HttpOnly; SameSite=Lax${process.env.NODE_ENV === 
 const setAuthCookie = (res, token) => res.append('Set-Cookie', `auth_token=${encodeURIComponent(token)}; ${cookieOptions}`);
 const clearAuthCookie = (res) => res.append('Set-Cookie', `auth_token=; ${cookieOptions}; Max-Age=0`);
 
+const JWT_SECRET = process.env.JWT_SECRET || 'QQQtUonFvBJVnq5OOp2259_ql6KDvIKRLskrF7Ra6YAlCkYF01FUNCdetL7WN3Fl';
+
 const generateToken = (user) => {
   return jwt.sign(
     { id: user.user_id ?? user.id, email: user.email, role: user.role, full_name: user.full_name },
-    process.env.JWT_SECRET,
+    JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
 };

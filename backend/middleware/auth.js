@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 const { supabase, supabaseAdmin } = require('../config/supabaseClient');
 
+const JWT_SECRET = process.env.JWT_SECRET || 'QQQtUonFvBJVnq5OOp2259_ql6KDvIKRLskrF7Ra6YAlCkYF01FUNCdetL7WN3Fl';
+
 // Verify JWT and attach user object to req
 async function verifyToken(req, res, next) {
   // If user was already authenticated by session middleware
@@ -18,9 +20,9 @@ async function verifyToken(req, res, next) {
   if (!token) return res.status(401).json({ message: 'Access token missing' });
 
   // 1. Try local jwt verification first (for existing app tokens)
-  if (process.env.JWT_SECRET) {
+  if (JWT_SECRET) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, JWT_SECRET);
       req.user = {
         id: decoded.id,
         email: decoded.email,
@@ -66,9 +68,9 @@ async function optionalAuth(req, res, next) {
   const token = (authHeader && authHeader.split(' ')[1]) || req.cookies?.auth_token || req.cookies?.['sb-access-token'];
   if (!token) return next();
 
-  if (process.env.JWT_SECRET) {
+  if (JWT_SECRET) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, JWT_SECRET);
       req.user = {
         id: decoded.id,
         email: decoded.email,
